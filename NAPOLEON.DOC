@@ -1,0 +1,935 @@
+         TACTICAL BATTLE MODULE - WARS OF NAPOLEON
+                   C O N T E N T S
+ 
+ 1      INTRODUCTION                                   1 
+ 1.1    Description                                    1 
+ 1.2  How to Win                                       1 
+ 1.3  Quitting the Game (Strategic Retreat)            1 
+ 1.4  The Objective                                    2 
+ 1.5  Esprit de Corps                                  2 
+ 1.6  Battle Screen                                    2 
+ 1.7  Battle Map & Terrain                             3 
+ 1.8  'Terrain' Command                                3 
+ 1.9  Armies Summary Data                              3 
+ 1.10  Active Unit Data                                3 
+ 1.11 Message Window                                   4 
+ 2      UNIT TYPES & ATTRIBUTES                        4 
+ 2.1  Unit Types                                       4 
+ 2.2  Routed Units                                     5 
+ 2.3  Hollow Squares                                   5 
+ 2.4  Cavalry vs. Cavalry                              5 
+ 2.5   Morale and Leadership                           5 
+ 2.6    Generals                                       5 
+ 2.7  [X]cancel Orders                                 6 
+ 2.8  i[N]spire Units                                  6 
+ 3      VISIBILITY & MOVEMENT                          6
+ 3.1   Visibility                                      6 
+ 3.2    Movement                                       7 
+ 3.3   Controlling Diagonal Moves                      7 
+ 3.4   Single Hex Movement                             7 
+ 3.5   Move-to-Location Orders                         8 
+ 3.6  Infantry Charge                                  9 
+ 3.7   Rest                                            10 
+ 3.8   Wait                                            10 
+ 3.9   Stacking                                        10 
+ 4      COMBAT                                         11 
+ 4.1  Normal (Melee) Combat                            11 
+ 4.2   Artillery                                       12 
+ 4.3  Line of Sight                                    12 
+ 4.4  'View' Command to Check Line of Sight            13 
+ 4.5  Limbering Artillery                              13 
+ 4.6  Cannonade                                        14 
+ 4.7  Cavalry Charge                                   14 
+ 4.8  Resolving Combat                                 14 
+ 4.9  Combat Results                                   15 
+ 4.10 Retreat                                          15 
+ 4.11 Eliminated Units                                 16 
+ 4.12 Capturing Artillery                              16 
+ 5      HOT KEY COMMANDS                               16 
+ 5.1  Hot Keys                                         16 
+ 5.2  Intelligence                                     17 
+ 5.3  Rest                                             18 
+ 5.4  (special options)                                18 
+ 5.5  Order of Battle ('O')                            18 
+ 5.6  Game Score ('G')                                 18 
+ 5.7  F3-Screen Redraw                                 18 
+
+         TACTICAL BATTLE MODULE - WARS OF NAPOLEON
+===========================================================
+ 1 INTRODUCTION
+===========================================================
+ 1.1    Description
+===================
+The tactical battle module for Wars of Napoleon is meant for
+use within the Wars of Napoleon strategic game. Though it
+can be used as a stand alone module to play random scenarios, it
+is intended to resolve tactically battles in which the relative
+strength ratios of the armies is in the range of 1:3 to 3:1. More
+lopsided battles are resolved at the strategic level game).
+
+The winner of the battle will take possession of the
+contested city on the strategic level map. The loser must
+retreat.
+
+The battle is randomly set up based on the relative
+strengths of the armies at the strategic level and their
+morale, experience, and leadership.
+
+If the strategic battle site is not fortified, the objective will
+be near the defending army, but not necessarily possessed by it.
+If it is fortified or double fortified, the objective will be
+possessed by the defending army, and the terrain will be more
+difficult.
+
+IF EITHER ARMY IS OUT OF SUPPLY, ITS TACTICAL STRENGTH WILL
+BE ONLY 50% OF THE NOMINAL STRENGTH. Thus, a 100,000 man
+army out of supply will have only 50,000 strength points in
+the tactical combat. (This could be a reason for a strategic
+retreat).
+
+ 1.2  How to Win
+================
+To "win" the battle, you must either:
+    (a) be holding the objective on the LAST turn of the
+        battle, or
+    (b) cause the esprit de corps of the enemy army
+        to fall so low that the entire enemy army routs and
+        leaves the field of battle
+
+ 1.3  Quitting the Game (Strategic Retreat)
+===========================================
+By pressing F9 and confirming, you can cause your army to
+
+				- 2  -
+ 
+strategically retreat - thereby losing the objective and
+taking a 20% additional loss. You might wish to do this
+to avoid even greater losses on the battlefield.
+
+ 1.4  The Objective
+===================
+The objective is a battlefield location. It is "controlled"
+by the army that last had a unit on that location. It is not
+necessary to keep a unit on the objective to maintain
+control of it (though a unit left on the objective can
+defend it against an enemy assault).
+
+ 1.5  Esprit de Corps
+=====================
+Each army has a "spirit" that reflects its overall morale -
+the esprit de corps, which you can monitor using the 'G'
+game score hot key. When critical events occur, the esprit
+de corps can rise or fall. If it gets too low, the entire
+army will break and run and the battle is over.
+
+The esprit de corps for an army rises when it takes the
+objective, eliminates an enemy unit, or pursues a retreating
+unit.
+
+The esprit de corps for an army falls when one of its units
+is routed or eliminated. Having General units eliminated is
+particularly damaging to spirit.
+
+ 1.6  Battle Screen
+===================
+The battle screen is divided into 4 zones as shown:
+
++==========================================================+
+|                                          |               |
+|                                          |  2 - Armies   |
+|                                          |      Summary  |
+|                                          |      Data     |
+|                                          |               |
+|              1- Battle Map               +===============+
+|                                          | 3 - Active    |
+|                                          |     Unit      |
+|                                          |     Data      |
+|                                          |               |
+|                                          |               |
++==========================================================+
+                    4 - Message Window
+
+				- 3  -
+ 
+
+ 1.7  Battle Map & Terrain
+==========================
+The battle map is based on a hexagonal layout, 27 hexes wide
+by 20 hexes high, with terrain features shown by EGA graphic
+icons. More complete information is provided on-line via the
+F1 help key.
+
+The map is randomly generated for each battle.
+
+  DESCRIPTION             MOVEMENT EFFECT
+----------------------- ---------------------
+  forest/wooded terrain    slow
+  road                     fast
+  bridge                   fast
+  clear or open terrain    normal
+  swamp/small stream       very slow
+  hill/elevation           slow
+  river/lake/water         extremely slow
+  mountain                 very slow
+  fortification            normal
+  objective                normal
+  village/house            normal
+
+ 1.8  'Terrain' Command
+=======================
+You can view the terrain without the army units at any time by
+pressing "T" (for Terrain). This temporarily toggles the unit
+icons off, then replaces all visible units after you have viewed
+the terrain.
+
+ 1.9  Armies Summary Data
+=========================
+The number of turns remaining in the battle is shown in the
+top section of this zone. A summary is given of the total
+losses incurred by each army and the number of turns each
+side has controlled the objective. The side you are playing
+is indicated by a '' character. The side currently
+controlling the objective is indicated by a '' character.
+
+ 1.10  Active Unit Data
+=======================
+A summary is given for the current player-controlled unit,
+showing unit number, unit name, unit type, current strength,
+terrain, leadership, and morale. In addition, the time the
+unit will next be available for movement is shown. If the
+
+				- 4  -
+ 
+unit is under 'orders', the message "ORDERS" will appear
+next to the unit number.
+
+ 1.11 Message Window
+====================
+The message window provides comments on battle maneuvers and
+outcomes as they occur. It also shows when the enemy
+(computer) is taking its turn.
+
+===========================================================
+ 2 UNIT TYPES & ATTRIBUTES
+===========================================================
+ 2.1  Unit Types
+================
+There are 4 basic unit types, Infantry, Artillery, Cavalry,
+and Generals. In addition, Infantry units may form hollow
+Squares for defensive purposes. They are shown on the display by
+distinctive "standard" military icons, in red for Allied units
+and blue for French units. (Press 'F1' to get a full display of
+icons, terrain features and effects, and hot key commands).
+
+                       Melee
+Type       Movement    Combat     Special Abilities
+-------    -------    --------    -------------------------
+Infantry   average     average    may 'charge' on open
+                                  ground if morale is
+                                  sufficiently high.
+                                  Vulnerable to enemy
+                                  cavalry attacks and likely
+                                  to rout if overrun by
+                                  cavalry.
+
+Hollow     none        defensive  good vs. cavalry attacks;
+Squares                           poor vs. infantry attacks
+
+Cavalry    fast        good       excellent attack on open
+                                  terrain, especially
+                                  vs. infantry
+
+Artillery  slow        poor       may fire on units at a
+                                  distance
+
+General    average     poor       increased combat effect on
+                                  adjacent friendly units;
+                                  can cancel orders of other
+                                  units; can inspire units
+
+				- 5  -
+ 
+                                  into action; can inspire
+                                  routed units to regroup
+
+ 2.2  Routed Units
+==================
+Units that suffer large melee losses may ROUT. The unit icon
+will change to that of a shattered unit and the unit will
+immediately begin to flee from the combat area toward the
+edge of the map. Once routed, units are very vulnerable to
+further attack, and will take huge losses. If a routed unit
+is able to withdraw without being attacked, it will attempt
+to regroup on each turn it gets. If it moves to the edge of
+the map, it will stop and continue to try to regroup.
+
+Nearby General units may be able to iNspire routed units
+before they move to the edge of the map.
+
+Even when routed units are able to regroup, their fighting
+ability will be greatly reduced.
+
+Each time a unit routs, the overall esprit de corps for the
+unit's entire army is reduced.
+
+ 2.3  Hollow Squares
+====================
+Infantry that is attacked by cavalry on open terrain is
+likely to take large losses and even rout. However, if the
+infantry can form into hollow squares, it is much more able
+to fend off the cavalry attacks. While in hollow squares,
+the infantry unit cannot move.
+
+ 2.4  Cavalry vs. Cavalry
+=========================
+When cavalry units that meet on open terrain, there is a
+tremendous test of nerves as the horses, men, sabers, and
+pikes all converge. The losing unit is very likely to rout.
+Even the victorious unit may rout.
+
+ 2.5   Morale and Leadership
+============================
+Units which have poor leadership lower will have difficulty
+in movement and combat. Likewise, units with low morale will
+not be very effective, and should be rested if possible.
+Units with low morale cannot 'charge' and may not have
+enough discipline to form hollow squares.
+
+
+				- 6  -
+ 
+ 2.6    Generals
+================
+A General unit greatly improves the fighting abilities of
+adjacent units, both attack and defense. In addition,
+Generals have a powerful ability to iNspire units into
+action or to X cancel orders. However, you must be careful
+in actually engaging General unit itself, since it is
+usually weak and not very effective in melee.
+
+ 2.7  [X]cancel Orders
+======================
+Sometimes in the thick of battle you will have units engaged
+in combat (and not moving) or with movement orders which you
+need to redirect. To cancel existing orders for all friendly
+units, type 'X' when a General unit has its turn. As
+described earlier, this is not 100% effective (some units
+will ignore it) and may cause morale and leadership to
+suffer in units that do comply.
+
+Friendly units that are "under orders" are indicated on the
+map as units WITHOUT a contrasting color border. For
+instance, French units normally have a light blue border,
+but French units currently under orders do not have the
+border.
+
+When a General cancels orders, units that obey will flash
+briefly after the order is issued. Then a message indicates
+how many units obeyed out of the total currently 'under
+orders'. This allows you to see whether you need to issue
+additional commands to cancel orders.
+
+ 2.8  i[N]spire Units
+=====================
+General units may issue an iNspire command to rally another
+unit or to cause a routed unit to regroup and halt its
+flight from the battle.. The hot key for this command is 'N'
+(for iNspire). Using this command, a General unit may
+activate another unit nearby if the target unit is close
+enough and if the General has sufficient leadership.
+
+The "iNspired" unit normally will activate and be ready to
+move within the next turn
+
+===========================================================
+ 3 VISIBILITY & MOVEMENT
+===========================================================
+
+				- 7  -
+ 
+ 3.1   Visibility
+=================
+All your friendly units are visible, but enemy units are not
+always visible. Enemy units do not become visible until they
+come near enough to one of your units. If your unit occupies
+a mountain or hill it has increased ability to see enemy
+units; while occupying a forest or swamp, it has decreased
+ability to see enemy units. If the enemy is in a forest, he
+is much more difficult to see, and your unit must be closer.
+Enemies that move into forests may disappear from view.
+
+ 3.2    Movement
+================
+When one of your units is ready to move, it will be
+highlighted and a short tone will sound. At that point, you
+have several command options as described below.
+
+ 3.3   Controlling Diagonal Moves
+=================================
+Diagonal movement is supported in this module, using the
+numeric key pad, with NUMLOCK turned OFF, as shown below:
+
+                    +------+------+------+
+                    |  7   |  8   |  9   |
+ Move UP & LEFT ----->     |      |     <----- Move UP & RIGHT
+                    | Home |      | PgUp |
+                    +------+------+------+
+                    |  4   |  5   |  6   |
+    Move LEFT ------->     |      |     <----- Move RIGHT
+                    |      |      |      |
+                    +------+------+------+
+                    |  1   |  2   |  3   |
+ Move DOWN & LEFT --->     |      |     <----- Move DOWN & RIGHT
+                    | End  |      | PgDn |
+                    +------+------+------+
+
+Note that this scheme is required because the map is hex-based.
+The game will respond to the Up or Down moves (either on the
+numeric keypad, or the "inverted T" arrows), but since there are
+no directly up or down moves on the map, it must convert them to
+a diagonal move, which is done on a 50%-50% random basis, either
+left or right.
+
+ 3.4   Single Hex Movement
+==========================
+You may move the unit to an adjacent unoccupied hex by using
+
+				- 8  -
+ 
+the appropriate arrow key (numeric key pad). Since the unit
+may not move directly up or down on the hexagonal map, the
+'up' or 'down' keys are reinterpreted as diagonal 'up' or
+'down' moves. You cannot control whether these reinterpreted
+diagonal moves are right or left (done randomly), so you
+should generally avoid using the 'up' and 'down' keys for
+single hex movement.
+
+If you attempt to move into a prohibited hex (occupied or
+water), a tone will sound. There is no movement penalty.
+
+After the unit moves, it may reveal enemy units that were
+previously hidden.
+
+Any units that were entrenched at the beginning of the
+scenario (using the scenario editor) may be reluctant to
+move from the safety of their trenches. Occasionally such
+units will not respond to move orders (a message to that
+effect is displayed). Units that are low on morale or that
+are poorly led are more likely to do this.
+
+ 3.5   Move-to-Location Orders
+==============================
+Single hex movement may be tedious. You may wish to give
+your units orders to move to a particular location instead.
+To do this, press 'M' when the unit is highlighted and a
+cursor will appear on top of the unit. Move this cursor with
+the arrow keys to the desired destination, and press
+'Enter'. When the "move to" order is issued, the destination
+is will be indicated by a small white circle and a line will
+connect the unit with its intended target. On its next turn,
+your unit will then begin to move to the selected
+destination, following the most direct path. (It will not
+necessarily follow the same path you used in moving the
+cursor to the destination). If it is blocked by a friendly
+unit or by prohibited terrain (water or edge of map screen),
+or if the unit is attacked in any way, the movement order
+will be cancelled, and the unit will wait for new
+instructions.
+
+Artillery units must be LIMBERED to move. Orders can be
+issued to unlimbered artillery, but the orders are ignored,
+and the unit will not move. Emplaced artillery can not
+receive move-to-location orders.
+
+For destinations that are far away, moving the cursor may be
+
+				- 9  -
+ 
+speeded by holding down 'Shift' before pressing the desired
+arrow key. The cursor will then move to the indicated map
+edge. Pressing the '5' key at the center of the key pad will
+center the cursor on the screen.
+
+Once a unit has reached its assigned destination, it will
+flash and a tone will sound, along with a message that it
+has arrived at its destination. At that point its orders are
+cancelled, and it will await further instructions.
+
+While units are 'under orders' to move you will not normally
+be able to access them, even if you change your mind about
+what they should do. The only way you can overcome this is
+having one of your General units cancel the unit orders
+using the 'X' command. (See 'hot keys' section). This is not
+100% effective (due to communication breakdowns and stubborn
+subordinate officers). Even if the orders are actually
+cancelled, morale and leadership may be reduced in units
+affected due to the conflicts between unit commanders and
+General unit. Thus, the 'cancel orders' option should be
+used only as needed to free units that have become locked in
+combat.
+
+Since the General units are your only means to cancel
+orders, you should usually not give them movement orders.
+That way, you will be able to access them more frequently.
+
+Though your units will normally wait for your commands, on
+occasion they will decide to move on their own initiative
+(generally in an attempt to engage an enemy unit which they
+have sighted). Such units issue their own orders to move to
+the chosen destination.
+
+ 3.6  Infantry Charge
+=====================
+Infantry units ONLY may double their speed for short
+distances on OPEN TERRAIN OR ROADS only with a 'C' (CHARGE)
+command. Units in 'charge' mode will be shown with a
+distinctive icon. While in 'charge' mode they will move
+twice as fast as normal infantry.
+
+If charging units become involved in combat, or are attacked
+by artillery, or move into any other than open or roads
+terrain, they will switch out of 'charge' mode. In addition,
+each time a unit in 'charge' mode is moved, there is a
+chance that the unit will simply become too tired to
+
+				- 10  -
+ 
+continue the charge. Units that are moved until they are too
+tired will be delayed in their action for a time while they
+rest.
+
+The 'charge' option affects both movement and combat
+(increases 'shock' effect of attacks). Units with too low
+morale will not be able to charge at all until their morale
+improves.
+
+Note that switching to 'charge' mode requires one turn. Then
+the unit may be moved a single hex or given orders.
+
+ 3.7   Rest
+===========
+You may not wish to move a unit on its turn. By pressing the
+space bar you can skip the unit and allow it to rest for a
+few turns. If the unit's morale is low, it will improve
+slightly after resting.
+
+ 3.8   Wait
+===========
+To avoid having to repeatedly issue a 'Rest' order, an
+option is provided whereby units may 'Wait'. Press 'W' when
+the unit has its turn. The unit icon will change to a solid
+colored block. The unit will become inactive, automatically
+resting to regain morale. The unit will reactivate if
+attacked (either melee or cannonade). Waiting units suffer
+no penalty if attacked.
+
+In addition, you may activate the WAITing unit at any time
+another friendly unit has a turn. Press 'I' for the
+intelligence cursor and pass it over the inactive unit you
+wish to wake. The icon will change to the normal icon. Now
+press 'esc' and the first unit can take whatever action you
+wish.
+
+ 3.9   Stacking
+===============
+Normally, units cannot move onto other friendly units
+(stack). However, units can now be stacked under certain
+conditions:
+
+   (a) TOTAL unit strength resulting from stacking must be
+       stack limit or less (stack limit default is 500)
+   (b) If dissimilar units are stacked, an INFANTRY unit
+       will result, unless one of the units is a
+
+				- 11  -
+ 
+       GENERAL, in which case a GENERAL will result
+
+The leadership value for the stacked unit will usually be
+the higher of the two units that are being combined. An
+exception is if one of the units is a General and the other
+is not; in that case, the resulting leadership value is
+always that of the General unit.
+
+Morale will generally INCREASE slightly if LIKE units are
+stacked. It will generally DECREASE slightly if UNLIKE units
+are stacked.
+
+Stacking results in a time delay for the unit to get
+reorganized. The reorganization delay is reduced if
+leadership is high.
+
+===========================================================
+ 4 COMBAT
+===========================================================
+ 4.1  Normal (Melee) Combat
+===========================
+Units can attack enemy units in an adjacent hex. To do so,
+attempt to move the selected unit on top of the enemy. A
+menu will appear in the 'Armies Summary Data' zone of the
+screen showing the attack options. Four different
+intensities of attack are permitted:
+
+         Option         Relative Intensity
+     --------------     ------------------
+     Light Skirmish             1
+     Medium Fight               2
+     Heavy Attack               3
+     All-Out Assault            8
+
+Note the 'All-Out Assault' is just that, and that it should
+be used relatively sparingly, since it will result in heavy
+casualties for BOTH sides. If you do not wish to attack at
+all, you may cancel the attack by pressing the 'escape' key;
+however, that will forfeit the unit's turn for the current
+round (the price paid for indecision).
+
+Normally your units will wait for you to issue an attack
+order. However, they may occasionally attack on their own
+initiative. When this happens, you will receive a message in
+the 'Message Window' zone, and the attack intensity menu
+will appear for you to select the intensity, as described
+
+				- 12  -
+ 
+above. Pressing 'Esc' will abort the attack for now, but the
+unit will miss its turn.
+
+When units become engaged in combat, they are somewhat
+'locked in place', and their ability to respond to orders is
+reduced. They also are more likely to act on their own
+initiative, to renew the combat without any orders to do so.
+
+ 4.2   Artillery
+================
+Artillery units may bombard visible enemy units some
+distance away, rather than melee adjacent units (which they
+do very poorly anyway). To fire the cannons, press 'F' (for
+'FIRE') when the artillery unit is given its turn to move.
+(If LIMBER option is ON, you will be prompted to unlimber
+first)
+
+When you fire artillery, a cursor will appear. Also, the
+range of the cannon and the current distance to target is
+displayed in the 'Message Window'. If the cursor is moved
+out of range of the cannon, the distance will be highlighted
+(to remind you it is out of range). You may move the cursor
+using the key pad (as described earlier for unit movement)
+to the selected target, then press 'Enter'. Both the firing
+cannon battery and the defending unit are highlighted until
+the results are displayed in the 'Message Window' and in the
+'Armies Summary'.
+
+When firing artillery, the valid enemy targets only will be
+visible during the firing phase. Valid targets must be in range.
+Additionally,if the line of sight option is ON, they must also be
+in line of sight. ALL visible enemy units will reappear after
+firing.
+
+Range of the artillery depends on the same factors as visibility
+(elevation and cover).
+
+Enemy artillery will concentrate more fire on units that
+threaten the artillery unit (especially those immediately
+adjacent). Damage from canister fire at close range is often
+devastating. This makes artillery units tough to overrun if
+they have a chance to fire.
+
+There is a (low) probability of artillery exploding and
+killing members of the firing battery.
+
+
+				- 13  -
+ 
+ 4.3  Line of Sight
+===================
+Line of sight restricts artillery units to fire only at
+enemy units not blocked by obstructing terrain features.
+Line of sight is considered by tracing an approximate
+straight line path from the firing unit to the enemy (while
+keeping to the map hexes). Line of sight is traced until an
+obstruction is encountered. If there are no obstructions,
+the line of sight is reported as clear. Otherwise, the
+artillery unit cannot see the enemy and is prohibited from
+firing at that target.
+
+Trees, villages, hills and mountains are considered
+obstructions. Army units are NOT considered as obstructions.
+
+A firing unit on a hill may see over ONE obstructed hex with
+a forest or village (but not any additional obstructed
+hexes). A firing unit on a hill cannot see over a hill or
+mountain.
+
+A firing unit on a mountain may see over TWO obstructed
+forest or village hexes. A firing unit on a mountain can see
+over ONE hill, but never over another mountain.
+
+ 4.4  'View' Command to Check Line of Sight
+===========================================
+Any unit may check for visible enemy units within line of
+sight from the location of the checking unit by typing 'V'
+(for 'VIEW'). This helps you scout where to set up your
+artillery. Visible terrain hexes are shown in reverse color,
+as are visible friendly units. Enemy units visible to the
+checking unit are shown in normal colors. Enemy units that
+are not visible to the checking unit are not displayed until
+you press a key.
+
+ 4.5  Limbering Artillery
+=========================
+A 'limber' feature is provided to add realism by requiring
+all land-based artillery units (Artillery-Rifled, Napoleon,
+and Horse Artillery) to limber before being moved and to
+unlimber before being fired. The 'L' hot key will toggle
+land-based artillery units between limbered and unlimbered
+states. A LIMBERED unit is represented on the map by an open
+circle (think of it as a "wheel") and its unit description
+has an 'L' in front of the name (e.g. LArtillery).
+Changing between limbered/unlimbered requires additional
+
+				- 14  -
+ 
+time. In addition, units with low morale will be even
+slower to limber or unlimber.
+
+Limbered artillery is extremely vulnerable to attack, either
+melee or artillery fire. Limbered artillery is very
+ineffective in melee attack.
+
+Unlimbered artillery unit types cannot retreat until they
+are limbered. This means unlimbered artillery units simply
+have to take the punishment while they are under attack.
+
+ 4.6  Cannonade
+===============
+Attacks by cannons are a special type of combat. The outcome
+depends on the strength of the attacking unit, the strength
+of the defending unit, the terrain, and luck. Given the more
+uncertain nature of this form of combat, the outcomes are
+more variable. However, in the long run cannonades will
+cause considerable damage. Cannonades against units
+immediately next to the artillery unit will cause twice the
+normal damage, as the defenders receive fire at pointblank
+range.
+
+ 4.7  Cavalry Charge
+====================
+When cavalry in a CLEAR or ROAD hex attacks an enemy also in
+a CLEAR of ROAD hex, the cavalry may 'charge' (receive an
+attack bonus). The charge option is automatically put into
+effect and a special message will announce it. Note that
+bridge hexes do not allow charges due to the constricted
+space.
+
+ 4.8  Resolving Combat
+======================
+In resolving the combat, the attacker goes first, then the
+defender. While the attacker is attacking, the defender's
+terrain is used in determining defender casualties. When the
+defender returns fire, the attacker's terrain is used in
+determining extent of attacker casualties.
+
+Attacking is risky business, since the attacker must expose
+himself, while the defender can take advantage of whatever
+cover is available. Thus, attackers will generally take
+proportionally more casualties. The results will be
+displayed as the battle progresses in the 'Armies Summary'
+area and in the 'Message Window'. Morale of both armies
+
+				- 15  -
+ 
+under fire will decrease.
+
+ 4.9  Combat Results
+====================
+The primary factors affecting combat results are shown
+below:
+
+ Factor               Relative Effect
+ -----                ---------------------
+ Intensity .......... Major
+ Unit Strength ...... Major
+ Unit Leadership .... Moderate (major if very high or low)
+ Unit Morale ........ Moderate (major if very low)
+ Unit Experience......Moderate (major if very high or low)
+ Terrain ............ Moderate (major for some
+ (see note)                     conditions, such as cavalry
+                                in swamps)
+ Unit Type .......... Moderate (major if Artillery or
+                                General units directly
+                                involved in combat)
+ Adjacent Friendly .. Moderate
+ General
+ LUCK ............... Slight-Moderate
+ Adjacent Friendly
+ Unit ............... Slight
+
+ NOTE: The terrain occupied by BOTH combatants is considered
+ in adjusting combat outcome. A unit is at a disadvantage in
+ swamps, but is at an advantage in forest or hill hexes. A
+ unit is at a considerable advantage on mountains or in fort
+ hexes. Cavalry and Artillery units (all types) are
+ particularly disadvantaged in swamps, and somewhat
+ disadvantaged in forests. Entrenchment (if any) is also
+ considered. Entrenched units gain a bonus in addition to
+ any terrain effect.
+
+ 4.10 Retreat
+=============
+If a unit takes particularly heavy casualties, and
+leadership and morale are sufficiently low, it will decide
+to retreat. When this happens, the unit attempts to move to
+one of the 3 hexes furthest from the attacker. The selected
+hex must be an unoccupied hex. When a unit attempts to pull
+back, a message will appear and the unit will appear in
+purple. When an army retreats, its morale suffers, and it
+takes a few additional casualties as wounded men are
+
+				- 16  -
+ 
+captured.
+
+Since pulling back means exposure to enemy fire, units will
+take additional casualties when they decide to retreat.
+Units that are cut off and unable to retreat will take heavy
+additional losses in the confusion, and are very likely to
+rout. Botched retreats will also reduce effectiveness of
+unit leadership.
+
+Sometimes the enemy unit will have to retreat as well, if it
+has taken heavy losses. In some instances, one unit in
+combat will have to retreat while the victor has not taken
+much damage. The victorious unit may advance to pursue the
+fleeing unit. Morale increases for the pursuing unit;
+leadership may also improve, as the commander hones his
+skills.
+
+The human attacker is given the option to pursue if
+the computer must retreat.
+
+ 4.11 Eliminated Units
+======================
+Occasionally units will be eliminated from the battle. This
+is announced in the message window and an "death's head"
+icon will appear in the hex the eliminated unit occupied.
+When this happens, esprit de corps values will shift.
+
+If one side is completely annihilated by having ALL of its
+units eliminated, the battle will end.
+
+ 4.12 Capturing Artillery
+=========================
+In the case of eliminated artillery, some portion of the
+eliminated unit may be captured by the attacker. This will
+occur if the artillery unit is large enough and there is an
+unused unit for the new artillery unit that will be formed.
+To capture the artillery, the attacker must pursue into the
+hex where the eliminated unit had been. The option to
+capture occurs only when the artillery unit is eliminated.
+If not captured, the eliminated unit is permanently removed
+from the remainder of the battle.
+
+===========================================================
+ 5 HOT KEY COMMANDS
+===========================================================
+ 5.1  Hot Keys
+
+				- 17  -
+ 
+==============
+In addition to the movement and combat commands, there are
+several commands available during the battle. Some of these
+are accessed through the menus described later. Most can be
+reached using 'hot keys' as described below.
+
+    Command                    Use
+-----------+----------------------------------------
+(space bar)| Rest the unit - skip a turn
+    G      | Game score
+    O      | Order of battle summary
+    Q      | Toggle between SOUND and QUIET
+-----------+----------------------------------------
+    I      | Intelligence on visible units
+           | and Activate WAITed units
+    M      | Move to destination - give move orders
+    T      | Terrain - temporarily remove all unit icons
+    V      | View line of sight (All Units)
+    W      | Wait (All Units)
+-----------+----------------------------------------
+    N      | iNspire Unit (General units only)
+    X      | Cancel orders (General units only)
+-----------+----------------------------------------
+    C      | Charge (Infantry units only)
+    S      | form / unform hollow Square (Infantry only)
+-----------+----------------------------------------
+    F      | Fire (Artillery, Napoleon, Horse Artillery only)
+-----------+----------------------------------------
+  (F1)     | On line Help
+  (F3)     | Screen Redraw
+-----------Å----------------------------------------                                         -
+
+ 5.2  Intelligence
+==================
+This option causes cursor to appear on your highlighted
+unit. The cursor may be moved to get strength and terrain
+information on any unit that is currently visible. Press
+'esc' when done. Placing the cursor over a friendly unit
+will display that unit's current status in the 'active unit
+data' window.
+
+If the friendly unit under the cursor is WAITed, it will
+activate on its next time of action. (Note that this may not
+be immediately).
+
+Intelligence is useful to identify units that are weak or
+
+				- 18  -
+ 
+are bogged down by terrain or combat and not likely to move
+very soon. When doing an intelligence scan of friendly units
+that are 'under orders' to go to a specific location, that
+location is shown on the map and with a line connected to
+the unit.
+
+Use of the Intelligence command does not cost a turn. This
+gives the human player more information in selecting units
+to attack.
+
+ 5.3  Rest
+==========
+This option is described in elsewhere. The Wait option
+allows units to repeatedly rest.
+
+ 5.4  (special options)
+=======================
+This option will appear only if a General, Artillery, or
+Infantry type unit is waiting for orders. It will give these
+options:
+
+           Cancel Orders   (General)
+           Fire            (Artillery)
+           Charge          (Infantry)
+           Square          (Infantry)
+
+Note that all of these may be directly accessed using the
+appropriate 'hot key'
+
+ 5.5  Order of Battle ('O')
+===========================
+This option gives a detailed listing of all your units and
+their status, as well as listings of known (visible) enemy
+units. While the information for your own units is accurate,
+it is only approximately correct for enemy units. Units in
+trouble will be shown in red.
+
+ 5.6  Game Score ('G')
+======================
+This option gives the current game score, showing who is
+currently winning, as well as the esprit de corps scores for
+both sides. Scoring depends on relative casualties, number of
+units eliminated, and number of turns of control of the
+objective.
+
+ 5.7  F3-Screen Redraw
+This option redraws the screen.
