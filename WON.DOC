@@ -1,0 +1,1442 @@
+
+
+
+      *****************************************************
+      *                                                   *
+      *           Wars of Napoleon Strategy Game          *
+      *           (c) 1997 W R Hutsell                    *
+      *                                                   *
+      *****************************************************
+
+
+
+              _______
+         ____|__     |               (R)
+      --|       |    |-------------------
+        |   ____|__  |  Association of
+        |  |       |_|  Shareware
+        |__|   o   |    Professionals
+      -----|   |   |---------------------
+           |___|___|    MEMBER
+
+
+
+
+
+
+              WARS OF NAPOLEON STRATEGY GAME
+                    C O N T E N T S
+ 
+ 1      I N T R O D U C T I O N                        1 
+ 1.1   Introduction                                    1 
+ 1.2   Requirements                                    1 
+ 1.3   Running the Game                                1 
+ 1.4  Tactical Level Game                              2 
+ 1.5   Running from Windows                            2 
+ 1.6   How to Win                                      2 
+ 1.7   Map Display                                     3 
+ 1.8   Nationality                                     4 
+ 1.9   Hot Keys                                        5 
+ 1.10  Using the Menus                                 5 
+ 1.11  Game Setup                                      6 
+ 1.12  Sequence of Play                                6 
+ 2      D E C I S I O N    P H A S E                   6 
+ 2.1   Land Movement                                   6 
+ 2.2   Army Attributes                                 7 
+ 2.3   Napoleon                                        8 
+ 3      M A I N    M E N U                             8 
+ 3.1   Main Menu                                       8 
+ 3.2   Recruit                                         9 
+ 3.3   Commanders                                      9 
+ 3.4   Ships                                           10 
+ 3.5   Fast Naval Combat                               10 
+ 3.6   Invasions - Marines                             10 
+ 3.7   Raid Commerce                                   11 
+ 3.8   Move Orders                                     11 
+ 3.9   Movement Across the Sea                         11 
+ 3.10  Next Turn                                       12 
+ 3.11  Inform (Reports)                                12 
+ 3.12  Commands                                        13 
+ 3.13  Utility                                         13 
+ 3.14  Files                                           13 
+ 3.15  Autosave                                        13 
+ 4      O P T I O N S                                  14 
+ 4.1   Options Submenu                                 14 
+ 4.2   Cancel                                          14 
+ 4.3   Fortify                                         14 
+ 4.4   Join (Combine)                                  14 
+ 4.5   Supply                                          15 
+ 4.6   Detach                                          15 
+ 4.7   Drill                                           16 
+ 4.8   Relieve                                         16
+ 
+ 5      U T I L I T Y                                  16 
+ 5.1   Utility Submenu                                 16 
+ 5.2   Side                                            17 
+ 5.3   1-Player/2-Player                               17 
+ 5.4   Noise                                           17 
+ 5.5   Tactical    (Registered Edition ONLY)           17 
+ 5.6   Display                                         17 
+ 5.7   Balance                                         17 
+ 5.8   End Game Conditions                             17 
+ 5.9   Victory Condition Override                      18 
+ 5.10  Random Events                                   18 
+ 5.11  Vary Start                                      18 
+ 5.12  Enemy Aggression                                19 
+ 5.13  Save Configuration                              19 
+ 6      M O V E    &    C O M B A T    P H A S E       19 
+ 6.1   Computer Decisions                              19 
+ 6.2   Army Movement                                   19 
+ 6.3  The Occupying Army                               20 
+ 6.4   Unit Cohesion                                   20 
+ 6.5   Combat                                          20 
+ 6.6   Income Update                                   22 
+ 7      D A T A    F I L E S                           23 
+ 7.1   Scenario Initialization File (NWSxxxx.INI       23 
+ 7.2   Commander File (LEADxxxx.DAT)                   25 
+ 7.3   Configuration File (NWS.CFG)                    26 
+ 7.4   City Matrix (EUROxxxx.MAP)                      26 
+ 8      D E S I G N E R    N O T E S                   27 
+ 8.1   Combat Model Adjustment                         27 
+ 8.2   Why Register ?                                  28 
+
+===========================================================
+ 1   I N T R O D U C T I O N
+===========================================================
+ 1.1   Introduction
+===================
+"Wars of Napoleon Strategy Game" is a 1 or 2-player VGA graphic
+strategic level wargame of the Napoleonic era. The registered
+version of the game includes a tactical level module which
+permits individual battles to be fought. The game requires VGA.
+It is provided "as is" without any warranty of any kind. It has
+been tested on several types of IBM compatibles (from 386 to
+Pentium) but it is impossible to try all the combinations of
+equipment that exist.
+
+The object of the game is to accumulate as many victory
+points as possible. The game is played in turns of 2 months
+during which both sides perform their actions. Decisions are
+made using menus which are described below.
+
+ 1.2   Requirements
+===================
+The program requires the following files:
+WON.EXE         - the main stregic level game program
+NAPOLEON.EXE    - tactical level game module
+NWS.CFG         - your customizable configuration file
+NWSxxxx.INI     - initialization data file for year xxxx
+LEADxxxx.DAT    - army leader data file for year xxxx
+EUROxxxx.MAP    - city data file for year xxxx
+WON.DOC         - this documentation file
+HISCORE.NWS     - high score file
+GAMESATA.INI    - initialization data file
+
+In addition, the program requires several *.VGA and *.EGA
+files for graphical effects.
+
+There are other optional files that may be produced as you
+customize and play the game.
+
+ 1.3   Running the Game
+=======================
+Type 'NWS' at the command line prompt. The title screen
+display will appear while the game initializes.
+
+The option to load a game or begin a new game is given at
+the beginning of the game, in addition to being available
+
+				- 2  -
+ 
+during the game.
+
+ 1.4  Tactical Level Game
+=========================
+In addition to the main strategy level game of NWS.EXE,
+there is a tactical level game, NAPOLEON.EXE, which in the
+registered version may be linked to the strategic game
+by setting the TACTICAL option in the Utility Menu of NWS.
+
+In the shareware version, you may still play the battle of
+Waterloo by typing 'NAPOLEON' at the command line prompt.
+
+ 1.5   Running from Windows
+===========================
+This is a DOS-based game, but it can be run under Windows* or
+Windows 95 using the RUN command (using the Start with
+Windows 95 or the File Manager in Windows). You will need to
+type both the path and file name to run the program.
+Typically this will be:
+
+C:\NWS\NWS.EXE
+
+Both Windows and Windows 95 carry overhead that may slow the
+game. If this is a problem, you should exit Windows or
+Windows 95, then change to the NWS directory and run the
+program under DOS.
+
+(*Windows and Windows 95 are trademarks of Microsoft).
+
+ 1.6   How to Win
+=================
+You are awarded victory points for (1) capturing cities, (2)
+capturing armies, (3) winning battles, and (4) special
+events. Each city you control gives you a certain number of
+victory points (and a like amount of income). This varies
+depending on the city. For instance, a large city such as
+Paris is worth more than a smaller city such as Metz. To see
+the number of victory points each city is worth, use the
+"Inform" option to access the "Cities" report.
+
+Objective cities are worth an additional bonus of 100 victory
+points in addition to the normal victory points. If you lose
+your objective, you permanently lose the bonus income.
+Additionally, the game will end unless the "Objective" end game
+condition is de-selected.
+
+
+				- 3  -
+ 
+If your army defeats an enemy that has no route for retreat
+or causes enough casualties to crush the enemy, you capture
+the army and receive a bonus of 25 victory points.
+Eliminating the enemy fleet also results in bonus victory
+points.
+
+For each battle you win, you receive 1 victory point.
+Certain special events result in extra victory points for
+one side or the other.
+
+The game continues until one side achieves an end game
+condition. (See End Game Conditions under the "Utility"
+submenu). The side that triggers the end of the game
+receives an additional bonus of 100 victory points.
+
+If your score is one of the top 5 scores for the side
+played, your name and score are entered into the high score
+file.
+
+When the game is over, you are returned to the opening
+screen, with the option to quit, load a game or begin a new
+game.
+
+ 1.7   Map Display
+==================
+The title screen will clear and a map of western Europe
+will appear along with a menu entitled 'Main'. This is the
+Main Menu from which you choose most of your options. Above
+the menu is a box showing which side is currently selected,
+French or Allies and the number of victory points for that
+side.
+
+The small colored circles on the map display are cities or
+other key locations. There are a total of 67 such locations.
+Blue circles are French controlled; red ones are Allied
+controlled. Gray circles are true neutral cities (e.g. Bern,
+Switzerland). Green circles are Allied cities at peace: they
+belong to a potentially Allied country, but the country has
+not yet gone to war. Two of the cities are OBJECTIVE cities,
+and their circle is marked with a small yellow cross.
+Connections between the cities will be shown by dashed
+lines.
+
+If the circle representing the city is surrounded by a
+HOLLOW BLACK box, it is a FORTIFIED (FORT+)location; if
+surrounded by a SOLID BLACK box, the location is HEAVILY
+
+				- 4  -
+ 
+FORTIFIED (FORT++). Any level of fortification tends to
+improve resistance to enemy attacks.
+
+Small flag icons appear next to some cities. Each flag
+represents an army
+
+ 1.8   Nationality
+==================
+Each city on the display is related to a country. Each army
+raised has the nationality of the country associated with
+the city where it was first formed. Each commander also has
+a nationality. If the commander happens to lead an army of
+different nationality from his own, the entire unit will
+suffer a cohesion penalty in combat.
+
+The following countries are potentially ALLIED countries:
+        Austria
+        England
+        Russia
+        Prussia
+        Spain
+
+The remaining countries (e.g., Switzerland) are truly
+neutral, and though they may be drawn into the conflict,
+they will not join the alliance.
+
+At the beginning of the game, many of the Allied countries
+may be at peace. While an Allied country is not at war, it
+does not contribute to Allied income, nor can armies be
+recruited in the cities of that country by the Allies. Such
+cities are represented by green circles.
+
+If a nonaligned Allied country is invaded by France it
+automatically enters the war. (Allied armies can pass or
+retreat through nonaligned Allied cities with no effect).
+
+Any city currently possessed will contribute to income.
+However, recruiting can only be done in certain cities:
+
+                                    RECRUITING
+                    +--------------------------------------+
+                    |               Side                   |
++-------------------+------------------+-------------------+
+|Original City Owner|     French       |   Allies          |
++-------------------+------------------+-------------------+
+|French             |      YES         |      NO           |
+
+				- 5  -
+ 
++-------------------+------------------+-------------------+
+|Allied             |       NO         |      NO           |
+|(but not at war)   |                  |                   |
++-------------------+------------------+-------------------+
+|Allied             |       NO         |     YES           |
+|(at war)           |                  |                   |
++-------------------+------------------+-------------------+
+|Neutral            |      YES         |     YES           |
++-------------------+------------------+-------------------+
+
+ 1.9   Hot Keys
+===============
+There are several game command short cut or hot keys that
+are useful:
+
+F1 - shows a list of the hot keys
+F3 - redraw the screen
+F4 - show a summary of unit strengths in each occupied city
+F7 - speed "End Turn" key: avoids the "are you sure" prompt
+
+ 1.10  Using the Menus
+======================
+You may move the highlighted menu option by pressing the
+"up" and "down" arrow keys. Pressing 'Enter' will select the
+currently highlighted option. In most cases, you may exit
+from a menu without selecting any option by pressing the
+"esc" key.
+
+Hot keys" are provided to speed menu access. The first
+letter of each command will immediately select the item
+without having to move the menu bar. WARNING: In responding
+to city locations, watch out for cities that have the same
+first letter. Using the hot key will select the FIRST city
+on the menu that begins with the letter you press. If you
+wanted to select another, you must use the up/down arrow
+keys. Example: You have the option to recruit at Sardinia or
+Sicily, both of which begin with "S". If you press "S",
+Sardinia will be selected because it comes first
+alphabetically in the menu list. If you want to select
+Sicily instead, you must use the arrow keys. (If there had
+been no other cities beginning with "S" except for Sicily
+the hot key would have worked fine).
+
+For the Option and Utility menus, the cursor stays on the
+submenu if there are more choices available for the item
+currently being selected (e.g., more troops to be drilled).
+
+				- 6  -
+ 
+Otherwise it returns to the main menu and stays on the
+Option or Utility item.
+
+PLEASE NOTE: TO RETURN TO THE MAIN MENU FROM EITHER THE
+COMMANDS OR UTILITY MENU, PRESS THE "ESCAPE" KEY ("Esc").
+
+ 1.11  Game Setup
+=================
+There are several setup options available which can be
+accessed from the "UTILITY" option of the Main Menu. You can
+swap sides, select 1- or 2-player options, control sound and
+graphic options, and adjust difficulty. When you save a
+game, the configuration file is automatically updated to the
+current set of options you have chosen.
+
+ 1.12  Sequence of Play
+=======================
+Play proceeds in the following sequence for each game turn
+(representing 2 months):
+
+  A. Decision Phase
+      Side 1 Decisions
+             (French if 2 players ; Human if 1 player)
+             1. Recruit
+             2. Naval Actions (Resolved Immediately)
+             3. Move Orders
+             4. Other Decisions (Combine, Fortify, etc.)
+
+      Side 2 Decisions
+             (Allies if 2 players ; Computer if 1 player)
+             1. Recruit
+             2. Naval Actions (Resolved Immediately)
+             3. Move Orders
+             4. Other Decisions (Combine, Fortify, etc.)
+
+  B. Move & Combat Update Phase
+             (Move Orders Carried Out)
+
+  C. Turn Update Phase
+             1. Income Updated Based on Cities Controlled
+             2. Unit Supply Updated
+
+===========================================================
+ 2   D E C I S I O N    P H A S E
+===========================================================
+ 2.1   Land Movement
+
+				- 7  -
+ 
+====================
+Movement is from city to city (point-to-point movement) by
+armies. Any number of friendly armies may stack in a city. A
+small number appears on the unit icon to show how many units
+are in the stack. Armies that move to a city occupied by an
+enemy army must fight the enemy, and either drive off the
+enemy (to capture the city) or be forced back themselves.
+
+The move-to-menu for army shows the name of the occupying
+army if the target city is occupied.
+
+NOTE: If there is more than one army in an occupied city
+that another army is viewing to move to, the name and
+strength of only one army is shown. You will need to consult
+the INFORM option to determine all the armies in that
+particular city.
+
+Moving into an enemy city that is not occupied by an army
+results in automatic capture of the city. Movement into a
+"true" neutral city automatically captures the neutral city.
+The city will change colors to indicate change in control.
+
+Fighting to capture an occupied fortified city reduces the
+fortification by one level. (Thus, a FORTIFIED+ city would
+be reduced to an unfortified city.) When an army captures an
+unoccupied fortified city, the fort is not necessarily
+reduced. The victorious army is given the option to raze the
+fortifications. Note that razing TOTALLY destroys the forts,
+even if they were double fortified.
+
+ 2.2   Army Attributes
+======================
+Armies have several attributes of importance. These will
+change as the game progresses, and it is important for you
+to understand how they influence the outcomes.
+
+STRENGTH   - the number of men in the unit; the prime
+             attribute in combat
+
+LEADER     - ability score of the unit leader, from 1 to 10.
+             Greatly affects the unit's effectiveness in
+             battle and movement.
+
+EXPERIENCE - the number of battles the unit has won (0-10).
+             More experienced units are more effective in
+             combat. Each battle won increases the
+
+				- 8  -
+ 
+             experience level by 1.
+
+SUPPLY     - the current state of food and equipment (0-10).
+             Units use 1 unit of supply each turn, except in
+             summer and autumn harvest months. Capturing
+             cities and capturing enemy armies increases
+             supply. Moving and fighting accelerate use of
+             supplies. Units that are surrounded in enemy
+             countries use supplies at an accelerated rate.
+             Units that are 'out of supply'(supply level=0) fight
+             at 50% effectiveness, and move more slowly. In
+             winter months out of supply units cannot move at
+             all. Units that are out of supply are marked with an
+             "S" to make them easier to locate. Armies in port
+             cities are always in supply if the city is not
+             blockaded.
+
+ 2.3   Napoleon
+===============
+The stack commanded by Napoleon has some special abilities.
+His leadership bonus is very large. Unlike all other
+commanders,if he is defeated he is not necessarily eliminated
+from the game. He may be banished to Corsica with his unit size
+reduced to 1,000 soldiers. The French score will be reduced by
+half and the strength of all French units will be reduced by
+half. However, with fleet support, Napoleon can escape from
+Corsica back to the continent and the war may continue.
+
+===========================================================
+ 3   M A I N    M E N U
+===========================================================
+ 3.1   Main Menu
+================
+
+                     +=============+
+                     |    Main     |
+                     +=============+
+                     | Recruit     |
+                     | Moves       |
+                     | Ships       |
+                     | END TURN    |
+                     | Inform      |
+                     | COMMANDS    |
+                     | UTILITY     |
+                     | Files       |
+                     +=============+
+
+				- 9  -
+ 
+
+ 3.2   Recruit
+==============
+Allows you to recruit new armies or build up existing
+armies. Each recruitment requires 100 money units. If you do
+not have enough money, you cannot recruit.
+
+You will be given several randomly selected cities where you
+may recruit. These will either be cities you originally
+owned or neutral cities you have captured. If the city is
+vacant, a NEW army is placed there, along with a commander
+and his corresponding abilities. ADDing recruits to an
+existing army increases its strength, but does not change
+the commander.
+
+Newly created armies MAY NOT move the turn they are created,
+while they train and organize. Existing armies that are
+increased in strength CAN MOVE in the current turn.
+
+The size of newly created armies depends on where they are
+recruited. The larger the city and higher the income it
+produces, the larger the number of recruits. For instance,
+if you are playing the French, you will build bigger armies
+faster by recruiting in Paris versus other cities.
+Experience level of recruits will be low (varies slightly,
+with slightly better levels for French armies).
+
+NOTE: Once you have begin to recruit, you should NOT change
+      sides or number of players, since the cities to
+      recruit in are already selected for that part of the
+      turn.
+
+ 3.3   Commanders
+=================
+Each side has 25 commanders available to lead separate
+armies. As the game progresses, the number of available
+commanders will be reduced as commanders are captured or are
+used to lead other units. (When units are captured, the
+commanders are removed from play. An exception is Napoleon,
+who will continue in play if possible).
+
+If the list of 25 preset commanders is exhausted, there is
+list of "generic" commanders provided so you can still
+continue the game. Generic units are given Roman numeral
+identifiers. For instance, French army 12 is designated
+French XII. Allies army number 27 (being the second Allied
+
+				- 10  -
+ 
+army) is designated Allies II, and so forth.
+
+ 3.4   Ships
+============
+Allows you to build and move fleets and bombard enemy
+cities. Each side has one fleet, consisting of 0-10 ships.
+Ships can be added to the fleet only in port cities
+controlled by that side.
+
+Ships cost 100 money units. In each turn, they can be moved
+to any other port city. This means ships may move much more
+rapidly than armies, but their effect is different.
+
+If the two fleets meet in a port, they will engage in
+combat. During each round of combat, the attacker has the
+option to press the attack or retire. Each ship can take 10
+hits before it sinks. The current number of hits remaining
+is shown below the ship icon. Combat continues until one
+fleet either retreats or is eliminated. At the end of the
+turn, there can be only one fleet in a given port.
+
+English ships have a 10% combat advantage.
+
+Ships can bombard enemy cities to damage defending armies or
+fortifications, or to drive the city to neutrality. If the
+city has an enemy army, the bombardment will damage the
+enemy. The fleet will also blockade the enemy army in the
+port, reducing his supplies. Fortified cities may have the
+forts damaged or reduced. However, forts may sink attacking
+ships.
+
+Unfortified cities not occupied by a defending army may
+become neutral as a result of the bombardment.
+
+ 3.5   Fast Naval Combat
+========================
+The normal naval combat speed will be accelerated if you
+press any key after combat has begun.
+ 
+ 3.6   Invasions - Marines
+==========================
+Small scale invasions by marine units from the fleet may be
+conducted only when the port city to be invaded is not
+hostile (either originally neutral or after being bombarded
+into neutrality) at neutral cities if there is more than one
+ship in the invading fleet. The fleet size will be reduced
+
+				- 11  -
+ 
+by 1 and the new army will seize the neutral city, under the
+leadership of the next available commander. The invading
+army is small and vulnerable to counterattack
+
+ 3.7   Raid Commerce
+====================
+Ships from both sides have the option to raid enemy commerce
+on the high seas. This is shown as the "Raid" option on the
+Ships menu. Selecting this option will cause a red box to
+appear, with the word "Commerce" in it, along with the ship
+icon. Each turn that the fleet stays in this box, there is a
+probability of doing damage to the enemy by destroying
+commerce and thereby reducing his income. There is also a
+chance that one or more of the raiding ships will be sunk.
+If both fleets enter the commerce raiding zone, combat will
+occur and one fleet will either be destroyed or have to
+retreat. Only one fleet can remain in this zone at the end
+of the turn; that fleet will then attempt to raid enemy
+commerce.
+
+ 3.8   Move Orders
+==================
+Allows you to select an army to move and where to move it. A
+menu will cycle through all your armies that are able to
+move this turn. Armies that already have move orders, or
+that have been combined this turn, or that have built
+fortifications this turn, or newly created armies are not
+eligible to move in the current turn.
+
+Once you select the army to move, the choice of all possible
+connecting destinations for that army are shown. Selecting a
+destination will result in a white dotted line from the
+selected unit to the destination. Note that the army does
+not move immediately. Rather, it will make its move during
+the move and update phase.
+
+If an army with move orders is attacked during the move and
+update phase, there is a chance that it will not be able to
+carry out those orders. If it is defeated, it must retreat,
+but even if it wins it may have its movement orders
+cancelled.
+
+ 3.9   Movement Across the Sea
+==============================
+Movement between England and the continent (e.g. London to
+Amsterdam) or between Sicily (or Sardinia) and the continent
+
+				- 12  -
+ 
+is considered movement across the sea and requires that
+special conditions be met: a) Your friendly fleet must be in the
+port city where the army is moving FROM
+
+b) The port city where the army is moving TO must NOT be
+   occupied by the opposing fleet
+
+ 3.10  Next Turn
+================
+When you have completed your decisions for the current turn,
+select this option to continue with the game sequence. Note
+that once the game sequence progresses, you cannot back up.
+Thus, when you select this option, you will be asked to
+confirm before the turn actually progresses.
+
+ 3.11  Inform (Reports)
+=======================
+Seven different reports are potentially available; there is
+no cost for any of the reports.
+
+  1) Friendly Army report
+       Shows the status of all your armies, and other useful
+       statistics on the progress of the game. After the
+       first turn, it will also show the total strength of
+       the enemy forces.
+
+  2) Enemy Army report
+       Shows information similar to Friendly army report,
+       except that it shows less complete information on the
+       enemy forces. It includes the composition of the
+       enemy navy.
+
+  3) City report
+       Provides information on the cities, their worth,
+       status, and so on.
+
+  4) Force summary
+       Shows on the map the strength of all armies (in 100's
+       of men). Because of the importance of knowing the
+       force strengths, there is a hot key (F4) to access this
+       information directly without having to go through the
+       menu.
+
+  5) Intelligence report
+       Provides an on-map summary of attributes of all
+       FRIENDLY armies (strength, leadership, experience,
+
+				- 13  -
+ 
+       and supply).
+
+  6) Battle Summary report
+       Shows number of battles won and casualties incurred
+       for each side.
+
+  7) Recap report (available only if HISTORY option is ON in
+     the Utility menu). Scrolls through a chronicle of the
+     history of the game thus far (battle outcomes and
+     losses)
+
+     Typical chronicle entries might look like this:
+
+  Metz *Napoleon (3200/29600) defeats Alvintzi (5400/30200)
+  Berlin Blcher (1200/59900) defeats *Grouchy (3900/22400)
+
+     The asterisk indicates the attacker. Casualties and
+     total troop strength are indicated in the parentheses.
+
+ 3.12  Commands
+===============
+See Commands Submenu for a description of the choices. These
+generally relate to special commands available for
+individual armies.
+
+ 3.13  Utility
+==============
+See Utility Submenu. These provide game options that allow
+various features of overall game play to be modified.
+
+ 3.14  Files
+============
+Allows you to load or save games and to quit the program.
+There can be up to 8 user-saved games,"NWSx.SAV", where "x"
+is a number from 1 to 8. Those file names for which a saved
+game exists are marked with a "û" as a reminder. When the
+game is started, the base game is automatically initialized,
+configured according to the current NWS.CFG settings.
+
+ 3.15  Autosave
+===============
+There is one additional saved game file NWS9.SAV, the
+autosave file, that is automatically updated at the end of
+each decision phase. This provides a backup in case the game
+is interrupted for any reason. The game can be resumed by
+loading the NWS9.SAV file.
+
+				- 14  -
+ 
+
+===========================================================
+ 4   O P T I O N S
+===========================================================
+ 4.1   Options Submenu
+======================
+
+                     +============+
+                     |  Commands  |
+                     +============+
+                     | Cancel     |
+                     | Fortify    |
+                     | Join       |
+                     | Supply     |
+                     | Detach     |
+                     | Army Drill |
+                     | Relieve    |
+                     | MAIN MENU  |
+                     +============+
+
+ 4.2   Cancel
+=============
+Allows the move orders for unit selected (menu with eligible
+units will be displayed) to be cancelled - in case you
+change your mind before you go to the next turn.
+
+ 4.3   Fortify
+==============
+If ALL the following conditions are met, you may fortify a
+city:
+1. City is occupied by a friendly army
+2. City is not already at DOUBLE FORTIFIED ++ level
+3. You have at least 200 money units
+
+All cities meeting these conditions, will appear in a menu
+of candidates. Selecting a city to fortify will cause the
+city icon to be updated on the game display. The army
+occupying a city that is fortified loses its turn (it is
+presumably busy building fortifications) and will be shown
+as 'Resting' in the Army report.
+
+An army may increase a given city's fortifications by 1
+level per turn. If there are 2 units in a city, each army
+may add 1 level of fortification in a turn, thereby double
+fortifying the city.
+
+
+				- 15  -
+ 
+ 4.4   Join (Combine)
+=====================
+Up to a certain level, friendly armies may be combined to
+create larger and more powerful forces. In order to combine,
+armies must start the turn stacked in the same city. Stacked
+armies are indicated by a small gold circle on the flag
+icon. Selecting 'Combine' will result in a menu of candidate
+cities in which armies are stacked. Selecting a city will
+cause all armies in that city to attempt to combine, up to a
+maximum level of 400,000 men. Army attributes for combined
+armies are averaged, and the best commander of the armies
+combined will assume leadership of the combined forces. (His
+leadership ability may be reduced slightly to account for
+the increased difficulty of commanding the larger forces.)
+
+ 4.5   Supply
+=============
+On occasion, you may need to manually allocate additional
+provisions to units that are out of supply. These units may
+be seen on the map marked with an "S" to make them easier to
+locate. At the end of the move and update phase, units will
+automatically receive 1 unit of supply, assuming enough
+money is available. Automatic update of supply costs .002
+money units per 1,000 men in the army unit. (For instance, a
+22,000 man unit would require 44 money units to resupply).
+This automatic resupply is done in numerical unit sequence,
+so that higher numbered units are supplied last. If there is
+not enough money to supply all units, or if the unit expends
+more than expected supplies, or is blockaded in a port, some
+will eventually get out of supply. Note that in the months
+of July and September, units are resupplied without cost
+(except for blockaded units).
+
+To manually resupply, you must have enough money to provide
+the supplies, which depends on the size of the army being
+resupplied. Each unit of supply requires .001 money units
+1,000 men (cheaper that automatic resupply). However, the
+computer will attempt to allocate as much supply as possible
+to the unit selected, up to a maximum of 5 units of supply.
+If you do not have enough money to allocate at least 1 unit
+of supply, none will be provided.
+ 
+ 4.6   Detach
+=============
+Either side may detach units from an existing army, provided
+the original army is large enough (6,500 men or more) and
+
+				- 16  -
+ 
+there is an available Allies commander for the detached
+unit. 30% of the original force is split into the new unit,
+along with 30% of the supplies.
+
+ 4.7   Drill
+============
+Both sides may drill armies to increase their experience
+level. Drilling requires one turn in which the army cannot
+move. Experience gained in this manner cannot exceed the
+leader's command rating, and is limited to a maximum of 5 in
+any case.
+
+ 4.8   Relieve
+==============
+The Relieve option allows you to replace generals, thereby
+removing them from their command. To be RELIEVED, a unit
+cannot have already used its turn (e.g., cannot have move
+orders). When a general is relieved, you are allowed to
+replace him with another general from the list of available
+commanders. When a general is relieved, the unit uses its
+turn, and suffers two additional penalties. Both the
+EXPERIENCE level and the LEADERSHIP level of the unit are
+decreased by 1 because of confusion about the new leader's
+style of command. The relieved general is placed on the list
+of available commanders, awaiting possible future service.
+
+===========================================================
+ 5   U T I L I T Y
+===========================================================
+ 5.1   Utility Submenu
+======================
+                     +============+
+                     |  Utility   |
+                     +============+
+                     | Side       |
+                     | 1 Player   |
+                     | Noise      |
+                     | Tactical   |
+                     | Display    |
+                     | Balance    |
+                     | End Cond   |
+                     | Rndom Evt  |
+                     | Vary Start |
+                     | History    |
+                     | Aggress 1  |
+                     | Save CFG   |
+
+				- 17  -
+ 
+                     +============+
+
+ 5.2   Side
+===========
+Toggles between the French and Allies side for the 1 player
+game only.
+
+ 5.3   1-Player/2-Player
+========================
+Toggles between 1- and 2- player game.
+
+ 5.4   Noise
+============
+Toggle between Sound & Music, Sound Only, and Quiet.
+
+ 5.5   Tactical    (Registered Edition ONLY)
+============================================
+Toggle to set up tactical level battles when combat occurs
+instead of the normal strategic level battle resolution. If
+checked ("û") tactical level battles will result if the
+relative force strength is 3:1 or less. More lopsided
+battles will still be resolved using the strategic level
+combat. (Note: This option requires the Registered Edition).
+
+ 5.6   Display
+==============
+Sets display speed for messages displayed, from fast to very
+slow. Slower speeds display messages longer, but also slow
+movement and game play. This should be set as fast as possible
+for your machine.
+
+ 5.7   Balance
+==============
+Set Play Balance from Allies++ (large Allies advantage) all
+the way to French++ (large French advantage). Play balance
+affects the relative resources allocated, along with the
+handicap received in combat.
+
+ 5.8   End Game Conditions
+==========================
+Shows the conditions that will determine when the game is
+over. These are specified in the input file NWS.INI, and can
+be changed by changing that file. Up to 5 different preset
+conditions may trigger the end of the game:
+
+                Time (Month & Year)
+
+				- 18  -
+ 
+                % Cities Controlled by Either Side
+                % Income for Either Side
+                Objective Capture By Either Side *
+                Ratio of Total Army Strength
+
+In addition, the total elimination of either side's armies
+will trigger a victory condition. Active conditions are
+marked with an "û". These may be toggled either off or on
+(active) using this option by pressing ENTER when the
+desired condition is highlighted, but the VALUES themselves
+can only be changed in NWS.INI (see "Files" section below).
+If ANY of the active conditions are achieved by EITHER SIDE,
+the game will end. If there are NO active end game
+conditions, the game will continue indefinitely.
+
+* Note: If BOTH sides lose their objectives in the same turn,
+  the game does NOT end even if this condition is active.
+
+ 5.9   Victory Condition Override
+=================================
+There is an override option when victory conditions signal
+the end of the game. This allows you to keep playing if you
+choose instead of abruptly ending the game. Each time the
+override is used it increases the victory condition that was
+triggered. Overriding victory conditions during game play will
+result in a penalty to your score.
+
+ 5.10  Random Events
+====================
+Control over random events has been extended in the Utility
+menu option. Random events can be toggled OFF so they do not
+occur. If random events are ON, the degree to which they
+favor one side or the other can be controlled:
+
+    Favor French  (70% of random events help the French)
+    Neutral (50% help the French; 50% help the Allies)
+    Favor Allies (70% of random events help the Allies)
+
+Historically, Napoleon had problems with subordinates who were
+disloyal, sometimes to the point of treachery. This is reflected
+in the random events where sometimes French commanders will turn
+over their armies to the Allies.
+
+ 5.11  Vary Start
+=================
+Selecting this option at the beginning of the game will
+
+				- 19  -
+ 
+give different starting conditions.
+
+
+ 5.12  Enemy Aggression
+=======================
+This option applies only for 1-player game. By repeated
+selecting this option you may cycle through enemy
+aggressiveness levels from 0 (least aggressive) to 5 (most
+aggressive). The default level is 1. At the lower levels,
+the enemy will be more cautious and defensive, preferring to
+build forts and make attacks only when the odds are
+favorable. At the higher levels, the enemy will attack more
+often, perhaps even to the point of foolhardiness.
+
+ 5.13  Save Configuration
+=========================
+Allows the options selected in the Utility menu to be saved as
+your customized configuration.
+
+===========================================================
+ 6   M O V E    &    C O M B A T    P H A S E
+===========================================================
+ 6.1   Computer Decisions
+=========================
+If you are playing a 1-player game versus the computer, you
+will see the computer decisions being made. The computer
+does not 'cheat' by taking advantage of knowledge of the
+moves you have selected.  If the side played by the computer
+has an advantage in play balance, it will be a more
+difficult opponent because it will get more resources, and
+will receive a combat handicap.
+
+You will be prompted to "press any key for month /year
+events". During the update phase, the message "UPDATE" will
+appear to the right of the map area. The computer will move
+the armies, provide information on battles, state of
+supplies, and so on. From time to time the display will
+pause to give you time to read the messages. You can press
+any key to move on.
+
+ 6.2   Army Movement
+====================
+When you see the message "press any key for (current month
+and year) events", the move and update phase has begun.
+During this phase both sides have their move orders carried
+out. When enemy armies meet in the same city, combat occurs.
+
+				- 20  -
+ 
+After combat, only one side will continue to occupy the
+city. The side that was driven off loses the battle.
+
+The order in which armies move depends on (1) ability of the
+leader (better ones tend to move first), (2) supply (out of
+supply units move last) and (3) a random factor. Armies
+carry out their orders one at a time. The flag icon will
+move from the starting location to the destination city.
+
+ 6.3  The Occupying Army
+========================
+When an army captures a city, that army becomes the occupying
+army. If there are multiple armies in a city, only one (the
+largest army remaining in that city) is considered the occupying
+army, which is the first army to engage in combat when the city
+is attacked.
+
+ 6.4   Unit Cohesion
+====================
+Allied armies sometimes suffer from having mixed
+nationalities (i.e., leader is of a different nationality
+than the army itself). In such cases, the unit will suffer
+from a lack of cohesion, and will perform more poorly in
+combat. (You may be able to remedy this by swapping
+commanders using the RELIEVE option).
+
+ 6.5   Combat
+=============
+If combat occurs, a set of statistics will appear on the
+right of the screen giving important information on how the
+battle will be resolved. The information for both attacker
+and defender begins with a base calculation, which goes
+through a series of adjustments to arrive at a final value
+for this battle.
+
+   Item       Meaning
+----------  -----------------------------------------------
+
+ Base       Base combat strength, obtained by multiplying unit
+            strength by .0001 and rounding up. Thus, an
+            army with 23,000 men has a base combat strength
+            of 3. The base for defenders is increased to
+            account for their reduced exposure to fire.
+
+ Ldr/Exp    Base combat strength, adjusted for leadership
+            and experience. Armies outmanned by more than
+
+				- 21  -
+ 
+            5:1 will usually not receive this adjustment.
+            However, elite armies with experience levels of
+            8 or more automatically receive a bonus, even if
+            hopelessly outnumbered. The army commanded by
+            Napoleon receives a large bonus.
+
+ Outman     Adjustment if army is small or the opposing army
+            is much larger than this army proportionately.
+            This occurs for the attacker if outnumbered by
+            more than 5:1 or for the defender if outnumbered
+            by more than 10:1.
+
+ Supply     Additional adjustment if unit is out of supply
+            (will be in contrasting color). Out-of-supply
+            units fight at half strength.
+
+ Cohesion   Penalty if the army commander is not of the same
+            nationality as the army itself (e.g., Austrian
+            commander leading a Prussian army).
+
+ Difclt     Additional adjustment based on difficulty level.
+
+ Fort       (FOR DEFENDERS ONLY) - Additional adjustment if
+            location is fortified and defender has not moved
+            or fought previously in this turn. NOTE:
+            Occasionally an exceptional commander will get
+            the fort bonus even if he has fought previously
+            in the turn. A +1 fortification increases combat
+            power by 50%; a +2 fortification doubles combat
+            power.
+
+The exact combat adjustment for outmanned armies is shown
+below:
++-------------------------+---------------+---------------+
+| Attacker/Defender Ratio |  Attack Adjust| Defend Adjust |
++=========================+===============+===============+
+|     1:10 or worse       | set to 1 (min)|set to 30 (max)|
++-------------------------+---------------+---------------+
+|     1:10 to  1:5        | set to 1 (min)|     + 2       |
++-------------------------+---------------+---------------+
+|     1:5  to  1:2        |      - 2      |     + 2       |
++-------------------------+---------------+---------------+
+|     1:2  to  2:1        |        0      |       0       |
++-------------------------+---------------+---------------+
+|     2:1  to  3:1        |        0      |     - 2       |
++-------------------------+---------------+---------------+
+
+				- 22  -
+ 
+|     3:1  to  5:1        |      + 2      |     - 2       |
++-------------------------+---------------+---------------+
+|     5:1  to 10:1        |      + 2      | set to 1 (min)|
++-------------------------+---------------+---------------+
+|     10:1 or better      |set to 30 (max)| set to 1 (min)|
++-------------------------+----------------+--------------+
+Note that this is in addition to any other combat
+adjustments, such as leadership, fortification, supply, etc.
+
+
+All combat adjustments are made sequentially, and the final
+result is the one actually used in the combat calculations.
+The final result for both the Attacker and the Defender is
+shown in a highlighted box. The final values can never be
+less than 1 nor more than 30. A calculation of the odds of
+an attacker victory are also given as A GUIDE ONLY. The
+computer actually resolves the combat separately from this
+calculation of attacker odds, but it should provide a good
+indicator of who is likely to win the battle.
+
+The actual results of the battle will be displayed after you
+press a key. The winner is announced in the pop-up window.
+Casualty information (numbers and percentages for each side)
+are shown at the bottom of the screen. Notice that an army
+can win the battle but suffer greater losses than the enemy.
+
+The loser must retreat to an adjacent friendly city. The
+human player is given the option as to which city to retreat
+to if his DEFENDING army must retreat (if there is more than
+one choice for retreat). If there are no retreat options,
+the loser will surrender. Even if there is a retreat option,
+a unit may be so outnumbered and reduced in size so much
+that it can no longer function. Such shattered units will
+also surrender. When units surrender, their commanders are
+PERMANENTLY removed from the game.
+
+If there is more than one defending army in a city, the
+attacker must defeat each defender one at a time until all
+defenders are driven out before occupying the city.
+
+ 6.6   Income Update
+====================
+After all combat and moves are resolved, the supplies are
+distributed, and income and victory points are updated based
+on present game situations. Note that the Allied side always
+receives income from other parts of Europe outside the
+
+				- 23  -
+ 
+region shown (e.g., the remainder of England). Thus, the
+Allies in effect have an income bonus. Supplies are
+distributed based on cash remaining, to the armies in
+numerical order.
+
+===========================================================
+ 7   D A T A    F I L E S
+===========================================================
+ 7.1   Scenario Initialization File (NWSxxxx.INI
+================================================
+These data files are simple "flat ASCII" files and may be
+customized as you wish to modify starting game conditions.
+(It is good practice to copy the original as a backup
+before you create a new one.) The program probably will
+not run if you make errors in these files.
+
+Examples of the actual data lines are shown below in the
+boxed areas; comment lines before each of the data lines
+describe the information in that line.
+
+Month and year the scenario begins
++-------+
+|3,1796 |
++-------+
+
+End Game Conditions (Month/Year, % Cities, % Income,
+Objective Capture Flag, Total Force Strength Ratio)
++-----------------+
+|6,1799,80,80,1,3 |
++-----------------+
+The above example will end in 6th month of 1799 or if 80% of
+cities are controlled by one side or if 80% of income is
+gained by one side. It will also end if one of the objective
+cities is captured (the "1") or if the army strength ratio
+gets to 3 or more.
+
+Battles won by French, battles won by Allies, French
+casualties, and Allied casualties.
++---------+
+| 0,0,0,0 |
++---------+
+
+War conditions for each country. This can vary from 0 (total
+peace) to 100 (ultimate hatred). If it is above 50%, the
+country is at war. The values in order correspond to
+France,Austria,England,Russia,Prussia,and Spain.
+
+				- 24  -
+ 
+
++----------------+
+|75,75,0,0,0,0,0 |
++----------------+
+
+
+Number of French armies at beginning of play (5).
++--+
+|5 |
++--+
+
+Data lines for each French army at beginning of play
+        city # (47 = Paris)
+        strength in 100's (400 = 40,000 men)
+        experience (1)
+        supply     (9)
+
++-------------+
+|1,47,400,1,9 |
+|1,7,80,0,9   |
+|1,38,75,0,9  |
+|1,36,100,0,5 |
+|1,51,125,0,5 |
++-------------+
+NOTE: These are automatically assigned commanders starting
+      with commander 1 for the first army, commander 2 for
+      the second and so on. There must be one line for each
+      French army that starts at beginning.
+
+
+Number of Allies armies at beginning of play (3)
++--+
+|3 |
++--+
+
+Data lines for each Allies army at beginning of play
+        nationality (2=Austrian)
+        city # (65 = Vienna)
+        strength in 100's (300 = 30,000 men)
+        experience (1)
+        supply     (7)
++-------------+
+|2,65,300,1,7 |
+|2,27,140,0,7 |
+|2,55,475,0,4 |
++-------------+
+
+				- 25  -
+ 
+
+Starting Cash Position
+        Starting French cash (300)
+        Starting Allies cash (50)
+
++-------+
+|300,50 |
++-------+
+
+French Navy Data: Number of ships (4) and their starting location
+(city 7 = Bordeaux)
++----+
+|4,7 |
++----+
+
+Allied Navy Data: Number of ships (6) and their starting location
+(city 35 = London)
++-----+
+|6,35 |
++-----+
+
+Objective Cities
+
+        Allied Objective (47=Paris)
+        French Objective (65=Milan)
++------+
+|47,65 |
++------+
+
+ 7.2   Commander File (LEADxxxx.DAT)
+====================================
+Commanders will be assigned to armies in the order listed in
+this file, with first 25 assigned to French, second 25
+assigned to Allies. There MUST be exactly 50 commanders
+total. First one listed goes with army 1, second with army 2
+and so on.
+
+Format for French entries 1-25
+        Name
+        Rating (1-10)
++--------------------+
+|Bernadotte,7        |
++--------------------+
+Format for Allied entries 26-50
+        Nationality (country)
+        Name
+
+				- 26  -
+ 
+        Rating (1-10)
++--------------------+
+|2,Alvintzi,8        |
++--------------------+
+
+ 7.3   Configuration File (NWS.CFG)
+===================================
+This file is automatically updated when you save a game in
+progress.
+
+Format:
+     1. Side chosen    (1=French  2=Allies)
+     2. Sounds (0=none  1=sounds only   2= sounds and music)
+     3. Play Balance (1=Allies++  3=Balanced  5=French++)
+     4. Computer Enemy aggressiveness: single player (1=low
+        5=high)
+     5. Number of players (1-2)
+     6. Display speed (1=very fast  2=Normal  4=very slow)
+     7. Random event balance (0= off; 3= favor Allies;
+         5= neutral; 7= favor French)
+     8. History switch (0=off; 1=on)
+     9. Tactical Battles (Registered Edition only) (0=off 1=on)
+
++------------------+
+|1,2,3,3,1,1,5,0,0 |
++------------------+
+
+ 7.4   City Matrix (EUROxxxx.MAP)
+=================================
+Unless you are very experienced, you should not change this
+file. (Even if you are experienced, you should make a back
+up copy.) These are companion files for the scenarios, which
+indicate the control and value of cities for various start
+years (specified by the 'xxxx' portion of the file name).
+
+Please note: Cities MUST be in alphabetical order based on
+the city abbreviations used; the program depends on this
+order for army movement, fortification identification, and
+other options. STRANGE things may happen if your cities are
+not alphabetized. There must be exactly 67 cities.
+
+Format:
+        City #,
+        x VGA coordinate (1-530);
+                upper left corner of screen is (0,0)
+        y VGA coordinate (16-440),
+
+				- 27  -
+ 
+        city name (text),
+        which side initially possesses
+           (0=neutral, 1=French, 2= Austria, 3=England, etc.)
+        income value (0-99)
+        next 6 numbers indicate which cities this connects to
+        port indicator (0=not a port, >90=port city)
+        fortification level (0-2))
++----------------------------------------------+
+|1,"Amsterdam",165,63,9,5,12,18,19,35,0,0,98,0 |
++----------------------------------------------+
+Explanation of example line above:
+Amsterdam is city 1
+        at (165,63)
+        originally possessed by side 9 (Dutch)
+        income of is 5
+        links to cities 12,18,19,and 35
+        IS port (next to last value of 98 indicates this)
+        is NOT fortified initially (last 0 indicates this)
+
+
+===========================================================
+ 8   D E S I G N E R    N O T E S
+===========================================================
+ 8.1   Combat Model Adjustment
+==============================
+The combat model has been made more "open" to allow more
+user customization. Three key combat factors are specified
+immediately after the list of months in the GAMEDATA.INI
+file.
+
+  ATKFAC - the base attacker casualty rate. Default is 11%.
+           This value is adjusted, depending on whether the
+           defender is in a fortified position and whether
+           the attacker wins.
+  DEFAC  - the base defender casualty rate. Default is 9%.
+           This value is adjusted, depending on whether the
+           defender is in a fortified position and whether
+           the defender wins.
+  TCR    - the total combat range. Default is 30. This is
+           the limit of adjusted combat factors for both
+           the attacker and defender. Lower factors than
+           30 will tend to make battle outcomes more
+           influenced by random factors (luck). Higher
+           factors than 30 will increasingly give the edge
+           to the stronger army, particularly the one with
+           the most troops. A value around 30 will cause
+
+				- 28  -
+ 
+           the stronger side to generally win, but still
+           leave enough element of luck that the weaker
+           army can occasionally defeat a stronger foe.
+
+ 8.2   Why Register ?
+=====================
+1. More campaign scenarios: 1805, 1807, 1808, 1812, and 1815.
+2. Fully linked NAPOLEON tactical game allows you to maneuver
+   and fight key battles in each campaign.
+3. Technical support:
+        W R Hutsell
+        2021 Hutchinson Drive
+        Kingsport, TN 37660-1609
+        email: whutsell@interserv.com
+4. Latest version of program.
+5. Bundle offers for related games at great values !
+6. You are supporting shareware - and continuing development
+   of programs you can try before you buy.
