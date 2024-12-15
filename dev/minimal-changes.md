@@ -9,3 +9,6 @@ The code changes needed to get WON up and running in QB64 (plus maybe a few more
 - Deleted old binaries: ARCH2.EXE, NAPIC.EXE, NAPOLEON.EXE, TACTICAL.EXE, VIC.EXE, WON.EXE
 - Deleted PRINTDOC.BAT, REGISTER.DOC, WRHGAMES.DOC, SHAREW.TXT, GO.BAT
 - Created a docs folder and moved appropriate files into it.
+
+## Basic Code Cleanup
+- Remove old DOS special characters, e.g. "�"

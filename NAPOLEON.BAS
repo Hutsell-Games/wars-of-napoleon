@@ -82,9 +82,8 @@ NEXT i
 
 TICK 2
 flag = 1
-'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
-'บ  ******************    BEGIN MAIN GAME LOOP    ******************  บ
-'ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+'  ******************    BEGIN MAIN GAME LOOP    ****************** 
 ON ERROR GOTO 0
 SCREEN 9, , 0, 0
 CALL mainmap
@@ -104,12 +103,11 @@ IF file$ = "ERROR" GOTO menu7
 CALL refresh
     
 nother: CALL order: IF LEN(file$) > 1 GOTO nother
-IF file$ = "๔" THEN file$ = "": END
-IF file$ = "๕" THEN file$ = "": flag = 0: GOTO menu7
+IF file$ = "๏ฟฝ" THEN file$ = "": END
+IF file$ = "๏ฟฝ" THEN file$ = "": flag = 0: GOTO menu7
 GOTO nother
-'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
-'บ  ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ    END   MAIN GAME LOOP    ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ  บ
-'ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+' END MAIN GAME LOOP
 lodecfg:
 	RESTORE
 	FOR k = 1 TO 5: READ adj1$(k): NEXT k
@@ -175,7 +173,7 @@ SUB cannon (attack, defend)
 	IF d > .5 * vantage THEN flag = .7 * flag: IF d > .7 * vantage THEN flag = .3 * flag
 	IF RND > .9 THEN flag = flag + 3
 	IF d < 3.5 + plus THEN flag = flag * 1.5 + 10 * RND + 6
-	IF LEFTY$(defend) = "่" THEN unit$(defend) = "Infantry": flag = flag + 2
+	IF LEFTY$(defend) = "๏ฟฝ" THEN unit$(defend) = "Infantry": flag = flag + 2
 	flag = flag + 5 * RND
 	IF LEFTY$(defend) = "L" THEN flag = flag + 2
 	IF LEFTY$(defend) = "w" THEN unit$(defend) = RIGHT$(unit$(defend), LEN(unit$(defend)) - 1): CALL SHOWUNIT(defend)
@@ -254,7 +252,7 @@ LINE (1, 321)-(639, 336), 3, BF
 COLOR 11: LOCATE 24, 35: PRINT " press any key ";
 COLOR 15: LOCATE 1, 1
 PRINT "ICON  Unit Type"
-a$ = "I่CGALSwR": unitx(0) = 1: strength(0) = 1
+a$ = "I๏ฟฝCGALSwR": unitx(0) = 1: strength(0) = 1
 FOR k = 1 TO 9
 unity(0) = k: Visible(0) = 1
 unit$(0) = MID$(a$, k, 1): CALL SHOWUNIT(0)
@@ -313,10 +311,10 @@ LOCATE 5, 57: PRINT "2 	   0"  '.
 LOCATE 6, 57: PRINT "6 	  -5%" '=
 LOCATE 7, 57: PRINT "1 	   0"  '[
 LOCATE 8, 57: PRINT "4 	  +6%" '^
-LOCATE 9, 56: PRINT "10 	 -15%"  'ฐ
-LOCATE 10, 57: PRINT "2 	   0" '้
-LOCATE 11, 57: PRINT "8 	  +9%"'๏
-LOCATE 12, 57: PRINT "2 	  +3%" 'þ
+LOCATE 9, 56: PRINT "10 	 -15%"  '๏ฟฝ
+LOCATE 10, 57: PRINT "2 	   0" '๏ฟฝ
+LOCATE 11, 57: PRINT "8 	  +9%"'๏ฟฝ
+LOCATE 12, 57: PRINT "2 	  +3%" '๏ฟฝ
 COLOR 4: LOCATE 4, 70: PRINT "*": LOCATE 5, 70: PRINT "*"
 LOCATE 13, 45: PRINT "* Defend is -15% vs. Attack Cav"
 LINE (420, 14)-(480, 168), 4, B
@@ -512,7 +510,7 @@ reroll:
 			CALL routed(defend, 3)
 		END IF
 	END IF
-	IF t$ = "I" OR t$ = "G" OR t$ = "่" OR t$ = "R" THEN
+	IF t$ = "I" OR t$ = "G" OR t$ = "๏ฟฝ" OR t$ = "R" THEN
 smash:
 		roll! = roll! + .1
 		bonus = bonus + .1 * leader(attack)
@@ -530,7 +528,7 @@ smash:
 		END IF
 	END IF
 END IF
-IF LEFTY$(attack) = "่" THEN roll! = roll! + .02: bonus = bonus + .05 * leader(attack)
+IF LEFTY$(attack) = "๏ฟฝ" THEN roll! = roll! + .02: bonus = bonus + .05 * leader(attack)
 IF LEFTY$(defend) = "R" THEN roll! = roll! * 2
 
 index = 2: IF attack > m1 THEN index = 1
@@ -652,7 +650,7 @@ coffin:
 
 	IF morale(defend) > 4 THEN pct# = pct# + .02
 	IF flag = 1 AND LEFTY$(defend) <> "R" THEN pct# = pct# - .05  'cavalry charge
-	IF LEFTY$(attack) = "่" THEN pct# = pct# - .02
+	IF LEFTY$(attack) = "๏ฟฝ" THEN pct# = pct# - .02
 
 	IF prd! >= .07 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0
 	IF terrain(defend) = 35 THEN pct# = pct# + .03
@@ -660,7 +658,7 @@ coffin:
 
 	IF rflag = 0 AND pra! < pct# - .01 AND INSTR("AL", u$) = 0 THEN CALL pursue(attack, x2, y2, 0)
 seeme:
-	IF LEFTY$(attack) = "่" THEN unit$(attack) = "Infantry"
+	IF LEFTY$(attack) = "๏ฟฝ" THEN unit$(attack) = "Infantry"
 	CALL SHOWUNIT(attack): CALL SHOWUNIT(defend)
 END SUB
 
@@ -675,7 +673,7 @@ SUB order
 	IF bold < 4 AND timex = .5 * timelimit AND possess <> 3 - side THEN bold = 4
 	IF timex > .8 * timelimit AND possess <> 3 - side THEN bold = 5
 notime:
-	IF timelimit - timex <= 0 THEN CALL clrbot: COLOR 14: PRINT "Time expired - battle of "; SCENARIO$; " is over "; : TICK 99: CALL expire: file$ = "๕": EXIT SUB
+	IF timelimit - timex <= 0 THEN CALL clrbot: COLOR 14: PRINT "Time expired - battle of "; SCENARIO$; " is over "; : TICK 99: CALL expire: file$ = "๏ฟฝ": EXIT SUB
 	FOR k = 1 TO 2: CALL brittle(k): NEXT k
 
 	CALL scrcol(2)
@@ -687,7 +685,7 @@ notime:
 			movesleft = 1
 		CASE "I", "G", "L"
 			movesleft = 2
-		CASE "่"
+		CASE "๏ฟฝ"
 			movesleft = 3
 		CASE "C"
 			movesleft = 4
@@ -786,7 +784,7 @@ SELECT CASE z
 			END IF
 			SCREEN 9, , 0, 0
 		 END IF
-		IF t$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "่nfantry": toa(active) = timex + 1: CALL BUTTON(58, 25, 4, "Charge", 1): : GOSUB noise1: GOTO asleep
+		IF t$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "๏ฟฝnfantry": toa(active) = timex + 1: CALL BUTTON(58, 25, 4, "Charge", 1): : GOSUB noise1: GOTO asleep
 	CASE 70
 		IF INSTR("A", t$) > 0 THEN dx = 1: GOTO fodder
 	CASE 71: IF a = 2 GOTO moven
@@ -925,7 +923,7 @@ IF a$ = "S" THEN
 		GOTO asleep
 	END IF
 END IF
-IF a$ = "I" OR a$ = "่" AND (terrain(active) = 43 OR terrain(active) = 46) THEN
+IF a$ = "I" OR a$ = "๏ฟฝ" AND (terrain(active) = 43 OR terrain(active) = 46) THEN
 	CALL Near1(active, Enemy, d)
 	IF Enemy > 0 AND LEFTY$(Enemy) = "C" AND d < 9 THEN
 		x = 1.5: IF possess = 3 - side THEN x = 2
@@ -937,7 +935,7 @@ IF a$ = "I" OR a$ = "่" AND (terrain(active) = 43 OR terrain(active) = 46) THEN
 			END IF
 		END IF
 	END IF
-	IF a$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "่nfantry": CALL SHOWUNIT(active): toa(active) = timex + 1: RETURN
+	IF a$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "๏ฟฝnfantry": CALL SHOWUNIT(active): toa(active) = timex + 1: RETURN
 END IF
 '............................................................................
 IF INSTR("AL", a$) THEN
@@ -1021,14 +1019,13 @@ wait5:
 		CALL help
 		GOTO wait5
 	CASE 68
-		 IF a = 2 THEN CLS : file$ = "๔": EXIT SUB
+		 IF a = 2 THEN CLS : file$ = "๏ฟฝ": EXIT SUB
 	CASE ELSE
 	END SELECT
 
 	RETURN
-'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
-'บ                             Late Arrivals                          บ
-'ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+'                             Late Arrivals
 canplace:
 	CALL whois(unitx(active), unity(active), id, active)
 	IF id > 0 THEN RETURN
@@ -1362,10 +1359,10 @@ notart:
 	uorder(index) = 0: dxs = SGN(unitx(index) - unitx(Enemy)): dxy = SGN(unity(index) - unity(Enemy)): xloc = unitx(index) + 2 * dxs: yloc = unity(index) + 2 * dys
 	GOTO ours
 fire1:
-	IF LEFTY$(Enemy) = "่" THEN unit$(Enemy) = "Infantry"
+	IF LEFTY$(Enemy) = "๏ฟฝ" THEN unit$(Enemy) = "Infantry"
 	GOTO rumble
 try2:
-	IF LEFTY$(index) = "I" AND morale(index) > 2 AND (terrain(index) = 43 OR terrain(index) = 46) THEN unit$(index) = "่nfantry": toa(index) = timex + 1: EXIT SUB
+	IF LEFTY$(index) = "I" AND morale(index) > 2 AND (terrain(index) = 43 OR terrain(index) = 46) THEN unit$(index) = "๏ฟฝnfantry": toa(index) = timex + 1: EXIT SUB
 	IF morale(index) < 4 THEN CALL rest(index)
 '============================================================================
 '                    Continue with Move Orders
@@ -1421,7 +1418,7 @@ IF Visible(index) > 0 THEN CALL SHOWUNIT(index)
 	SELECT CASE u$
 	CASE "I"
 	plus = 2
-	CASE "่"
+	CASE "๏ฟฝ"
 	plus = 0
 	CASE "C"
 	plus = 0
@@ -1480,7 +1477,7 @@ IF Visible(index) > 0 THEN CALL SHOWUNIT(index)
 	a = Pnlty / 2: IF a < 1 THEN a = 1
 	movesleft = movesleft - a
 	toa(index) = timex + Pnlty + plus
-	IF LEFTY$(index) = "่" AND (RND > .97 OR (terrain(index) <> 43 AND terrain(index) <> 46)) THEN unit$(index) = "Infantry": toa(index) = timex + 2 + 2 * RND
+	IF LEFTY$(index) = "๏ฟฝ" AND (RND > .97 OR (terrain(index) <> 43 AND terrain(index) <> 46)) THEN unit$(index) = "Infantry": toa(index) = timex + 2 + 2 * RND
 	CALL YouorMe(active, F)
 	IF F = 0 THEN
 		IF toa(index) > timex + 1 AND difficult > 2 THEN
@@ -1500,15 +1497,13 @@ EXIT SUB
 '...........................................................................
 IF quiet > 0 THEN SOUND 1900, .5
 EXIT SUB
-'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
-'บ                    Special Cleanup -Contacted Units                บ
-'ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+'                    Special Cleanup - Contacted Units
 
 special:
 uorder(index) = 1
-'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
-'บ                            Combine Units                           บ
-'ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+'                            Combine Units                           
 CALL YouorMe(Enemy, F)
 IF Enemy = 0 THEN EXIT SUB
 IF LEFTY$(Enemy) = "w" THEN unit$(Enemy) = RIGHT$(unit$(Enemy), LEN(unit$(Enemy)) - 1): CALL SHOWUNIT(Enemy)
@@ -1858,7 +1853,7 @@ SELECT CASE z
 END SELECT
 CALL Tara(x, y + 1, z)
 PUT (8 * x, 14 * y), Xhair, XOR
-t$ = MID$(sdtext$(y + 1), x, 1): IF t$ = "้" THEN nobj = nobj - 1
+t$ = MID$(sdtext$(y + 1), x, 1): IF t$ = "๏ฟฝ" THEN nobj = nobj - 1
 a1$ = LEFT$(sdtext$(y + 1), x - 1)
 a2$ = RIGHT$(sdtext$(y + 1), LEN(sdtext$(y + 1)) - x)
 sdtext$(y + 1) = a1$ + CHR$(z) + a2$
