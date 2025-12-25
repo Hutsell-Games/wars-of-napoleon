@@ -1,0 +1,4 @@
+- Did you introduce any bugs?
+- Break any functionality?
+- Lose any functionality?
+- Implement bad practices?
