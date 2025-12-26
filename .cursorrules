@@ -1,2 +1,3 @@
 - Check what OS you are running on, use the appropriate commands (e.g. Windows use PowerShell).
 - You don't seem to have a good grasp on QB64, make sure you review the documentation for QB64 when making changes.
+- QB64 is located in c:\code\hutsell\qb64pe, the binary is qb64pe.exe

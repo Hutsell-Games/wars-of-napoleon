@@ -119,7 +119,7 @@ FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
         battleData.commander2 = armies(defenderIndex).name
         
         ' Army strengths - CONVERSION: Strategic uses raw size, tactical uses hundreds
-        ' Example: 5000 men → 50 (hundreds) for tactical battle
+        ' Example: 5000 men -> 50 (hundreds) for tactical battle
         battleData.vp1 = armies(attackerIndex).size \ 100
         battleData.vp2 = armies(defenderIndex).size \ 100
         
@@ -149,7 +149,7 @@ FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
         ' ============================================================
         ' LAUNCH TACTICAL BATTLE
         ' ============================================================
-        ' This is the critical integration point: strategic → tactical
+        ' This is the critical integration point: strategic -> tactical
         ' The tactical battle will:
         '   1. Initialize battle map and units
         '   2. Run tactical battle loop

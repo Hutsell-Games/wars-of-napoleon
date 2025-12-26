@@ -59,6 +59,10 @@ wars-of-napoleon/
 │   │   ├── core.bas             # Battle mechanics
 │   │   ├── ui.bas               # Tactical UI
 │   │   └── units.bas            # Unit types and behaviors
+│   ├── test/                    # Unit tests
+│   │   ├── test_main.bas        # Test runner entry point
+│   │   ├── test_runner.bas      # Test execution helpers
+│   │   └── example_tests.bas    # Example tests
 │   └── ui/                      # User interface modules
 │       ├── mouse.bas            # Mouse support (WW2)
 │       ├── graphics.bas         # Graphics rendering
@@ -136,6 +140,7 @@ See `IMPLEMENTATION_STATUS.md` for detailed status of all modules.
 - **Feature Analysis**: `docs/FINAL_FEATURE_ANALYSIS.md`
 - **Build Instructions**: `BUILD_INSTRUCTIONS.md`
 - **Implementation Status**: `IMPLEMENTATION_STATUS.md`
+- **Testing Framework**: `docs/TESTING_FRAMEWORK.md` - Generic unit testing framework for QB64 (located in `../qb64-test-framework/`)
 
 ## License
 

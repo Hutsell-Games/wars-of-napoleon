@@ -86,7 +86,7 @@ SUB ApplyCombatCasualties (attackerIndex AS INTEGER, defenderIndex AS INTEGER, w
     IF armies(defenderIndex).size < 0 THEN armies(defenderIndex).size = 0
     
     ' Update battle statistics
-    UpdateBattleStats winner, attackerCasualties, defenderCasualties
+    CALL UpdateBattleStats(winner, attackerCasualties, defenderCasualties)
 END SUB
 
 SUB DetermineCombatWinner (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cityIndex AS INTEGER, winner AS INTEGER)

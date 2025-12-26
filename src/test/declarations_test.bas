@@ -79,69 +79,71 @@ CONST MENU_QUIT = 5
 
 ' Shared arrays and variables from NAPOLEON.BAS (tactical module)
 ' These will be populated when tactical battle runs
-DIM SHARED strength(1 TO 100) AS INTEGER
-DIM SHARED unitx(1 TO 100) AS INTEGER
-DIM SHARED unity(1 TO 100) AS INTEGER
-DIM SHARED leader(1 TO 100) AS INTEGER
-DIM SHARED xper(1 TO 100) AS INTEGER
-DIM SHARED morale(1 TO 100) AS INTEGER
-DIM SHARED uorder(1 TO 100) AS INTEGER
-DIM SHARED Visible(1 TO 100) AS INTEGER
-DIM SHARED terrain(1 TO 100) AS INTEGER
-DIM SHARED name$(1 TO 100)
-DIM SHARED unit$(1 TO 100)
-DIM SHARED elan(1 TO 2) AS INTEGER
-DIM SHARED bigg(1 TO 2) AS INTEGER
-DIM SHARED m1 AS INTEGER ' Middle point 1 (40)
-DIM SHARED m2 AS INTEGER ' Middle point 2 (41)
-DIM SHARED most AS INTEGER ' Maximum unit index (80)
+' Note: strength is declared in declarations.bas
+' Note: unitx is declared in declarations.bas
+' Note: unity is declared in declarations.bas
+' Note: leader is declared in declarations.bas
+' Note: xper is declared in declarations.bas
+' Note: morale is declared in declarations.bas
+' Note: uorder is declared in declarations.bas
+' Note: Visible is declared in declarations.bas
+' Note: terrain is declared in declarations.bas
+' Note: name$ is declared in declarations.bas
+' Note: unit$ is declared in declarations.bas
+' Note: elan is declared in declarations.bas
+' Note: bigg is declared in declarations.bas
+' Note: m1 is declared in declarations.bas
+' Note: m2 is declared in declarations.bas
+' Note: most is declared in declarations.bas
 ' Initialize these values (from NAP10.BI: most = 80, m1 = 40, m2 = 41)
-most = 80: m1 = 40: m2 = 41
-DIM SHARED obstruct AS INTEGER ' Obstruction counter for map generation
-DIM SHARED possess AS INTEGER ' Objective possessor (1 or 2, 3 = neutral)
-DIM SHARED objx AS INTEGER
-DIM SHARED objy AS INTEGER
-DIM SHARED sdtext$(1 TO 24) ' Map text data (24 lines for 20 hex rows + buffer)
-DIM SHARED file$ ' Used to signal battle end (CHR$(219) = time expired)
+' TEST: Commented out to avoid "between SUB/FUNCTION" errors - initialized in InitializeTestVariables
+' most = 80: m1 = 40: m2 = 41
+' Note: obstruct is declared in declarations.bas
+' Note: possess is declared in declarations.bas
+' Note: objx is declared in declarations.bas
+' Note: objy is declared in declarations.bas
+' Note: sdtext$ is declared in declarations.bas
+' Note: file$ is declared in declarations.bas
 ' Initialize file$ to empty string to prevent undefined variable errors
-file$ = ""
-DIM SHARED setupx AS INTEGER ' Setup position (1-5)
-DIM SHARED timelimit AS SINGLE ' Battle time limit
-DIM SHARED unitsize& ' Base unit size
-DIM SHARED equip$(0 TO 5) ' Equipment types
-DIM SHARED recon AS INTEGER ' Recon mode (0 = normal, 1 = show all)
+' TEST: Commented out to avoid "between SUB/FUNCTION" errors - initialized in InitializeTestVariables
+' file$ = ""
+' Note: setupx is declared in declarations.bas
+' Note: timelimit is declared in declarations.bas
+' Note: unitsize& is declared in declarations.bas
+' Note: equip$ is declared in declarations.bas
+' Note: recon is declared in declarations.bas
 ' most, m1, m2 already declared above - removing duplicate
-DIM SHARED toa(1 TO 100) AS SINGLE ' Time of action for each unit
-DIM SHARED score&(1 TO 2) ' Score for each side
-DIM SHARED waver(1 TO 2) AS INTEGER ' Waver state for each side
-DIM SHARED stex$(1 TO 22) ' Status text
-DIM SHARED highscore(1 TO 2) AS INTEGER ' High score tracking
-DIM SHARED commander$(1 TO 2) ' Commander names
-DIM SHARED expbase(1 TO 2) AS INTEGER ' Base experience for each side
-DIM SHARED leadbase(1 TO 2) AS INTEGER ' Base leadership for each side
-DIM SHARED sidex(1 TO 2) AS INTEGER ' Side identifiers
-DIM SHARED vp&(1 TO 2) ' Victory points/strength for each side
-DIM SHARED adj1$(1 TO 5) ' Adjectives 1
-DIM SHARED adj2$(1 TO 5) ' Adjectives 2
-DIM SHARED adj3$(1 TO 5) ' Adjectives 3
-DIM SHARED sname$(1 TO 2) ' Side names ("Allies", "French")
-DIM SHARED morlev$(1 TO 5) ' Morale level names
-DIM SHARED xplev$(1 TO 5) ' Experience level names
-DIM SHARED ledlev$(1 TO 5) ' Leadership level names
-DIM SHARED stakk AS INTEGER ' Stack counter
-DIM SHARED Mighty AS INTEGER ' Mighty flag
-DIM SHARED artimp AS INTEGER ' Artillery improvement
-DIM SHARED batint AS INTEGER ' Battle intensity
-DIM SHARED movesleft AS INTEGER ' Moves left for current unit
-DIM SHARED limber AS INTEGER ' Limber mode
-DIM SHARED version AS INTEGER ' Version number
-DIM SHARED artcap AS INTEGER ' Artillery capture enabled
-DIM SHARED DEBUG AS INTEGER ' Debug mode
-DIM SHARED startit! ' Start time
-DIM SHARED timex AS SINGLE ' Current time
+' Note: toa is declared in declarations.bas
+' Note: score& is declared in declarations.bas
+' Note: waver is declared in declarations.bas
+' Note: stex$ is declared in declarations.bas
+' Note: highscore is declared in declarations.bas
+' Note: commander$ is declared in declarations.bas
+' Note: expbase is declared in declarations.bas
+' Note: leadbase is declared in declarations.bas
+' Note: sidex is declared in declarations.bas
+' Note: vp& is declared in declarations.bas
+' Note: adj1$ is declared in declarations.bas
+' Note: adj2$ is declared in declarations.bas
+' Note: adj3$ is declared in declarations.bas
+' Note: sname$ is declared in declarations.bas
+' Note: morlev$ is declared in declarations.bas
+' Note: xplev$ is declared in declarations.bas
+' Note: ledlev$ is declared in declarations.bas
+' Note: stakk is declared in declarations.bas
+' Note: Mighty is declared in declarations.bas
+' Note: artimp is declared in declarations.bas
+' Note: batint is declared in declarations.bas
+' Note: movesleft is declared in declarations.bas
+' Note: limber is declared in declarations.bas
+' Note: version is declared in declarations.bas
+' Note: artcap is declared in declarations.bas
+' Note: DEBUG is declared in declarations.bas
+' Note: startit! is declared in declarations.bas
+' Note: timex is declared in declarations.bas
 
 ' Shared variables from strategic game
-DIM SHARED graphic(1 TO 1564) AS INTEGER ' Graphics array
+' Note: graphic is declared in declarations.bas
 
 ' Function declarations for NAPOLEON.BAS subroutines
 ' These will be included when NAPOLEON.BAS is integrated
@@ -163,8 +165,8 @@ DECLARE SUB scrcol (which%)
 DECLARE SUB Tara (x%, y%, flag%)
 DECLARE SUB YouorMe (index%, F%)
 DECLARE SUB inspect (index%)
-' DECLARE SUB snapshot (x%, y%, flag%) ' Removed: not implemented and not used
-' DECLARE SUB touchup () ' Removed: not implemented and not used
+DECLARE SUB snapshot (x%, y%, flag%)
+DECLARE SUB touchup ()
 DECLARE SUB order ()
 DECLARE SUB expire ()
 DECLARE SUB whois (x%, y%, Enemy%, index%)
@@ -201,21 +203,29 @@ DECLARE SUB LoadTacticalConfig ()
 ' Note: LaunchTacticalBattle is declared in tactical_integration.bas after battle_types.bas is included
 
 ' Shared configuration variables
-DIM SHARED mdsp AS INTEGER ' Display mode
-DIM SHARED mdly! ' Display delay
-DIM SHARED bold AS INTEGER ' Boldness level (3-5)
-DIM SHARED seelimit AS INTEGER ' Visibility limit
-DIM SHARED quiet AS INTEGER ' Quiet mode (sound off)
-DIM SHARED difficult AS INTEGER ' Difficulty level
-DIM SHARED lineofsight AS INTEGER ' Line of sight enabled
+' Note: mdsp is declared in declarations.bas
+' Note: mdly! is declared in declarations.bas
+' Note: bold is declared in declarations.bas
+' Note: seelimit is declared in declarations.bas
+' Note: quiet is declared in declarations.bas
+' Note: difficult is declared in declarations.bas
+' Note: lineofsight is declared in declarations.bas
 
 ' Shared game state variables
-DIM SHARED scenario$
+' Note: scenario$ is declared in declarations.bas
 ' Initialize scenario$ to empty string to prevent undefined variable errors
-scenario$ = ""
-DIM SHARED currentPhase AS INTEGER
+' TEST: Commented out to avoid "between SUB/FUNCTION" errors - initialized in InitializeTestVariables
+' scenario$ = ""
+' Note: currentPhase is declared in declarations.bas
 
 ' Shared arrays for strategic game
+' Note: armies is declared in declarations.bas
+' Note: cities is declared in declarations.bas
+' Note: fleets is declared in declarations.bas
+' Note: occupied is declared in declarations.bas
+' Note: cityMatrix is declared in declarations.bas
+' Note: gameState is declared in declarations.bas
+' TEST: Add actual declarations for test compilation
 DIM SHARED armies(1 TO 40) AS ArmyType
 DIM SHARED cities(1 TO 60) AS CityType
 DIM SHARED fleets(1 TO 2) AS FleetType
@@ -224,36 +234,39 @@ DIM SHARED cityMatrix(1 TO 60, 1 TO 7) AS INTEGER
 DIM SHARED gameState AS GameStateType
 
 ' Commander storage (50 total: 25 French, 25 Allied)
+' Note: commanders is declared in declarations.bas
+' Note: commanderIndex is declared in declarations.bas
+' TEST: Add actual declarations for test compilation
 DIM SHARED commanders(1 TO 50) AS CommanderType
-DIM SHARED commanderIndex AS INTEGER ' Current commander assignment index
+DIM SHARED commanderIndex AS INTEGER
 
 ' Shared configuration
-DIM SHARED config_side AS INTEGER
-DIM SHARED config_sound AS INTEGER
-DIM SHARED config_balance AS INTEGER
-DIM SHARED config_aggression AS INTEGER
-DIM SHARED config_players AS INTEGER
-DIM SHARED config_display AS INTEGER
-DIM SHARED config_randevent AS INTEGER
-DIM SHARED config_history AS INTEGER
-DIM SHARED config_tactical AS INTEGER
+' Note: config_side is declared in declarations.bas
+' Note: config_sound is declared in declarations.bas
+' Note: config_balance is declared in declarations.bas
+' Note: config_aggression is declared in declarations.bas
+' Note: config_players is declared in declarations.bas
+' Note: config_display is declared in declarations.bas
+' Note: config_randevent is declared in declarations.bas
+' Note: config_history is declared in declarations.bas
+' Note: config_tactical is declared in declarations.bas
 
 ' Shared cohesion system
-DIM SHARED alliedAtWar(1 TO 6) AS INTEGER
+' Note: alliedAtWar is declared in declarations.bas
 
 ' Shared victory system
-DIM SHARED endGameFlags(1 TO 5) AS INTEGER
-DIM SHARED endGameTriggered AS INTEGER
-DIM SHARED endGameWinner AS INTEGER ' Side that triggered end condition
+' Note: endGameFlags is declared in declarations.bas
+' Note: endGameTriggered is declared in declarations.bas
+' Note: endGameWinner is declared in declarations.bas
 
 ' Shared reports
-DIM SHARED battleWon(1 TO 2) AS INTEGER
-DIM SHARED casualties(1 TO 2) AS LONG
-DIM SHARED historyFile AS INTEGER ' History file handle
+' Note: battleWon is declared in declarations.bas
+' Note: casualties is declared in declarations.bas
+' Note: historyFile is declared in declarations.bas
 
 ' Shared variables for logging system
-DIM SHARED logFileNum AS INTEGER ' Log file handle
-DIM SHARED logInitialized AS INTEGER ' Log initialization flag
+' Note: logFileNum is declared in declarations.bas
+' Note: logInitialized is declared in declarations.bas
 
 ' Mouse function declarations
 DECLARE FUNCTION GetMouseX% ()
@@ -276,27 +289,26 @@ DECLARE SUB InitializeGraphics
 DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
 
 ' Shared capitals
-DIM SHARED capitalCity(1 TO 2) AS INTEGER
+' Note: capitalCity is declared in declarations.bas
 
 ' Shared realism
-DIM SHARED realismMode AS INTEGER
+' Note: realismMode is declared in declarations.bas
 
 ' Shared PBM
-DIM SHARED pbmEnabled AS INTEGER
+' Note: pbmEnabled is declared in declarations.bas
 
 ' Shared mouse
-DIM SHARED mouseEnabled AS INTEGER
+' Note: mouseEnabled is declared in declarations.bas
 
 ' Shared menu system
-DIM SHARED mtx$(0 TO 20)
-DIM SHARED choose AS INTEGER
-DIM SHARED tlx AS INTEGER
-DIM SHARED tly AS INTEGER
-DIM SHARED colour AS INTEGER
-DIM SHARED hilite AS INTEGER
-DIM SHARED size AS INTEGER
+' Note: mtx$ is declared in declarations.bas
+' Note: choose is declared in declarations.bas
+' Note: tlx is declared in declarations.bas
+' Note: tly is declared in declarations.bas
+' Note: colour is declared in declarations.bas
+' Note: hilite is declared in declarations.bas
+' Note: size is declared in declarations.bas
 
 ' Month names
-DIM SHARED month$(1 TO 12)
+' Note: month$ is declared in declarations.bas
 ' Note: month$ initialization moved to InitializeCampaign to avoid module-level executable code
-

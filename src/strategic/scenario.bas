@@ -24,7 +24,12 @@ FUNCTION SelectScenario% ()
     NEXT i
     
     ' Show menu using menu system
-    selected = ShowListMenu%("Select Scenario", scenarioNames$, 7)
+    ' Note: Pass array by reference - QB64 syntax
+    DIM tempNames$(1 TO 7)
+    FOR i = 1 TO 7
+        tempNames$(i) = scenarioNames$(i)
+    NEXT i
+    selected = ShowListMenu%("Select Scenario", tempNames$(), 7)
     
     ' Map menu selection to scenario year
     IF selected >= 1 AND selected <= 7 THEN

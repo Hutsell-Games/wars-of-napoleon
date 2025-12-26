@@ -240,7 +240,7 @@ SUB ShowWarning (warningMessage AS STRING)
     COLOR 7 ' Reset
 END SUB
 
-FUNCTION ShowListMenu% (title AS STRING, items$, itemCount AS INTEGER)
+FUNCTION ShowListMenu% (title AS STRING, items$(), itemCount AS INTEGER)
     ' Show list menu with custom items
     ' Returns selected index (0 = cancelled)
     

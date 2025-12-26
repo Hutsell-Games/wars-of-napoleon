@@ -68,9 +68,8 @@ SUB AutoSupply
         FOR i = 1 TO MAX_ARMIES
             IF armies(i).size > 0 THEN
                 ' Determine side
-                DIM armySide AS INTEGER
-                armySide = GetArmySide%(i)
-                IF armySide = side THEN
+                currentArmySide = GetArmySide%(i)
+                IF currentArmySide = side THEN
                     cost = (armies(i).size / 1000) * SUPPLY_AUTO_COST
                     totalCost = totalCost + cost
                 END IF
@@ -80,17 +79,16 @@ SUB AutoSupply
         ' Apply supply
         IF GetGameStateCash&(side) >= totalCost THEN
             CALL SetGameStateCash(side, GetGameStateCash&(side) - totalCost)
-            FOR i = 1 TO MAX_ARMIES
-                IF armies(i).size > 0 THEN
-                    ' Determine side and supply
-                    DIM armySide AS INTEGER
-                    armySide = GetArmySide%(i)
-                    IF armySide = side THEN
-                        armies(i).supply = armies(i).supply + 1
-                        armies(i).supply = ClampValue%(armies(i).supply, 0, 10)
-                    END IF
+        FOR i = 1 TO MAX_ARMIES
+            IF armies(i).size > 0 THEN
+                ' Determine side and supply
+                currentArmySide = GetArmySide%(i)
+                IF currentArmySide = side THEN
+                    armies(i).supply = armies(i).supply + 1
+                    armies(i).supply = ClampValue%(armies(i).supply, 0, 10)
                 END IF
-            NEXT i
+            END IF
+        NEXT i
         END IF
     NEXT side
 END SUB

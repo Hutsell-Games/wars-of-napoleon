@@ -38,9 +38,6 @@ END
 ' $INCLUDE: 'src/tactical/core.bas'
 ' $INCLUDE: 'src/tactical/ui.bas'
 ' $INCLUDE: 'src/tactical/units.bas'
-' NAPOLEON.BAS subroutines extracted to napoleon_subs.bas to avoid main program execution
-' The original NAPOLEON.BAS had executable code that would run when included.
-' All SUB/FUNCTION definitions have been extracted to napoleon_subs.bas
 ' $INCLUDE: 'src/tactical/napoleon_subs.bas'
 ' $INCLUDE: 'src/strategic/commands.bas'
 ' $INCLUDE: 'src/strategic/move_capital.bas'
