@@ -92,15 +92,53 @@ DIM SHARED name$(1 TO 100)
 DIM SHARED unit$(1 TO 100)
 DIM SHARED elan(1 TO 2) AS INTEGER
 DIM SHARED bigg(1 TO 2) AS INTEGER
-DIM SHARED m1 AS INTEGER
-DIM SHARED m2 AS INTEGER
-DIM SHARED most AS INTEGER
-DIM SHARED obstruct AS INTEGER
-DIM SHARED possess AS INTEGER
+DIM SHARED m1 AS INTEGER ' Middle point 1 (40)
+DIM SHARED m2 AS INTEGER ' Middle point 2 (41)
+DIM SHARED most AS INTEGER ' Maximum unit index (80)
+' Initialize these values (from NAP10.BI: most = 80, m1 = 40, m2 = 41)
+most = 80: m1 = 40: m2 = 41
+DIM SHARED obstruct AS INTEGER ' Obstruction counter for map generation
+DIM SHARED possess AS INTEGER ' Objective possessor (1 or 2, 3 = neutral)
 DIM SHARED objx AS INTEGER
 DIM SHARED objy AS INTEGER
-DIM SHARED sdtext$(1 TO 10)
-DIM SHARED file$
+DIM SHARED sdtext$(1 TO 24) ' Map text data (24 lines for 20 hex rows + buffer)
+DIM SHARED file$ ' Used to signal battle end (CHR$(219) = time expired)
+' Initialize file$ to empty string to prevent undefined variable errors
+file$ = ""
+DIM SHARED setupx AS INTEGER ' Setup position (1-5)
+DIM SHARED timelimit AS SINGLE ' Battle time limit
+DIM SHARED unitsize& AS LONG ' Base unit size
+DIM SHARED equip$(0 TO 5) ' Equipment types
+DIM SHARED recon AS INTEGER ' Recon mode (0 = normal, 1 = show all)
+' most, m1, m2 already declared above - removing duplicate
+DIM SHARED toa(1 TO 100) AS SINGLE ' Time of action for each unit
+DIM SHARED score&(1 TO 2) AS LONG ' Score for each side
+DIM SHARED waver(1 TO 2) AS INTEGER ' Waver state for each side
+DIM SHARED stex$(1 TO 22) ' Status text
+DIM SHARED highscore(1 TO 2) AS INTEGER ' High score tracking
+DIM SHARED commander$(1 TO 2) ' Commander names
+DIM SHARED expbase(1 TO 2) AS INTEGER ' Base experience for each side
+DIM SHARED leadbase(1 TO 2) AS INTEGER ' Base leadership for each side
+DIM SHARED sidex(1 TO 2) AS INTEGER ' Side identifiers
+DIM SHARED vp&(1 TO 2) AS LONG ' Victory points/strength for each side
+DIM SHARED adj1$(1 TO 5) ' Adjectives 1
+DIM SHARED adj2$(1 TO 5) ' Adjectives 2
+DIM SHARED adj3$(1 TO 5) ' Adjectives 3
+DIM SHARED sname$(1 TO 2) ' Side names ("Allies", "French")
+DIM SHARED morlev$(1 TO 5) ' Morale level names
+DIM SHARED xplev$(1 TO 5) ' Experience level names
+DIM SHARED ledlev$(1 TO 5) ' Leadership level names
+DIM SHARED stakk AS INTEGER ' Stack counter
+DIM SHARED Mighty AS INTEGER ' Mighty flag
+DIM SHARED artimp AS INTEGER ' Artillery improvement
+DIM SHARED batint AS INTEGER ' Battle intensity
+DIM SHARED movesleft AS INTEGER ' Moves left for current unit
+DIM SHARED limber AS INTEGER ' Limber mode
+DIM SHARED version AS INTEGER ' Version number
+DIM SHARED artcap AS INTEGER ' Artillery capture enabled
+DIM SHARED DEBUG AS INTEGER ' Debug mode
+DIM SHARED startit! AS SINGLE ' Start time
+DIM SHARED timex AS SINGLE ' Current time
 
 ' Shared variables from strategic game
 DIM SHARED graphic(1 TO 1564) AS INTEGER ' Graphics array
@@ -127,16 +165,54 @@ DECLARE SUB YouorMe (index%, F%)
 DECLARE SUB inspect (index%)
 DECLARE SUB snapshot (x%, y%, flag%)
 DECLARE SUB touchup ()
+DECLARE SUB order ()
+DECLARE SUB expire ()
+DECLARE SUB whois (x%, y%, Enemy%, index%)
+DECLARE SUB replace (y%, x%, z%)
+DECLARE SUB arrange (who%, xloc%, yloc%)
+DECLARE SUB startmap ()
+DECLARE FUNCTION LEFTY$ (index%)
+DECLARE SUB over (flag%)
+DECLARE SUB TICK (sec!)
+DECLARE SUB clrbot ()
+DECLARE SUB BuffClear ()
+
+' Function declarations for main game
+DECLARE FUNCTION ShowMainMenu% ()
+DECLARE FUNCTION SelectCommander% (side AS INTEGER, cityIndex AS INTEGER)
+DECLARE FUNCTION SelectScenario% ()
+
+' Army management function declarations
+DECLARE SUB MarkCommanderAvailable (armyIndex AS INTEGER)
+
+' Utility function declarations
+DECLARE FUNCTION GetFileSize& (filename AS STRING)
+DECLARE SUB LogMessage (message AS STRING)
+DECLARE SUB CloseLogFile
+DECLARE SUB ShowHelp (topic AS STRING)
+
+' Function declarations for tactical battle system
+DECLARE FUNCTION RunTacticalBattleLoop% (side AS INTEGER, sidex(1 TO 2) AS INTEGER)
+DECLARE FUNCTION GetRemainingStrength& (side AS INTEGER)
+DECLARE FUNCTION CheckVictoryConditions% ()
+DECLARE FUNCTION CheckObjectiveControl% (sideNum AS INTEGER)
+DECLARE SUB LoadTacticalConfig ()
+
 ' Note: LaunchTacticalBattle is declared in tactical_integration.bas after battle_types.bas is included
 
 ' Shared configuration variables
-DIM SHARED mdsp AS INTEGER
-DIM SHARED mdly!
-DIM SHARED bold AS INTEGER
-DIM SHARED seelimit AS INTEGER
+DIM SHARED mdsp AS INTEGER ' Display mode
+DIM SHARED mdly! AS SINGLE ' Display delay
+DIM SHARED bold AS INTEGER ' Boldness level (3-5)
+DIM SHARED seelimit AS INTEGER ' Visibility limit
+DIM SHARED quiet AS INTEGER ' Quiet mode (sound off)
+DIM SHARED difficult AS INTEGER ' Difficulty level
+DIM SHARED lineofsight AS INTEGER ' Line of sight enabled
 
 ' Shared game state variables
 DIM SHARED scenario$
+' Initialize scenario$ to empty string to prevent undefined variable errors
+scenario$ = ""
 DIM SHARED currentPhase AS INTEGER
 
 ' Shared arrays for strategic game
@@ -174,6 +250,30 @@ DIM SHARED endGameWinner AS INTEGER ' Side that triggered end condition
 DIM SHARED battleWon(1 TO 2) AS INTEGER
 DIM SHARED casualties(1 TO 2) AS LONG
 DIM SHARED historyFile AS INTEGER ' History file handle
+
+' Shared variables for logging system
+DIM SHARED logFileNum AS INTEGER ' Log file handle
+DIM SHARED logInitialized AS INTEGER ' Log initialization flag
+
+' Mouse function declarations
+DECLARE FUNCTION GetMouseX% ()
+DECLARE FUNCTION GetMouseY% ()
+DECLARE FUNCTION GetMouseButton% ()
+DECLARE FUNCTION GetMouseButtonClick% ()
+DECLARE FUNCTION IsMouseAvailable% ()
+DECLARE FUNCTION IsMouseOverCity% (cityIndex AS INTEGER)
+DECLARE SUB ProcessMouseInput
+DECLARE SUB HandleMouseClick
+DECLARE SUB InitializeMouse
+DECLARE SUB EnableMouse
+DECLARE SUB DisableMouse
+
+' Graphics function declarations
+DECLARE FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
+DECLARE SUB InitializeGraphics
+
+' Realism function declarations
+DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
 
 ' Shared capitals
 DIM SHARED capitalCity(1 TO 2) AS INTEGER

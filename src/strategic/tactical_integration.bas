@@ -9,13 +9,23 @@
 ' Note: tactical/battle.bas will be implemented in Phase 3
 
 ' Note: LaunchTacticalBattle is defined in tactical/battle.bas
-' DECLARE not needed - QB64 will find it automatically
+' DECLARE statement added for clarity and consistency
+DECLARE SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
 
+'============================================================================
+' ShouldTriggerTacticalBattle - Determine if tactical battle should be triggered
+'============================================================================
+' Parameters:
+'   attackerIndex (INTEGER) - Index of attacking army
+'   defenderIndex (INTEGER) - Index of defending army
+' Returns:
+'   INTEGER - 1 if tactical battle should be triggered, 0 otherwise
+' Description:
+'   Checks if conditions are met for tactical battle:
+'   1. TACTICAL option enabled (from NWS.CFG)
+'   2. Force ratio between 1:3 and 3:1 (inclusive)
+'============================================================================
 FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex AS INTEGER)
-    ' Check if tactical battle should be triggered
-    ' Conditions:
-    ' 1. TACTICAL option enabled (from NWS.CFG)
-    ' 2. Force ratio <= 3:1
     
     ShouldTriggerTacticalBattle% = 0
     
@@ -36,7 +46,12 @@ FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex A
         EXIT FUNCTION ' No defender
     END IF
     
-    ' Calculate ratio (attacker:defender)
+    ' Calculate ratio (attacker:defender) - prevent division by zero
+    IF defenderStrength = 0 THEN
+        ShouldTriggerTacticalBattle% = 0 ' No defender, no tactical battle
+        EXIT FUNCTION
+    END IF
+    
     ratio = attackerStrength / defenderStrength
     
     ' Check if ratio is between 1:3 and 3:1
@@ -45,9 +60,25 @@ FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex A
     END IF
 END FUNCTION
 
+'============================================================================
+' ResolveCombat - Resolve strategic combat between armies
+'============================================================================
+' Parameters:
+'   attackerIndex (INTEGER) - Index of attacking army
+'   defenderIndex (INTEGER) - Index of defending army
+'   cityIndex (INTEGER) - Index of city where combat occurs (0 if no city)
+' Returns:
+'   INTEGER - Winner side (1=attacker, 2=defender)
+' Description:
+'   Resolves combat between two armies. May trigger tactical battle if conditions
+'   are met. Updates army strengths, captures cities, and awards victory points.
+' Side Effects:
+'   - May launch tactical battle (if ShouldTriggerTacticalBattle returns 1)
+'   - Updates army strengths based on combat results
+'   - May capture city if attacker wins
+'   - Awards victory points to winner
+'============================================================================
 FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cityIndex AS INTEGER)
-    ' Resolve combat between attacker and defender
-    ' Returns winner (1=attacker, 2=defender)
     ' May trigger tactical battle or use strategic resolution
     
     DIM attackerSide AS INTEGER
@@ -56,53 +87,94 @@ FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
     DIM battleData AS BattleData
     DIM battleResult AS BattleResult
     
-    ' Determine sides
-    IF attackerIndex >= FRENCH_START AND attackerIndex < ALLIED_START THEN
-        attackerSide = 1
-    ELSE
-        attackerSide = 2
-    END IF
+    ' Determine sides using helper function
+    attackerSide = GetArmySide%(attackerIndex)
+    defenderSide = GetArmySide%(defenderIndex)
     
-    IF defenderIndex >= FRENCH_START AND defenderIndex < ALLIED_START THEN
-        defenderSide = 1
-    ELSE
-        defenderSide = 2
+    ' Validate sides
+    IF attackerSide = 0 OR defenderSide = 0 THEN
+        CALL HandleValidationError("Invalid army indices in ResolveCombat")
+        ' Return defender side as fallback (defender wins by default on error)
+        ResolveCombat% = defenderSide
+        IF defenderSide = 0 THEN ResolveCombat% = 2 ' Default to Allied if both invalid
+        EXIT FUNCTION
     END IF
     
     ' Check if tactical battle should be triggered
     IF ShouldTriggerTacticalBattle%(attackerIndex, defenderIndex) = 1 THEN
-        ' Prepare battle data
+        ' ============================================================
+        ' PREPARE BATTLE DATA FOR TACTICAL LAYER
+        ' ============================================================
+        ' Convert strategic game state to tactical battle parameters
+        ' This is the critical data transformation between layers
+        
+        ' Scenario and game state
         battleData.scenario = scenario$
-        battleData.side = gameState.side
-        battleData.sideID1 = attackerSide
-        battleData.sideID2 = defenderSide
+        battleData.side = gameState.side ' Current player side (1=French, 2=Allied)
+        battleData.sideID1 = attackerSide ' Side identifier for attacker (1 or 2)
+        battleData.sideID2 = defenderSide ' Side identifier for defender (1 or 2)
+        
+        ' Commander information
         battleData.commander1 = armies(attackerIndex).name
         battleData.commander2 = armies(defenderIndex).name
-        battleData.vp1 = armies(attackerIndex).size \ 100 ' Convert to hundreds
+        
+        ' Army strengths - CONVERSION: Strategic uses raw size, tactical uses hundreds
+        ' Example: 5000 men → 50 (hundreds) for tactical battle
+        battleData.vp1 = armies(attackerIndex).size \ 100
         battleData.vp2 = armies(defenderIndex).size \ 100
+        
+        ' Leadership and experience ratings (1-10 scale)
         battleData.leadbase1 = armies(attackerIndex).lead
         battleData.leadbase2 = armies(defenderIndex).lead
         battleData.expbase1 = armies(attackerIndex).exper
         battleData.expbase2 = armies(defenderIndex).exper
-        battleData.difficult = config_balance
-        battleData.fort = cities(cityIndex).fort
-        battleData.quiet = config_sound
         
-        ' Apply supply penalty if out of supply
+        ' Battle configuration
+        battleData.difficult = config_balance ' Difficulty level from config
+        battleData.fort = cities(cityIndex).fort ' Fortification level (0-5)
+        battleData.quiet = config_sound ' Sound enabled/disabled
+        
+        ' ============================================================
+        ' APPLY STRATEGIC MODIFIERS
+        ' ============================================================
+        ' Supply status affects tactical battle strength
+        ' Out-of-supply armies fight at 50% effectiveness
         IF IsOutOfSupply%(attackerIndex) = 1 THEN
-            battleData.vp1 = battleData.vp1 \ 2 ' 50% strength
+            battleData.vp1 = battleData.vp1 \ 2 ' 50% strength penalty
         END IF
         IF IsOutOfSupply%(defenderIndex) = 1 THEN
-            battleData.vp2 = battleData.vp2 \ 2 ' 50% strength
+            battleData.vp2 = battleData.vp2 \ 2 ' 50% strength penalty
         END IF
         
-        ' Launch tactical battle
+        ' ============================================================
+        ' LAUNCH TACTICAL BATTLE
+        ' ============================================================
+        ' This is the critical integration point: strategic → tactical
+        ' The tactical battle will:
+        '   1. Initialize battle map and units
+        '   2. Run tactical battle loop
+        '   3. Check victory conditions
+        '   4. Calculate casualties
+        '   5. Return results in battleResult structure
         ' NOTE: Avoid ON ERROR GOTO + in-procedure labels inside FUNCTIONs.
         ' QB64/QB64-PE can report "Common label within a SUB/FUNCTION" for that pattern.
         CALL LaunchTacticalBattle(battleData, battleResult)
         
-        ' Process results
-        winner = ProcessTacticalResults%(battleResult, attackerIndex, defenderIndex, cityIndex, attackerSide, defenderSide)
+        ' ============================================================
+        ' PROCESS TACTICAL BATTLE RESULTS
+        ' ============================================================
+        ' Validate battle result - check if battle completed successfully
+        ' battleResult.winner = 0 indicates error/failure
+        IF battleResult.winner = 0 THEN
+            ' Battle initialization failed or error occurred
+            ' Fall back to strategic combat resolution (no tactical battle)
+            CALL ShowStatusWarning("Tactical battle failed, using strategic resolution")
+            winner = ResolveStrategicCombat%(attackerIndex, defenderIndex, cityIndex)
+        ELSE
+            ' Process results from successful tactical battle
+            ' This updates army strengths, city control, experience, etc.
+            winner = ProcessTacticalResults%(battleResult, attackerIndex, defenderIndex, cityIndex, attackerSide, defenderSide)
+        END IF
     ELSE
         ' Strategic combat resolution
         winner = ResolveStrategicCombat%(attackerIndex, defenderIndex, cityIndex)
@@ -112,52 +184,89 @@ FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
     EXIT FUNCTION
 END FUNCTION
 
+'============================================================================
+' ProcessTacticalResults - Process results from tactical battle
+'============================================================================
+' This function bridges tactical battle results back to strategic layer
+' Parameters:
+'   result (BattleResult) - Results from tactical battle (winner, casualties)
+'   attackerIndex, defenderIndex (INTEGER) - Strategic army indices
+'   cityIndex (INTEGER) - City where battle occurred (0 if no city)
+'   attackerSide, defenderSide (INTEGER) - Side identifiers (1 or 2)
+' Returns:
+'   INTEGER - Strategic army index of winner
+' Description:
+'   Converts tactical battle results into strategic game state updates:
+'   - Applies casualties to army strengths
+'   - Updates army experience (winner gains +1)
+'   - Transfers city control if attacker wins
+'   - Processes retreat for losing army
+'   - Handles army destruction if strength reaches 0
+'============================================================================
 FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEGER, defenderIndex AS INTEGER, _
                                   cityIndex AS INTEGER, attackerSide AS INTEGER, defenderSide AS INTEGER)
-    ' Process results from tactical battle
-    ' Updates army strengths, city control, experience, retreats
     
     DIM winner AS INTEGER
     DIM loser AS INTEGER
     DIM winnerSide AS INTEGER
     DIM loserSide AS INTEGER
     
+    ' ============================================================
+    ' DETERMINE WINNER AND LOSER
+    ' ============================================================
+    ' result.winner contains side ID (1 or 2), convert to army index
     winner = result.winner
     IF winner = attackerSide THEN
+        ' Attacker won
         winnerSide = attackerSide
         loserSide = defenderSide
-        winner = attackerIndex
+        winner = attackerIndex ' Convert to strategic army index
         loser = defenderIndex
     ELSE
+        ' Defender won
         winnerSide = defenderSide
         loserSide = attackerSide
-        winner = defenderIndex
+        winner = defenderIndex ' Convert to strategic army index
         loser = attackerIndex
     END IF
     
-    ' Update army strengths based on casualties
+    ' ============================================================
+    ' APPLY CASUALTIES
+    ' ============================================================
+    ' Casualties are in scaled units (hundreds), same as strategic size
+    ' Example: 50 casualties (hundreds) = 5000 men lost
     armies(attackerIndex).size = armies(attackerIndex).size - result.casualties1
     armies(defenderIndex).size = armies(defenderIndex).size - result.casualties2
     
-    ' Ensure strengths don't go negative
+    ' Ensure strengths don't go negative (safety check)
     IF armies(attackerIndex).size < 0 THEN armies(attackerIndex).size = 0
     IF armies(defenderIndex).size < 0 THEN armies(defenderIndex).size = 0
     
-    ' Update experience (+1 for winner)
+    ' ============================================================
+    ' UPDATE EXPERIENCE
+    ' ============================================================
+    ' Winner gains experience (max 10)
     IF armies(winner).exper < 10 THEN
         armies(winner).exper = armies(winner).exper + 1
     END IF
     
-    ' Transfer city control if attacker wins
-    IF winnerSide = attackerSide THEN
+    ' ============================================================
+    ' CITY CONTROL TRANSFER
+    ' ============================================================
+    ' If attacker wins, they capture the city
+    IF winnerSide = attackerSide AND cityIndex > 0 THEN
         CaptureCity cityIndex, attackerSide
     END IF
     
-    ' Process retreat for loser
+    ' ============================================================
+    ' RETREAT PROCESSING
+    ' ============================================================
+    ' Loser must retreat if army still exists
     IF armies(loser).size > 0 THEN
         ProcessRetreat loser, cityIndex
     ELSE
-        ' Army destroyed
+        ' Army destroyed - mark commander as available
+        CALL MarkCommanderAvailable(loser)
         armies(loser).size = 0
         armies(loser).name = ""
         armies(loser).loc = 0
@@ -209,13 +318,9 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
         IF adjCity > 0 THEN
             ' Check if friendly city
             DIM side AS INTEGER
-            IF armyIndex >= FRENCH_START AND armyIndex < ALLIED_START THEN
-                side = 1
-            ELSE
-                side = 2
-            END IF
+            side = GetArmySide%(armyIndex)
             
-            IF cities(adjCity).owner = side AND occupied(adjCity) = 0 THEN
+            IF side > 0 AND cities(adjCity).owner = side AND occupied(adjCity) = 0 THEN
                 IF cities(adjCity).value > bestValue THEN
                     bestValue = cities(adjCity).value
                     bestCity = adjCity
@@ -228,10 +333,11 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
         ' Retreat to city
         armies(armyIndex).loc = bestCity
         PlaceArmy armyIndex
-        COLOR 11: CALL clrbot: PRINT armies(armyIndex).name; " retreats to"; cities(bestCity).name
+        CALL ShowStatusMessage(armies(armyIndex).name + " retreats to " + cities(bestCity).name, 11)
     ELSE
-        ' Surrender
-        COLOR 11: CALL clrbot: PRINT armies(armyIndex).name; " surrenders - no retreat path"
+        ' Surrender - mark commander as available
+        CALL MarkCommanderAvailable(armyIndex)
+        CALL ShowStatusMessage(armies(armyIndex).name + " surrenders - no retreat path", 11)
         armies(armyIndex).size = 0
         armies(armyIndex).name = ""
         armies(armyIndex).loc = 0

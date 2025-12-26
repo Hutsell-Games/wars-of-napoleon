@@ -11,9 +11,8 @@ SUB DisplayTacticalMap
     ' 27x20 hex grid
     ' Shows terrain, units, objectives
     
-    ' This will use the mainmap subroutine from NAPOLEON.BAS
-    ' TODO: Implement mainmap SUB from NAPOLEON.BAS
-    ' CALL mainmap
+    ' This uses the mainmap subroutine from NAPOLEON.BAS
+    CALL mainmap
 END SUB
 
 SUB RenderUnit (unitIndex AS INTEGER)

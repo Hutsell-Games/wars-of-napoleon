@@ -36,9 +36,14 @@ SUB BuildShip (side AS INTEGER, portCity AS INTEGER)
         EXIT SUB
     END IF
     
-    ' Check if city is a port (placeholder - will check actual port status)
-    IF portCity <= 0 THEN
-        COLOR 11: CALL clrbot: PRINT "Invalid port city"
+    ' Check if city is a port using cityMatrix(cityIndex, 7)
+    IF portCity <= 0 OR portCity > MAX_CITIES THEN
+        CALL ShowStatusError("Invalid port city")
+        EXIT SUB
+    END IF
+    
+    IF cityMatrix(portCity, 7) <> 1 THEN
+        CALL ShowStatusError("City is not a port")
         EXIT SUB
     END IF
     
@@ -111,7 +116,18 @@ SUB BombardCity (side AS INTEGER, targetCity AS INTEGER)
     END IF
     
     IF fleets(side).loc <> targetCity THEN
-        COLOR 11: CALL clrbot: PRINT "Fleet must be in target city port"
+        CALL ShowStatusError("Fleet must be in target city port")
+        EXIT SUB
+    END IF
+    
+    ' Verify target city is actually a port
+    IF targetCity <= 0 OR targetCity > MAX_CITIES THEN
+        CALL ShowStatusError("Invalid target city")
+        EXIT SUB
+    END IF
+    
+    IF cityMatrix(targetCity, 7) <> 1 THEN
+        CALL ShowStatusError("Target city is not a port")
         EXIT SUB
     END IF
     

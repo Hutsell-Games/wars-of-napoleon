@@ -10,9 +10,16 @@
 
 ' Note: endGameFlags, endGameTriggered, endGameWinner are declared in declarations.bas
 
+'============================================================================
+' InitializeVictoryConditions - Initialize victory condition tracking
+'============================================================================
+' Description:
+'   Initializes all end game condition flags to zero. Called at game start.
+'   Victory conditions are loaded from scenario data (NWSxxxx.INI files).
+' Side Effects:
+'   Resets endGameFlags array and endGameTriggered/endGameWinner variables
+'============================================================================
 SUB InitializeVictoryConditions
-    ' Initialize end game conditions from scenario data
-    ' Format from NWSxxxx.INI will set these values
     DIM i AS INTEGER
     FOR i = 1 TO 5
         endGameFlags(i) = 0
@@ -21,9 +28,16 @@ SUB InitializeVictoryConditions
     endGameWinner = 0
 END SUB
 
+'============================================================================
+' CheckEndGameConditions - Check if any end game condition is met
+'============================================================================
+' Returns:
+'   INTEGER - Side that triggered condition (1=French, 2=Allies, 0=none)
+' Description:
+'   Checks all victory conditions (control, casualties, objectives, etc.)
+'   Returns the side that has met an end game condition, or 0 if none met.
+'============================================================================
 FUNCTION CheckEndGameConditions% ()
-    ' Check all end game conditions
-    ' Returns side that triggered condition (0 = none)
     
     DIM i AS INTEGER
     DIM side AS INTEGER
@@ -147,10 +161,11 @@ SUB SaveHighScore (side AS INTEGER, score AS LONG)
     DIM tempScore AS LONG
     DIM tempName AS STRING
     
-    filename = "HISCORE.NWS"
+    filename = "data\HISCORE.NWS"
     
     ' Load existing scores
-    IF FileExists%(filename) <> 0 THEN
+    ' QB64-compatible file existence check
+    IF _FILEEXISTS(filename) THEN
         OPEN "I", 1, filename
         FOR i = 1 TO 5
             INPUT #1, names$(i), scores(i)

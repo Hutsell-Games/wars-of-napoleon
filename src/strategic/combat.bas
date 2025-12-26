@@ -99,8 +99,8 @@ SUB DetermineCombatWinner (attackerIndex AS INTEGER, defenderIndex AS INTEGER, c
     DIM defenderRoll AS SINGLE
     
     ' Calculate effective strengths
-    attackerStrength = CalculateCombatStrength(attackerIndex)
-    defenderStrength = CalculateCombatStrength(defenderIndex)
+    attackerStrength = CalculateCombatStrength&(attackerIndex)
+    defenderStrength = CalculateCombatStrength&(defenderIndex)
     
     ' Apply defender bonus
     defenderStrength = defenderStrength * CalculateDefenderBonus(cityIndex)
@@ -136,12 +136,10 @@ SUB ProcessCombatResult (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
     ' Transfer city control if attacker wins
     IF winner = 1 THEN
         DIM attackerSide AS INTEGER
-        IF attackerIndex >= FRENCH_START AND attackerIndex < ALLIED_START THEN
-            attackerSide = 1
-        ELSE
-            attackerSide = 2
+        attackerSide = GetArmySide%(attackerIndex)
+        IF attackerSide > 0 THEN
+            CALL CaptureCity(cityIndex, attackerSide)
         END IF
-        CALL CaptureCity(cityIndex, attackerSide)
     ELSE
         ' Defender wins - attacker's move cancelled
         armies(attackerIndex).move = armies(attackerIndex).loc
@@ -153,7 +151,8 @@ SUB ProcessCombatResult (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
         IF armies(defenderIndex).size > 0 THEN
             CALL ProcessRetreat(defenderIndex, cityIndex)
         ELSE
-            ' Army destroyed
+            ' Army destroyed - mark commander as available
+            CALL MarkCommanderAvailable(defenderIndex)
             armies(defenderIndex).size = 0
             armies(defenderIndex).name = ""
             armies(defenderIndex).loc = 0
@@ -167,16 +166,11 @@ SUB ProcessCombatResult (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
     ' Award battle victory
     DIM winnerSide AS INTEGER
     IF winner = 1 THEN
-        IF attackerIndex >= FRENCH_START AND attackerIndex < ALLIED_START THEN
-            winnerSide = 1
-        ELSE
-            winnerSide = 2
-        END IF
-    ELSEIF defenderIndex >= FRENCH_START AND defenderIndex < ALLIED_START THEN
-        winnerSide = 1
+        winnerSide = GetArmySide%(attackerIndex)
     ELSE
-        winnerSide = 2
+        winnerSide = GetArmySide%(defenderIndex)
     END IF
+    IF winnerSide = 0 THEN winnerSide = 1 ' Fallback if invalid
     
     AwardBattleVictory(winnerSide)
     

@@ -8,22 +8,6 @@
       *                                                   *
       *****************************************************
 
-
-
-              _______
-         ____|__     |               (R)
-      --|       |    |-------------------
-        |   ____|__  |  Association of
-        |  |       |_|  Shareware
-        |__|   o   |    Professionals
-      -----|   |   |---------------------
-           |___|___|    MEMBER
-
-
-
-
-
-
               WARS OF NAPOLEON STRATEGY GAME
                     C O N T E N T S
  
@@ -98,8 +82,7 @@
  7.4   City Matrix (EUROxxxx.MAP)                      26 
  8      D E S I G N E R    N O T E S                   27 
  8.1   Combat Model Adjustment                         27 
- 8.2   Why Register ?                                  28 
-
+
 ===========================================================
  1   I N T R O D U C T I O N
 ===========================================================
@@ -128,7 +111,7 @@ NWS.CFG         - your customizable configuration file
 NWSxxxx.INI     - initialization data file for year xxxx
 LEADxxxx.DAT    - army leader data file for year xxxx
 EUROxxxx.MAP    - city data file for year xxxx
-WON.DOC         - this documentation file
+WON.TXT         - this documentation file
 HISCORE.NWS     - high score file
 GAMESATA.INI    - initialization data file
 
@@ -701,7 +684,7 @@ no cost for any of the reports.
      Typical chronicle entries might look like this:
 
   Metz *Napoleon (3200/29600) defeats Alvintzi (5400/30200)
-  Berlin BlÅcher (1200/59900) defeats *Grouchy (3900/22400)
+  Berlin BlÔøΩcher (1200/59900) defeats *Grouchy (3900/22400)
 
      The asterisk indicates the attacker. Casualties and
      total troop strength are indicated in the parentheses.
@@ -722,7 +705,7 @@ various features of overall game play to be modified.
 Allows you to load or save games and to quit the program.
 There can be up to 8 user-saved games,"NWSx.SAV", where "x"
 is a number from 1 to 8. Those file names for which a saved
-game exists are marked with a "˚" as a reminder. When the
+game exists are marked with a "ÔøΩ" as a reminder. When the
 game is started, the base game is automatically initialized,
 configured according to the current NWS.CFG settings.
 
@@ -902,7 +885,7 @@ Toggle between Sound & Music, Sound Only, and Quiet.
 ============================================
 Toggle to set up tactical level battles when combat occurs
 instead of the normal strategic level battle resolution. If
-checked ("˚") tactical level battles will result if the
+checked ("ÔøΩ") tactical level battles will result if the
 relative force strength is 3:1 or less. More lopsided
 battles will still be resolved using the strategic level
 combat. (Note: This option requires the Registered Edition).
@@ -939,7 +922,7 @@ conditions may trigger the end of the game:
 
 In addition, the total elimination of either side's armies
 will trigger a victory condition. Active conditions are
-marked with an "˚". These may be toggled either off or on
+marked with an "ÔøΩ". These may be toggled either off or on
 (active) using this option by pressing ENTER when the
 desired condition is highlighted, but the VALUES themselves
 can only be changed in NWS.INI (see "Files" section below).
@@ -1174,7 +1157,7 @@ After all combat and moves are resolved, the supplies are
 distributed, and income and victory points are updated based
 on present game situations. Note that the Allied side always
 receives income from other parts of Europe outside the
-
+
 				- 23  -
  
 region shown (e.g., the remainder of England). Thus, the
@@ -1223,7 +1206,7 @@ War conditions for each country. This can vary from 0 (total
 peace) to 100 (ultimate hatred). If it is above 50%, the
 country is at war. The values in order correspond to
 France,Austria,England,Russia,Prussia,and Spain.
-
+
 				- 24  -
  
 
@@ -1272,7 +1255,7 @@ Data lines for each Allies army at beginning of play
 |2,27,140,0,7 |
 |2,55,475,0,4 |
 +-------------+
-
+
 				- 25  -
  
 
@@ -1321,7 +1304,7 @@ Format for French entries 1-25
 Format for Allied entries 26-50
         Nationality (country)
         Name
-
+
 				- 26  -
  
         Rating (1-10)
@@ -1370,7 +1353,7 @@ Format:
         x VGA coordinate (1-530);
                 upper left corner of screen is (0,0)
         y VGA coordinate (16-440),
-
+
 				- 27  -
  
         city name (text),
@@ -1419,24 +1402,9 @@ file.
            factors than 30 will increasingly give the edge
            to the stronger army, particularly the one with
            the most troops. A value around 30 will cause
-
+
 				- 28  -
  
            the stronger side to generally win, but still
            leave enough element of luck that the weaker
            army can occasionally defeat a stronger foe.
-
- 8.2   Why Register ?
-=====================
-1. More campaign scenarios: 1805, 1807, 1808, 1812, and 1815.
-2. Fully linked NAPOLEON tactical game allows you to maneuver
-   and fight key battles in each campaign.
-3. Technical support:
-        W R Hutsell
-        2021 Hutchinson Drive
-        Kingsport, TN 37660-1609
-        email: whutsell@interserv.com
-4. Latest version of program.
-5. Bundle offers for related games at great values !
-6. You are supporting shareware - and continuing development
-   of programs you can try before you buy.

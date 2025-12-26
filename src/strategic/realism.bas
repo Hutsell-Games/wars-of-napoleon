@@ -82,11 +82,82 @@ FUNCTION GetIsolatedCityRecruitment& (cityIndex AS INTEGER)
 END FUNCTION
 
 FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
-    ' Check if city is isolated (no friendly adjacent cities)
-    ' Placeholder - will check city matrix connections
+    ' Check if city is isolated (no connection to friendly cities)
+    ' Uses breadth-first search to find path to any friendly city
+    ' Returns 1 if isolated, 0 if connected
     
-    IsCityIsolated% = 0 ' Default not isolated
-    ' TODO: Implement isolation check
+    DIM cityOwner AS INTEGER
+    DIM visited(1 TO MAX_CITIES) AS INTEGER
+    DIM queue(1 TO MAX_CITIES) AS INTEGER
+    DIM queueFront AS INTEGER
+    DIM queueBack AS INTEGER
+    DIM currentCity AS INTEGER
+    DIM i AS INTEGER
+    DIM j AS INTEGER
+    DIM connectedCity AS INTEGER
+    
+    ' Validate city index
+    IF cityIndex <= 0 OR cityIndex > MAX_CITIES THEN
+        IsCityIsolated% = 0 ' Invalid city, consider not isolated
+        EXIT FUNCTION
+    END IF
+    
+    ' Get city owner (1=French, 2=Allied)
+    IF cities(cityIndex).owner = CITY_FRENCH THEN
+        cityOwner = 1
+    ELSEIF cities(cityIndex).owner = CITY_ALLIED THEN
+        cityOwner = 2
+    ELSE
+        ' Neutral cities are not considered isolated
+        IsCityIsolated% = 0
+        EXIT FUNCTION
+    END IF
+    
+    ' Initialize visited array
+    FOR i = 1 TO MAX_CITIES
+        visited(i) = 0
+    NEXT i
+    
+    ' Initialize queue for BFS
+    queueFront = 1
+    queueBack = 1
+    queue(1) = cityIndex
+    visited(cityIndex) = 1
+    
+    ' Breadth-first search for friendly cities
+    DO WHILE queueFront <= queueBack
+        currentCity = queue(queueFront)
+        queueFront = queueFront + 1
+        
+        ' Check all connected cities (up to 6 connections)
+        FOR j = 1 TO 6
+            connectedCity = cityMatrix(currentCity, j)
+            
+            ' Skip if no connection or invalid city
+            IF connectedCity <= 0 OR connectedCity > MAX_CITIES THEN
+                ' No connection in this slot
+            ELSEIF visited(connectedCity) = 1 THEN
+                ' Already visited
+            ELSE
+                ' Check if this city is friendly
+                IF cities(connectedCity).owner = cityOwner THEN
+                    ' Found a friendly city - not isolated
+                    IsCityIsolated% = 0
+                    EXIT FUNCTION
+                END IF
+                
+                ' Mark as visited and add to queue
+                visited(connectedCity) = 1
+                queueBack = queueBack + 1
+                IF queueBack <= MAX_CITIES THEN
+                    queue(queueBack) = connectedCity
+                END IF
+            END IF
+        NEXT j
+    LOOP
+    
+    ' No friendly cities found - city is isolated
+    IsCityIsolated% = 1
 END FUNCTION
 
 FUNCTION GetDefenderAdvantage! (cityIndex AS INTEGER)

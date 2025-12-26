@@ -14,9 +14,17 @@ SUB InitializePBM
     pbmEnabled = 0 ' Default disabled
 END SUB
 
+'============================================================================
+' CreatePBMFile - Save game state for play-by-mail exchange
+'============================================================================
+' Description:
+'   Saves complete game state to PBM file for file exchange between players.
+'   Only saves if PBM mode is enabled. File contains all game data needed
+'   for the other player to continue the game.
+' Side Effects:
+'   Creates or overwrites PBM file
+'============================================================================
 SUB CreatePBMFile
-    ' Create PBM file after each turn
-    ' Contains complete game state for file exchange
     
     IF pbmEnabled = 0 THEN EXIT SUB
     
@@ -49,19 +57,39 @@ SUB CreatePBMFile
     
     CLOSE #1
     
-    COLOR 11: CALL clrbot: PRINT "PBM file created"
+    CALL ShowStatusMessage("PBM file created", 11)
 END SUB
 
+'============================================================================
+' LoadPBM - Load game state from play-by-mail file
+'============================================================================
+' Description:
+'   Loads game state from PBM file received from other player. Restores all
+'   game data and continues the game from the loaded state.
+' Side Effects:
+'   - Restores complete game state from file
+'   - Displays load progress message
+'   - Exits early if PBM mode disabled or file not found
+'============================================================================
+'============================================================================
+' LoadPBMFile - Load game state from play-by-mail file
+'============================================================================
+' Description:
+'   Loads game state from PBM file received from other player. Restores all
+'   game data and continues the game from the loaded state.
+' Side Effects:
+'   - Restores complete game state from file
+'   - Displays load progress message
+'   - Exits early if PBM mode disabled or file not found
+'============================================================================
 SUB LoadPBMFile
-    ' Load PBM file to continue game
-    ' Reads complete game state from file exchange
     
     IF FileExists%("PBM") = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "PBM file not found"
+        CALL HandleFileNotFound("PBM")
         EXIT SUB
     END IF
     
-    COLOR 11: CALL clrbot: PRINT "Loading PBM file"
+    CALL ShowStatusMessage("Loading PBM file", 11)
     
     OPEN "I", 1, "PBM"
     
@@ -101,17 +129,17 @@ SUB LoadPBMFile
     
     CLOSE #1
     
-    COLOR 11: CALL clrbot: PRINT "PBM file loaded"
+    CALL ShowStatusMessage("PBM file loaded", 11)
 END SUB
 
 SUB EnablePBM
     ' Enable PBM mode
     pbmEnabled = 1
-    COLOR 11: CALL clrbot: PRINT "PBM mode enabled"
+    CALL ShowStatusMessage("PBM mode enabled", 11)
 END SUB
 
 SUB DisablePBM
     ' Disable PBM mode
     pbmEnabled = 0
-    COLOR 11: CALL clrbot: PRINT "PBM mode disabled"
+    CALL ShowStatusMessage("PBM mode disabled", 11)
 END SUB

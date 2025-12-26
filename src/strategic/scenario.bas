@@ -12,35 +12,42 @@
 FUNCTION SelectScenario% ()
     ' Display scenario selection menu
     ' Returns selected scenario year (0 = cancelled)
+    ' Uses menu system for consistent UI
     
     DIM i AS INTEGER
-    DIM choose AS INTEGER
-    DIM mtx$(0 TO 8)
+    DIM selected AS INTEGER
+    DIM scenarioNames$(1 TO 7)
     
-    mtx$(0) = "Select Scenario"
+    ' Format scenario names for menu display
     FOR i = 1 TO 7
-        mtx$(i) = STR$(scenarioYears(i))
+        scenarioNames$(i) = LTRIM$(STR$(scenarioYears(i))) + " Campaign"
     NEXT i
-    mtx$(8) = "Cancel"
     
-    ' Display menu (placeholder - will use menu system)
-    CLS
-    COLOR 15: PRINT "WARS OF NAPOLEON - SCENARIO SELECTION"
-    PRINT STRING$(80, "-")
-    FOR i = 1 TO 7
-        PRINT i; ". "; scenarioYears(i)
-    NEXT i
-    PRINT "8. Cancel"
-    PRINT
-    INPUT "Select scenario (1-8): ", choose
+    ' Show menu using menu system
+    selected = ShowListMenu%("Select Scenario", scenarioNames$, 7)
     
-    IF choose >= 1 AND choose <= 7 THEN
-        SelectScenario% = scenarioYears(choose)
+    ' Map menu selection to scenario year
+    IF selected >= 1 AND selected <= 7 THEN
+        SelectScenario% = scenarioYears(selected)
     ELSE
-        SelectScenario% = 0
+        SelectScenario% = 0 ' Cancelled
     END IF
 END FUNCTION
 
+'============================================================================
+' LoadScenario - Load scenario data from file
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario (determines which files to load)
+' Description:
+'   Loads scenario data from NWS<year>.INI file. Sets up starting conditions:
+'   starting month/year, war conditions, objective cities, army data, etc.
+' Side Effects:
+'   - Updates gameState with starting month/year
+'   - Loads war conditions and objectives
+'   - Initializes armies from scenario data
+'   - May exit early if file not found
+'============================================================================
 SUB LoadScenario (scenarioYear AS INTEGER)
     ' Load scenario data files
     ' Files: NWSxxxx.INI, LEADxxxx.DAT, EUROxxxx.MAP
@@ -49,7 +56,7 @@ SUB LoadScenario (scenarioYear AS INTEGER)
     DIM yearStr AS STRING
     yearStr = LTRIM$(STR$(scenarioYear))
     
-    COLOR 11: CALL clrbot: PRINT "Loading scenario"; scenarioYear
+    CALL ShowStatusMessage("Loading scenario " + LTRIM$(STR$(scenarioYear)), 11)
     
     ' Initialize game structures
     CALL InitializeArmies
@@ -66,12 +73,12 @@ SUB LoadScenario (scenarioYear AS INTEGER)
     ' Load scenario initialization file (uses commanders and cities)
     LoadScenarioINI scenarioYear
     
-    COLOR 11: CALL clrbot: PRINT "Scenario loaded"
+    CALL ShowStatusMessage("Scenario loaded", 11)
 END SUB
 
 SUB LoadScenarioINI (scenarioYear AS INTEGER)
     ' Load NWSxxxx.INI file
-    ' Format per WON.DOC:
+    ' Format per WON.TXT:
     ' Line 1: month, year (e.g., 3,1796)
     ' Line 2: end game conditions (month, year, % cities, % income, objective flag, army ratio)
     ' Line 3: battles won by French, battles won by Allies, French casualties, Allied casualties
@@ -91,7 +98,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
     filename = "data/scenarios/NWS" + yearStr + ".INI"
     
     IF FileExists%(filename) = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "Scenario file not found:"; filename
+        CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
     
@@ -248,7 +255,7 @@ END SUB
 
 SUB LoadCommanderData (scenarioYear AS INTEGER)
     ' Load LEADxxxx.DAT file
-    ' Format per WON.DOC:
+    ' Format per WON.TXT:
     ' Lines 1-25: French commanders (nameVal, rating)
     ' Lines 26-50: Allied commanders (nationality, nameVal, rating)
     ' Must have exactly 50 commanders total
@@ -259,7 +266,7 @@ SUB LoadCommanderData (scenarioYear AS INTEGER)
     filename = "data/scenarios/LEAD" + yearStr + ".DAT"
     
     IF FileExists%(filename) = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "Commander file not found:"; filename
+        CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
     

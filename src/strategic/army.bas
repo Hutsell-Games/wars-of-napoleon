@@ -9,6 +9,47 @@
 
 ' Note: armies array is declared in declarations.bas
 ' Note: occupied is declared in declarations.bas
+' Note: scenario.bas provides GetCommanderByName% function
+
+'============================================================================
+' MarkCommanderAvailable - Mark commander as available when army is destroyed
+'============================================================================
+' Parameters:
+'   armyIndex (INTEGER) - Index of army being destroyed
+' Description:
+'   When an army is destroyed or disbanded, marks its commander as available
+'   for reassignment. Uses army name to find the commander.
+' Side Effects:
+'   Updates commanders array to mark commander as available
+'============================================================================
+SUB MarkCommanderAvailable (armyIndex AS INTEGER)
+    ' Mark commander as available when army is destroyed/disbanded
+    ' Uses army name to find the commander
+    
+    DIM commanderName AS STRING
+    DIM commanderIndex AS INTEGER
+    
+    ' Validate army index
+    IF armyIndex < 1 OR armyIndex > MAX_ARMIES THEN
+        EXIT SUB
+    END IF
+    
+    ' Get commander name from army
+    commanderName = armies(armyIndex).name
+    
+    ' Only proceed if army has a name (commander assigned)
+    IF commanderName = "" THEN
+        EXIT SUB
+    END IF
+    
+    ' Find commander by name
+    commanderIndex = GetCommanderByName%(commanderName)
+    
+    ' Mark commander as available if found
+    IF commanderIndex > 0 AND commanderIndex <= 50 THEN
+        commanders(commanderIndex).available = 1
+    END IF
+END SUB
 
 SUB InitializeArmies
     ' Initialize all armies to empty state
@@ -57,7 +98,7 @@ SUB RecruitArmy (side AS INTEGER, cityIndex AS INTEGER, commanderName AS STRING,
             armies(i).supply = 5 ' Start with some supply
             armies(i).loc = cityIndex
             armies(i).move = -1 ' Cannot move this turn
-            armies(i).nationality = GetCityNationality(cityIndex)
+            armies(i).nationality = GetCityNationality%(cityIndex)
             
             ' Set army size based on city value (will be set by scenario data)
             ' For now, use default
@@ -120,11 +161,8 @@ SUB CombineArmies (cityIndex AS INTEGER)
             armiesInCity(count) = i
             
             ' Determine side
-            IF i >= FRENCH_START AND i < ALLIED_START THEN
-                side = 1
-            ELSE
-                side = 2
-            END IF
+            side = GetArmySide%(i)
+            IF side = 0 THEN side = 1 ' Fallback to French if invalid
             
             totalSize = totalSize + armies(i).size
             totalLead = totalLead + armies(i).lead
@@ -160,6 +198,8 @@ SUB CombineArmies (cityIndex AS INTEGER)
     
     ' Clear other armies
     FOR i = 2 TO count
+        ' Mark commander available before destroying army
+        CALL MarkCommanderAvailable(armiesInCity(i))
         armies(armiesInCity(i)).size = 0
         armies(armiesInCity(i)).name = ""
         armies(armiesInCity(i)).loc = 0

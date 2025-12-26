@@ -1,122 +1,18 @@
+'============================================================================
+' NAPOLEON.BAS Subroutines - Extracted for WON integration
+'============================================================================
+' Main program code (lines 7-95) has been removed to prevent execution when included
+' All SUB and FUNCTION definitions from original NAPOLEON.BAS are preserved here
+'============================================================================
+' Note: The original NAPOLEON.BAS had executable code at module level that would
+' run when included. This file contains only SUB/FUNCTION definitions.
+'============================================================================
+
 DEFINT A-Z
 DECLARE SUB align (index%, x%, y%)
 DECLARE SUB randarm (k%)
 DECLARE SUB randmap ()
 REM $INCLUDE: 'nap10.bi'
-
-RANDOMIZE TIMER
-
-'============================================================================
-' Main program code - moved here after all SUB definitions for QB64 compatibility
-'============================================================================
-CLS
-choose = 22: GOSUB lodecfg
-mdly! = mdsp: IF mdsp = 5 THEN mdly! = 10
-OPEN "I", 1, "equip.dat"
-	FOR k = 0 TO 5: INPUT #1, equip$(k): NEXT k
-CLOSE #1
-CALL iconload
-menu6:
-	ON ERROR GOTO 0
-menu7:
-	SCREEN 9
-	IF quiet > 0 THEN SOUND 1900, 1: SOUND 2000, 1
-
-hilite = 14
-OPEN "I", 1, "battle.$$$"
-INPUT #1, SCENARIO$, side, sidex(1), sidex(2), commander$(sidex(1)), vp&(sidex(1)), leadbase(sidex(1)), expbase(sidex(1)), commander$(sidex(2)), vp&(sidex(2)), leadbase(sidex(2)), expbase(sidex(2)), difficult, fort, quiet
-CLOSE #1
-CALL randmap
-setupx = 1 + INT(4 * RND)
-timelimit = 25 + 5 * fort
-IF vp&(1) > 200 AND vp&(2) > 200 THEN timelimit = 40 + 5 * fort
-IF side = sidex(2) THEN
-	timelimit = timelimit + 10
-	bold = 3
-	IF RND > .5 THEN bold = 4: IF RND > .5 THEN bold = 5
-END IF
-timelimit = timelimit + .1 * obstruct
-unitsize& = vp&(1): IF vp&(2) > vp&(1) THEN unitsize& = vp&(2)
-unitsize& = 3 * unitsize&
-IF unitsize& < 500 THEN unitsize& = 500
-bigg(2) = most
-FOR k = 1 TO 2
-vp&(k) = vp&(k) * 100           'scale up unit size
-NEXT k
-FOR k = 1 TO 2
-CALL randarm(k)
-NEXT k
-seelimit = 18: IF RND > .8 THEN seelimit = 10 + INT(9 * RND)
-name$(1) = commander$(1)
-name$(41) = commander$(2)
-IF name$(41) = "Napoleon" THEN
-	leader(41) = 5: xper(41) = 5: morale(41) = 5
-END IF
-FOR k = 1 TO most
-	IF strength(k) > 0 THEN
-		z = ASC(MID$(sdtext$((unity(k) + 1)), unitx(k), 1))
-		terrain(k) = z
-	END IF
-NEXT k
-
-FOR i = 1 TO 2
-	k = sidex(i)
-	a = leader(1): IF k = 1 THEN a = leader(41)
-	elan(k) = 80 + 5 * (expbase(k) - 3) + 5 * (a - 3)
-	CALL brittle(k)
-NEXT i
-
-TICK 2
-flag = 1
-'---------------------------------------------------------------------------
-' BEGIN MAIN GAME LOOP
-'---------------------------------------------------------------------------
-ON ERROR GOTO 0
-SCREEN 9, , 0, 0
-CALL mainmap
-	CALL clrbot: COLOR 4: PRINT "Initializing";
-	FOR i = 1 TO 2: CALL Compact(i): NEXT i
-	CALL lowtime
-	FOR k = 1 TO bigg(2): Visible(k) = 0
-	IF strength(k) > 0 AND uorder(k) <> 99 AND terrain(k) = 233 THEN CALL victory(k)
-	NEXT k
-
-	s = 1: F = bigg(side): IF side = 2 THEN s = m2
-	FOR active = s TO F: IF strength(active) > 0 AND uorder(active) <> 99 THEN Visible(active) = 1: CALL see(active)
-	NEXT active
-
-	startit! = TIMER
-IF file$ = "ERROR" GOTO menu7
-CALL refresh
-    
-nother: CALL order: IF LEN(file$) > 1 GOTO nother
-IF file$ = "" THEN file$ = "": END
-IF file$ = "" THEN file$ = "": flag = 0: GOTO menu7
-GOTO nother
-'---------------------------------------------------------------------------
-' END MAIN GAME LOOP
-'---------------------------------------------------------------------------
-lodecfg:
-	RESTORE
-	FOR k = 1 TO 5: READ adj1$(k): NEXT k
-	FOR k = 1 TO 5: READ adj2$(k): NEXT k
-	FOR k = 1 TO 5: READ adj3$(k): NEXT k
-	FOR k = 1 TO 2: READ sname$(k): NEXT k
-	FOR k = 1 TO 5: READ xplev$(k): NEXT k
-	FOR k = 1 TO 5: READ ledlev$(k): NEXT k
-	FOR k = 1 TO 5: READ morlev$(k): NEXT k
-	bold = 3: seelimit = 18: side = 1: mdsp = 3
-	limber = 1
-	rely = 4: stakk = 3: lineofsight = 1: artcap = 1
-	RETURN
-
-DATA Timid,Cautious,Normal,Bold,Reckless
-DATA Very Easy,Easy,Normal,Hard,Very Hard
-DATA VERY Fast,Fast,Normal,Slow,VERY Slow
-DATA Allies,French
-DATA Green,Raw,Veteran,Seasoned,Hardened
-DATA Inept,Weak,Good,Strong,Brilliant
-DATA Beaten,Low,Good,High,Fearless
 
 SUB cannon (attack, defend)
 	IF defend = 0 THEN uorder(attack) = 0: EXIT SUB
@@ -690,11 +586,11 @@ routedunit:
 	END SELECT
 
 	IF strength(active) < 1 OR toa(active) > timex THEN movesleft = 0: GOTO snore
-	IF uorder(active) = 99 THEN GOSUB canplace: IF uorder(active) = 99 THEN movesleft = 0: GOTO sleep2
+	IF uorder(active) = 99 THEN CALL CanPlaceUnit(active): IF uorder(active) = 99 THEN movesleft = 0: GOTO sleep2
 	IF t$ = "w" THEN CALL rest(active): uorder(active) = 0: GOTO sleep2
 	flag = 1
 stillgoing:
-	CALL YouorMe(active, F): IF F = 0 THEN GOSUB otherside: GOTO asleep
+	CALL YouorMe(active, F): IF F = 0 THEN GOTO otherside: GOTO asleep
 '============================================================================
 human:
 	y0 = 14 * unity(active): x0 = 8 * unitx(active)
@@ -718,12 +614,14 @@ human:
 wait2:
 	IF LEFTY$(active) = "R" GOTO routedunit
 	LITEUP x0, y0, 14
-	GOSUB cline
+	CALL DrawCommandLine(active, t$, limber)
 '============================================================================
 '                     Get Keyboard Command
 '============================================================================
 wait3:
-	commnd$ = INKEY$: IF commnd$ = "" GOTO wait3
+	DO
+		commnd$ = INKEY$
+	LOOP WHILE commnd$ = ""
 kez:
 	a = LEN(commnd$): commnd$ = RIGHT$(commnd$, 1)
 	z = ASC(UCASE$(commnd$))
@@ -735,7 +633,7 @@ SELECT CASE z
 			CALL SHOWUNIT(k)
 		NEXT k
 
-	CASE 27: GOSUB noise1: GOTO wait2
+	CASE 27: CALL PlayNoise1: GOTO wait2
 	CASE 32: CALL BUTTON(27, 25, 4, "rest", 1)
 		 CALL rest(active): GOTO asleep
 	CASE 59  'F1
@@ -768,11 +666,11 @@ SELECT CASE z
 			END IF
 			SCREEN 9, , 0, 0
 		 END IF
-		IF t$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "Infantry": toa(active) = timex + 1: CALL BUTTON(58, 25, 4, "Charge", 1): : GOSUB noise1: GOTO asleep
+		IF t$ = "I" AND morale(active) > 2 AND (terrain(active) = 43 OR terrain(active) = 46) THEN unit$(active) = "Infantry": toa(active) = timex + 1: CALL BUTTON(58, 25, 4, "Charge", 1): : CALL PlayNoise1: GOTO asleep
 	CASE 70
 		IF INSTR("A", t$) > 0 THEN dx = 1: GOTO fodder
 	CASE 71: IF a = 2 GOTO moven
-		GOSUB ahead
+		CALL RefreshAhead(active)
 	CASE 72: IF a = 2 GOTO moven
 	CASE 73: IF a = 2 GOTO moven
 		 CALL BUTTON(33, 25, 4, "Intell", 1)
@@ -810,7 +708,7 @@ SELECT CASE z
 			GOTO asleep
 		END IF
 	CASE 84
-		GOSUB allterr
+		CALL UpdateAllTerrain
 		CALL clrbot: PRINT "Terrain"; TAB(60); "(press a key)...";
 		TICK 5
 		CALL refresh
@@ -834,8 +732,8 @@ SELECT CASE z
 		CALL clrbot: PRINT "Visible Enemy Units and Terrain"; TAB(60); "(press a key)...";
 		TICK 99
 		SCREEN 9, , 0, 0
-	CASE 87: CALL BUTTON(41, 25, 4, "Wait", 1): GOSUB whoa1: GOTO asleep
-	CASE 88: IF t$ = "G" THEN GOSUB cancel: IF y > 0 GOTO asleep ELSE GOTO wait2
+	CASE 87: CALL BUTTON(41, 25, 4, "Wait", 1): CALL WaitUnit(active): GOTO asleep
+	CASE 88: IF t$ = "G" THEN CALL CancelOrders(active, side, x, y): IF y > 0 GOTO asleep ELSE GOTO wait2
 	CASE ELSE
 		IF a < 2 THEN clrbot: COLOR 11: PRINT "Cannot execute that command"; : CALL TICK(mdly!): clrbot: BuffClear
 END SELECT
@@ -846,15 +744,15 @@ GOTO wait2
 '                     Move Unit & Check for Sighting
 '============================================================================
 moven:
-	IF LEFTY$(active) = "S" THEN CALL clrbot: COLOR 14: PRINT "Hollow squares may not move"; : GOSUB noise1: GOTO wait3
+	IF LEFTY$(active) = "S" THEN CALL clrbot: COLOR 14: PRINT "Hollow squares may not move"; : CALL PlayNoise1: GOTO wait3
 	IF limber > 0 AND INSTR("A", t$) > 0 THEN
 		IF LEFTY$(active) <> "L" THEN CALL limbo(active, 2): IF LEFTY$(active) = "L" GOTO asleep ELSE GOTO wait2
 	END IF
 	xloc = unitx(active): yloc = unity(active)
 	CALL curser(commnd$, xloc, yloc)
-	IF yloc = unity(active) AND xloc = unitx(active) THEN GOSUB noise1: GOTO wait3
+	IF yloc = unity(active) AND xloc = unitx(active) THEN CALL PlayNoise1: GOTO wait3
 	CALL placeunit(xloc, yloc, active)
-	IF uorder(active) = 1 THEN COLOR 14: clrbot: PRINT "Cannot move in that direction "; : GOSUB noise2: CALL TICK(1): uorder(active) = 0: GOTO wait2
+	IF uorder(active) = 1 THEN COLOR 14: clrbot: PRINT "Cannot move in that direction "; : CALL PlayNoise2: CALL TICK(1): uorder(active) = 0: GOTO wait2
 	CALL inspect(active)
 asleep:
 	CALL SHOWUNIT(active)
@@ -886,6 +784,10 @@ EXIT SUB
 '============================================================================
 '                               Enemy Update
 '============================================================================
+' GOSUB otherside converted to SUB - Note: Uses GOTO for flow control within order SUB
+' This is a complex function that would require significant refactoring to eliminate all GOTOs
+' For now, keeping the label but converting GOSUB call to direct code execution
+' The label remains for GOTO targets within the order SUB
 otherside:
 IF flag = 0 THEN CALL kleer: flag = 1
 COLOR 11: CALL clrbot: LOCATE 23, 50: PRINT name$(active); "'s TURN";
@@ -941,29 +843,40 @@ IF morale(active) < 3 THEN CALL rest(active): RETURN
 CALL general(active)
 CALL valid(active)
 speed:
-IF uorder(active) > 0 THEN CALL cupdate(active)
-CALL see(active)
-IF uorder(active) > 0 AND movesleft > 0 GOTO speed
+DO
+	IF uorder(active) > 0 THEN CALL cupdate(active)
+	CALL see(active)
+	IF uorder(active) = 0 OR movesleft = 0 THEN EXIT DO
+LOOP
 movesleft = 0
 RETURN
 '============================================================================
 '                              Sounds
 '============================================================================
-noise1: IF quiet > 0 THEN SOUND 1900, 1
-	RETURN
-noise2: IF quiet > 0 THEN SOUND 400, .7
-	RETURN
-noise3: IF quiet > 0 THEN SOUND 600, 2: SOUND 900, 2
-	RETURN
+' GOSUB labels converted to SUBs - noise functions
+SUB PlayNoise1
+	IF quiet > 0 THEN SOUND 1900, 1
+END SUB
+
+SUB PlayNoise2
+	IF quiet > 0 THEN SOUND 400, .7
+END SUB
+
+SUB PlayNoise3
+	IF quiet > 0 THEN SOUND 600, 2: SOUND 900, 2
+END SUB
 '============================================================================
 '                               Stats on Unit Under Cursor
 '============================================================================
-stats:
-CALL inspect(id)
-CALL YouorMe(id, F): IF F > 0 THEN IF uorder(id) > 99 AND dx <> 4 THEN CALL target(id): GOSUB inlin
-RETURN
+' GOSUB stats converted to SUB
+SUB ShowUnitStats (id AS INTEGER, dx AS INTEGER)
+	DIM F AS INTEGER
+	CALL inspect(id)
+	CALL YouorMe(id, F): IF F > 0 THEN IF uorder(id) > 99 AND dx <> 4 THEN CALL target(id): CALL ShowIntelligenceLine
+END SUB
 '============================================================================
-cline:
+' GOSUB cline converted to SUB
+SUB DrawCommandLine (active AS INTEGER, t$ AS STRING, limber AS INTEGER)
 	COLOR 14: CALL clrbot
 	PRINT "UNIT"; active; name$(active);
 	LINE (4, 334)-(639, 349), 8, BF
@@ -987,33 +900,50 @@ cline:
 		CASE ELSE
 	END SELECT
 	COLOR 11
-	RETURN
-wait5:
-	commnd$ = INKEY$: IF commnd$ = "" GOTO wait5
-	dxs = ASC(UCASE$(commnd$)): dys = LEN(commnd$)
-	IF dxs = 27 OR dxs = 32 OR dxs = 76 OR dxs = 88 THEN RETURN
-	IF dxs = 13 THEN RETURN
-	IF dys = 1 AND ASC(commnd$) > 48 AND ASC(commnd$) < 58 THEN RETURN
-	IF dys < 2 GOTO wait5
-	a = LEN(commnd$)
-	commnd$ = RIGHT$(commnd$, 1)
-
-	SELECT CASE ASC(commnd$)
-	CASE 59
-		CALL help
-		GOTO wait5
-	CASE 68
-		 IF a = 2 THEN CLS : file$ = CHR$(219): EXIT SUB
-	CASE ELSE
-	END SELECT
-
-	RETURN
+END SUB
+' GOSUB wait5 converted to SUB - Uses loop instead of recursion
+SUB WaitForKeypress (commnd$ AS STRING, dxs AS INTEGER, dys AS INTEGER)
+	DIM a AS INTEGER
+	DO
+		commnd$ = INKEY$
+		IF commnd$ <> "" THEN
+			dxs = ASC(UCASE$(commnd$)): dys = LEN(commnd$)
+			IF dxs = 27 OR dxs = 32 OR dxs = 76 OR dxs = 88 THEN EXIT DO
+			IF dxs = 13 THEN EXIT DO
+			IF dys = 1 AND ASC(commnd$) > 48 AND ASC(commnd$) < 58 THEN EXIT DO
+			IF dys >= 2 THEN
+				a = LEN(commnd$)
+				commnd$ = RIGHT$(commnd$, 1)
+				SELECT CASE ASC(commnd$)
+				CASE 59
+					CALL help
+				CASE 68
+					IF a = 2 THEN CLS : file$ = CHR$(219): EXIT DO
+				CASE ELSE
+					EXIT DO
+				END SELECT
+			END IF
+		END IF
+	LOOP
+END SUB
 '---------------------------------------------------------------------------
 ' Late Arrivals
 '---------------------------------------------------------------------------
-canplace:
+' GOSUB canplace converted to SUB
+SUB CanPlaceUnit (active AS INTEGER)
+	DIM id AS INTEGER
+	DIM s AS INTEGER
+	DIM a$ AS STRING
+	DIM F AS INTEGER
+	DIM Enemy AS INTEGER
+	DIM d AS INTEGER
+	DIM k AS INTEGER
+	DIM x AS INTEGER
+	DIM y AS INTEGER
+	DIM t$ AS STRING
+	
 	CALL whois(unitx(active), unity(active), id, active)
-	IF id > 0 THEN RETURN
+	IF id > 0 THEN EXIT SUB
 	s = 1: IF active > m1 THEN s = 2
 	uorder(active) = 0: a$ = unit$(active)
 	CALL YouorMe(active, F): IF F > 0 THEN Visible(active) = 1: a$ = name$(active)
@@ -1026,49 +956,55 @@ canplace:
 
 	IF Visible(active) > 0 THEN
 		FOR k = 1 TO 5
-		ATTENTION active, 15: IF quiet > 0 THEN GOSUB noise1
+		ATTENTION active, 15: IF quiet > 0 THEN CALL PlayNoise1
 		NEXT k
 	END IF
 
 	CALL YouorMe(active, F)
-	IF F > 0 AND t$ = "G" THEN RETURN
+	IF F > 0 AND t$ = "G" THEN EXIT SUB
 	CALL Near2(active, Enemy, d)
 	TICK .5 * mdly!
-	IF Enemy = 0 OR RND > .5 THEN uorder(active) = 100 * objy + objx: RETURN
-	IF t$ = "A" THEN CALL cannon(active, Enemy): RETURN
+	IF Enemy = 0 OR RND > .5 THEN uorder(active) = 100 * objy + objx: EXIT SUB
+	IF t$ = "A" THEN CALL cannon(active, Enemy): EXIT SUB
 	uorder(active) = 100 * unity(Enemy) + unitx(Enemy)
 	IF F > 0 THEN TICK .2 * mdly!
-	RETURN
+END SUB
 '============================================================================
 '                               cancel orders
 '============================================================================
-cancel:
-CALL clrbot: PRINT " General "; name$(active); " cancelling orders : ";
-x = 0: y = 0: s = 1: F = bigg(side): IF side = 2 THEN s = m2
-FOR i = s TO F
-IF strength(i) = 0 OR uorder(i) < 1 OR uorder(i) = 99 GOTO corpse
-IF LEFTY$(i) = "R" GOTO corpse
-y = y + 1
-IF RND < .2 * leader(active) THEN
-	uorder(i) = 0
-	CALL ATTENTION(i, 13)
-	IF quiet > 0 THEN SOUND 2900, .1: TICK .02
-	GOTO corpse
-END IF
-x = x + 1
-corpse:
-NEXT i
-IF y = 0 THEN PRINT "NO UNITS UNDER ORDERS"; : TICK .2 * mdly!: CALL clrbot: RETURN
-movesleft = movesleft - 1
-PRINT y - x; " of "; y; " units obeyed"; : TICK .2 * mdly!: CALL clrbot
-RETURN
+' GOSUB cancel converted to SUB
+SUB CancelOrders (active AS INTEGER, side AS INTEGER, x AS INTEGER, y AS INTEGER)
+	DIM s AS INTEGER
+	DIM F AS INTEGER
+	DIM i AS INTEGER
+	
+	CALL clrbot: PRINT " General "; name$(active); " cancelling orders : ";
+	x = 0: y = 0: s = 1: F = bigg(side): IF side = 2 THEN s = m2
+	FOR i = s TO F
+	IF strength(i) = 0 OR uorder(i) < 1 OR uorder(i) = 99 GOTO cancel_corpse
+	IF LEFTY$(i) = "R" GOTO cancel_corpse
+	y = y + 1
+	IF RND < .2 * leader(active) THEN
+		uorder(i) = 0
+		CALL ATTENTION(i, 13)
+		IF quiet > 0 THEN SOUND 2900, .1: TICK .02
+		GOTO cancel_corpse
+	END IF
+	x = x + 1
+cancel_corpse:
+	NEXT i
+	IF y = 0 THEN PRINT "NO UNITS UNDER ORDERS"; : TICK .2 * mdly!: CALL clrbot: EXIT SUB
+	movesleft = movesleft - 1
+	PRINT y - x; " of "; y; " units obeyed"; : TICK .2 * mdly!: CALL clrbot
+END SUB
 '============================================================================
 '                               Score Hot Key
 '============================================================================
-ahead:
+' GOSUB ahead converted to SUB
+SUB RefreshAhead (active AS INTEGER)
 	CALL expire
 	CALL mainmap: CALL refresh: CALL inspect(active)
-	RETURN
+END SUB
 '============================================================================
 '                                  Inspire Unit
 '============================================================================
@@ -1115,14 +1051,14 @@ here:
 			END IF
 		NEXT k
 		PRINT dy; "units obeyed";
-		GOSUB flash
+		CALL FlashCursor(xloc, yloc)
 	END IF
 
 	IF dx <> 2 GOTO wait2
 	uorder(active) = 100 * yloc + xloc
 	IF limber > 0 AND INSTR("A", t$) > 0 THEN
 		CALL limbo(active, 2)
-		GOSUB flash
+		CALL FlashCursor(xloc, yloc)
 		IF LEFTY$(active) = "L" GOTO asleep ELSE GOTO wait2
 	END IF
 	d = 2 * ABS(unity(active) - yloc) + ABS(unitx(active) - xloc)
@@ -1130,12 +1066,12 @@ here:
 	IF dx = 2 AND d < 4 THEN
 		uorder(active) = 100 * yloc + xloc
 		CALL cupdate(active)
-		IF uorder(active) = 1 THEN uorder(active) = 0: CALL TICK(.5): GOSUB flash: GOTO wait2
+		IF uorder(active) = 1 THEN uorder(active) = 0: CALL TICK(.5): CALL FlashCursor(xloc, yloc): GOTO wait2
 		uorder(active) = 0
 		GOTO asleep
 	ELSE
 		CALL target(active)
-		GOSUB flash
+		CALL FlashCursor(xloc, yloc)
 		CALL clrbot
 		GOTO asleep
 	END IF
@@ -1157,7 +1093,7 @@ SELECT CASE dx
 	IF dx = 5 THEN PRINT "GROUP MOVE ORDERS : Hit ENTER to order group to move to cursor position";
      
       CASE 3  'intelligence
-	GOSUB inlin
+	CALL ShowIntelligenceLine
 
       CASE 4  'inspire
 	IF LEFTY$(active) <> "G" THEN GOTO wait2
@@ -1189,29 +1125,29 @@ SELECT CASE dx
 
       CASE 2, 5  'move
       CASE 3, 4 'intelligence & inspire
-	CALL whois(xloc, yloc, id, 0): IF id > 0 THEN GOSUB stats
-	GOSUB Awaken
+	CALL whois(xloc, yloc, id, 0): IF id > 0 THEN CALL ShowUnitStats(id, dx)
+	CALL AwakenUnit(id, xloc, yloc)
 	COLOR 13: LOCATE 23, 68: PRINT d;
 	CASE ELSE
 END SELECT
        
-	GOSUB wait5
+	CALL WaitForKeypress(commnd$, dxs, dys)
 	IF ASC(commnd$) = 13 GOTO here2
 	CALL curser(commnd$, xloc, yloc)
 
-	GOSUB flash
+	CALL FlashCursor(xloc, yloc)
 	PUT (8 * x, 14 * y), Xhair, XOR
 	z = ASC(MID$(sdtext$(yloc + 1), xloc, 1))
 
 	SELECT CASE dxs
 	CASE 27
-	GOSUB flash: CALL refresh: GOTO wait2
+	CALL FlashCursor(xloc, yloc): CALL refresh: GOTO wait2
 	CASE 32
-	GOSUB flash: CALL rest(active): GOTO asleep
+	CALL FlashCursor(xloc, yloc): CALL rest(active): GOTO asleep
 	CASE 76
-	GOSUB flash: CALL limbo(active, 1): GOTO asleep
+	CALL FlashCursor(xloc, yloc): CALL limbo(active, 1): GOTO asleep
 	CASE 87
-	GOSUB whoa1: GOTO asleep
+	CALL WaitUnit(active): GOTO asleep
 	CASE ELSE
 	END SELECT
 
@@ -1219,12 +1155,12 @@ END SELECT
 '...........................................................................
 here2:
 	IF dx = 2 OR dx = 5 GOTO here
-	IF dx = 3 THEN GOSUB flash: GOTO wait2
-	IF dx = 4 THEN GOSUB flash: GOTO RAlly
+	IF dx = 3 THEN CALL FlashCursor(xloc, yloc): GOTO wait2
+	IF dx = 4 THEN CALL FlashCursor(xloc, yloc): GOTO RAlly
 	CALL whois(xloc, yloc, Enemy, active)
 	IF Enemy = 0 OR Visible(Enemy) = 0 THEN
-			GOSUB flash
-			GOSUB noise3
+			CALL FlashCursor(xloc, yloc)
+			CALL PlayNoise3
 			CALL clrbot
 			PRINT "NO ENEMY AT THAT LOCATION !"
 			TICK mdly!
@@ -1243,8 +1179,8 @@ here2:
 	IF d > vantage THEN a$ = "ENEMY IS OUT OF RANGE !"
 	IF F < 1 THEN a$ = "NOT IN LINE OF SIGHT !"
 	IF a$ <> "" THEN
-		GOSUB flash
-		GOSUB noise3
+		CALL FlashCursor(xloc, yloc)
+		CALL PlayNoise3
 		CALL clrbot
 		PRINT a$
 		TICK .2 * mdly!
@@ -1279,29 +1215,38 @@ vistarg:
 '============================================================================
 '                      Awaken Waited Unit
 '============================================================================
-Awaken:
+' GOSUB Awaken converted to SUB
+SUB AwakenUnit (id AS INTEGER, xloc AS INTEGER, yloc AS INTEGER)
+	DIM F AS INTEGER
 	IF LEFTY$(id) = "w" THEN
 		CALL YouorMe(id, F)
 		IF F > 0 THEN
 			unit$(id) = RIGHT$(unit$(id), LEN(unit$(id)) - 1)
 			CALL SHOWUNIT(id)
-			GOSUB flash
+			CALL FlashCursor(xloc, yloc)
 		END IF
 	END IF
-	RETURN
-allterr:
-FOR k = 1 TO bigg(2)
-IF strength(k) > 0 AND uorder(k) <> 99 THEN CALL Tara(unitx(k), unity(k) + 1, 0)
-NEXT k
-RETURN
-inlin:
+END SUB
+' GOSUB allterr converted to SUB
+SUB UpdateAllTerrain
+	DIM k AS INTEGER
+	FOR k = 1 TO bigg(2)
+	IF strength(k) > 0 AND uorder(k) <> 99 THEN CALL Tara(unitx(k), unity(k) + 1, 0)
+	NEXT k
+END SUB
+' GOSUB inlin converted to SUB
+SUB ShowIntelligenceLine
 	COLOR 11: clrbot: PRINT "INTELLIGENCE: move cursor over units"; : COLOR 15: PRINT "  (ESC when done) ";
 	LOCATE 23, 61: COLOR 11: PRINT "Range :";
-	RETURN
-flash:
-	PUT (8 * xloc, 14 * yloc), Xhair, XOR: RETURN
-whoa1:
-	COLOR 15: unit$(active) = "w" + unit$(active): clrbot: PRINT name$(active); " is WAITING until alerted"; : TICK .1 * mdly!: CALL rest(active): RETURN
+END SUB
+' GOSUB flash converted to SUB
+SUB FlashCursor (xloc AS INTEGER, yloc AS INTEGER)
+	PUT (8 * xloc, 14 * yloc), Xhair, XOR
+END SUB
+' GOSUB whoa1 converted to SUB
+SUB WaitUnit (active AS INTEGER)
+	COLOR 15: unit$(active) = "w" + unit$(active): clrbot: PRINT name$(active); " is WAITING until alerted"; : TICK .1 * mdly!: CALL rest(active)
+END SUB
 
 END SUB
 
@@ -1573,7 +1518,7 @@ END SUB
 
 SUB randarm (s)
 who = sidex(s)
-dx = 41: file$ = "french.dat": IF who = 1 THEN file$ = "allies.dat": dx = 1
+dx = 41: file$ = "data\french.dat": IF who = 1 THEN file$ = "data\allies.dat": dx = 1
 
 COLOR 4: LOCATE 23, 1: PRINT "Placing armies ... "
 CALL arrange(who, xloc, yloc)
@@ -1586,7 +1531,10 @@ FOR i = 1 TO allarm
 	index = 40 * (who - 1) + i
 coord:
 	spin = spin + 1: IF spin > 99 GOTO muster
-	GOSUB xxyy
+	DIM xx AS INTEGER
+	DIM yy AS INTEGER
+	DIM flag AS INTEGER
+	CALL CalculateXY(xx, yy, xloc, yloc)
 
 	unitx(index) = xx - 10 + 20 * RND
 	unity(index) = yy - 5 + 10 * RND
@@ -1595,7 +1543,7 @@ coord:
 	IF unity(index) < 2 THEN unity(index) = 1
 	IF unity(index) > 20 THEN unity(index) = 20
 
-	GOSUB odd: IF flag = 0 GOTO chek2
+	CALL CheckOddHex(index, flag): IF flag = 0 GOTO chek2
 	IF unitx(index) < 54 THEN unitx(index) = unitx(index) + 1: GOTO chek2
 	IF unitx(index) > 2 THEN unitx(index) = unitx(index) - 1: GOTO chek2
 	IF unity(index) < 20 THEN unity(index) = unity(index) + 1: GOTO chek2
@@ -1673,14 +1621,17 @@ IF s = 2 THEN
 END IF
 EXIT SUB
 
-xxyy:
+' GOSUB xxyy converted to SUB
+SUB CalculateXY (xx AS INTEGER, yy AS INTEGER, xloc AS INTEGER, yloc AS INTEGER)
 	xx = xloc: yy = yloc
 	IF xx = 99 THEN xx = 1 + INT(54 * RND)
 	IF yy = 99 THEN yy = 1 + INT(24 * RND)
-	RETURN
-odd:    flag = 0
+END SUB
+
+' GOSUB odd converted to SUB
+SUB CheckOddHex (index AS INTEGER, flag AS INTEGER)
+	flag = 0
 	IF (unitx(index) + unity(index)) <> INT(.5 * (unitx(index) + unity(index))) * 2 THEN flag = 1
-	RETURN
 END SUB
 
 SUB randmap
@@ -1693,8 +1644,8 @@ PAINT (320, 172), 0, 14
 a$ = "Setting Up Battle of " + SCENARIO$: LOCATE 11, 40 - .5 * LEN(a$): PRINT a$
 a$ = commander$(sidex(1)) + " is attacking " + commander$(sidex(2)): LOCATE 13, 40 - .5 * LEN(a$): PRINT a$
 ' QB64-compatible file existence check
-IF _FILEEXISTS("quotes.dat") THEN
-	OPEN "I", 1, "quotes.dat"
+IF _FILEEXISTS("data\quotes.dat") THEN
+	OPEN "I", 1, "data\quotes.dat"
 	INPUT #1, n
 	a = 1 + INT(RND * n)
 	FOR k = 1 TO a
@@ -1716,62 +1667,70 @@ FOR k = 1 TO most: strength(k) = 0: NEXT k
 '============================================================================
 '                            Place Terrain Features
 '============================================================================
+	DIM flag AS INTEGER
+	DIM spin AS INTEGER
 	IF RND > r! GOTO moret
 	xloc = 4 + 50 * RND: yloc = 4 + 16 * RND
 	x1 = xloc: y1 = yloc
 	r! = .2 + .3 * RND: x = 8 * RND
 	IF fort = 0 OR side = sidex(2) GOTO morerd
 morewat:                        ' water
-	IF RND > .9 THEN x = 8 * RND
-	GOSUB nearhere: GOSUB adjx: GOSUB lim1: IF flag = 1 GOTO nowat
-	CALL replace(yloc, xloc, 176)
-	PUT (8 * xloc, 14 * yloc), Xhair, XOR
-	GOTO morewat
+	DO
+		IF RND > .9 THEN x = 8 * RND
+		CALL MoveNearHere(x, xloc, yloc, r!): CALL AdjustHexX(xloc, yloc): CALL CheckLimits(xloc, yloc, flag, spin): IF flag = 1 THEN EXIT DO
+		CALL replace(yloc, xloc, 176)
+		PUT (8 * xloc, 14 * yloc), Xhair, XOR
+	LOOP
 nowat:
 	IF x1 > 0 THEN xloc = x1: yloc = y1: x1 = 0: GOTO morewat
 	IF RND > .6 GOTO trees
 moret:
-	GOSUB rloc
-	IF RND < .5 THEN yloc = 0: GOSUB adjx: x = 6: IF RND > .5 THEN x = 8: GOTO morerd
-	yloc = 21: GOSUB adjx: x = 1: IF RND > .5 THEN x = 3
+	CALL RandomLocation(xloc, yloc)
+	IF RND < .5 THEN yloc = 0: CALL AdjustHexX(xloc, yloc): x = 6: IF RND > .5 THEN x = 8: GOTO morerd
+	yloc = 21: CALL AdjustHexX(xloc, yloc): x = 1: IF RND > .5 THEN x = 3
 morerd:                         ' road
-	GOSUB nearhere: GOSUB lim1: IF flag = 1 OR spin > 99 GOTO endrd
-	CALL replace(yloc, xloc, 43)
-	PUT (8 * xloc, 14 * yloc), Xhair, XOR
-	GOTO morerd
+	DO
+		CALL MoveNearHere(x, xloc, yloc, r!): CALL CheckLimits(xloc, yloc, flag, spin): IF flag = 1 OR spin > 99 THEN EXIT DO
+		CALL replace(yloc, xloc, 43)
+		PUT (8 * xloc, 14 * yloc), Xhair, XOR
+	LOOP
 endrd:
 	spin = 0
 	IF RND > .8 GOTO nowat
 
 trees:                          ' trees
-	GOSUB rloc
+	CALL RandomLocation(xloc, yloc)
 newtree:
-	x = 8 * RND: GOSUB nearhere: GOSUB lim1: IF flag = 1 GOTO endtree
-	z = ASC(MID$(sdtext$(yloc + 1), xloc, 1)): IF z <> 46 GOTO newtree
-	CALL replace(yloc, xloc, 42)
-	PUT (8 * xloc, 14 * yloc), Xhair, XOR
-	GOTO newtree
+	DO
+		x = 8 * RND: CALL MoveNearHere(x, xloc, yloc, r!): CALL CheckLimits(xloc, yloc, flag, spin): IF flag = 1 THEN EXIT DO
+		z = ASC(MID$(sdtext$(yloc + 1), xloc, 1)): IF z <> 46 THEN
+			CALL replace(yloc, xloc, 42)
+			PUT (8 * xloc, 14 * yloc), Xhair, XOR
+		END IF
+	LOOP WHILE z <> 46
 endtree:
 	IF obstruct > 80 GOTO donehere
 	IF RND > .4 GOTO trees
 
 hills:                          ' hills
-	GOSUB rloc: r! = .3 + .6 * RND
+	CALL RandomLocation(xloc, yloc): r! = .3 + .6 * RND
 morehill:
-	x = 8 * RND: GOSUB nearhere: GOSUB lim1: IF flag = 1 GOTO endhill
-	z = ASC(MID$(sdtext$(yloc + 1), xloc, 1)): IF z <> 46 GOTO morehill
-	a = 239: IF RND < .8 THEN a = 94
-	CALL replace(yloc, xloc, a)
-	PUT (8 * xloc, 14 * yloc), Xhair, XOR
-	GOTO morehill
+	DO
+		x = 8 * RND: CALL MoveNearHere(x, xloc, yloc, r!): CALL CheckLimits(xloc, yloc, flag, spin): IF flag = 1 THEN EXIT DO
+		z = ASC(MID$(sdtext$(yloc + 1), xloc, 1)): IF z <> 46 THEN
+			a = 239: IF RND < .8 THEN a = 94
+			CALL replace(yloc, xloc, a)
+			PUT (8 * xloc, 14 * yloc), Xhair, XOR
+		END IF
+	LOOP WHILE z <> 46
 endhill:
 	IF obstruct > 80 GOTO donehere
 	IF RND > .4 GOTO hills
 
 other:                          ' other features
-	GOSUB rloc: r! = .1
+	CALL RandomLocation(xloc, yloc): r! = .1
 morestuf:
-	GOSUB lim1: IF flag = 1 GOTO donehere
+	CALL CheckLimits(xloc, yloc, flag, spin): IF flag = 1 GOTO donehere
 xtrastuf:
 	z = ASC(MID$(sdtext$(yloc + 1), xloc, 1)): IF z <> 46 GOTO other
 	z = 35
@@ -1779,52 +1738,60 @@ xtrastuf:
 	IF RND > .4 + .1 * fort THEN z = 61
 	CALL replace(yloc, xloc, z)
 	PUT (8 * xloc, 14 * yloc), Xhair, XOR
-	IF RND > .5 - .1 * fort THEN GOSUB nearhere: GOTO xtrastuf
+	IF RND > .5 - .1 * fort THEN CALL MoveNearHere(x, xloc, yloc, r!): GOTO xtrastuf
 	IF obstruct > 80 GOTO donehere
 	IF RND > .1 GOTO other
 	GOTO donehere
 '============================================================================
-rloc:
+' GOSUB rloc converted to SUB
+SUB RandomLocation (xloc AS INTEGER, yloc AS INTEGER)
 	xloc = 2 + 53 * RND: yloc = 1 + 19 * RND
-	IF xloc + yloc <> INT((xloc + yloc) / 2) * 2 THEN GOSUB adjx
-	RETURN
-nearhere:
-SELECT CASE x
-	CASE 1
-	xloc = xloc - 1: yloc = yloc - 1
-	CASE 2
-	yloc = yloc - 1
-	CASE 3
-	xloc = xloc - 1: yloc = yloc - 1
-	CASE 4
-	xloc = xloc - 2
-	CASE 5
-	xloc = xloc + 2
-	CASE 6
-	xloc = xloc - 1: yloc = yloc + 1
-	CASE 7
-	yloc = yloc + 1
-	CASE 8
-	xloc = xloc - 1: yloc = yloc + 1
-	CASE ELSE
-	xloc = 54
-	IF RND < r! THEN GOSUB rloc
-END SELECT
+	IF xloc + yloc <> INT((xloc + yloc) / 2) * 2 THEN CALL AdjustHexX(xloc, yloc)
+END SUB
+
+' GOSUB nearhere converted to SUB
+SUB MoveNearHere (x AS INTEGER, xloc AS INTEGER, yloc AS INTEGER, r! AS SINGLE)
+	SELECT CASE x
+		CASE 1
+		xloc = xloc - 1: yloc = yloc - 1
+		CASE 2
+		yloc = yloc - 1
+		CASE 3
+		xloc = xloc - 1: yloc = yloc - 1
+		CASE 4
+		xloc = xloc - 2
+		CASE 5
+		xloc = xloc + 2
+		CASE 6
+		xloc = xloc - 1: yloc = yloc + 1
+		CASE 7
+		yloc = yloc + 1
+		CASE 8
+		xloc = xloc - 1: yloc = yloc + 1
+		CASE ELSE
+		xloc = 54
+		IF RND < r! THEN CALL RandomLocation(xloc, yloc)
+	END SELECT
 	IF xloc < 1 THEN xloc = 1
 	IF yloc > 21 THEN yloc = 21
 	IF xloc > 55 THEN xloc = 55
 	IF yloc < 1 THEN yloc = 1
-	RETURN
-adjx:
-	IF xloc + yloc = INT((xloc + yloc) / 2) * 2 THEN RETURN
-	IF xloc > 2 THEN xloc = xloc - 1: RETURN
-	IF xloc < 54 THEN xloc = xloc + 1: RETURN
-lim1:
+END SUB
+
+' GOSUB adjx converted to SUB
+SUB AdjustHexX (xloc AS INTEGER, yloc AS INTEGER)
+	IF xloc + yloc = INT((xloc + yloc) / 2) * 2 THEN EXIT SUB
+	IF xloc > 2 THEN xloc = xloc - 1: EXIT SUB
+	IF xloc < 54 THEN xloc = xloc + 1: EXIT SUB
+END SUB
+
+' GOSUB lim1 converted to SUB
+SUB CheckLimits (xloc AS INTEGER, yloc AS INTEGER, flag AS INTEGER, spin AS INTEGER)
 	flag = 0
 	IF xloc > 54 OR xloc < 2 THEN flag = 1
 	IF yloc > 20 OR yloc < 1 THEN flag = 1
 	spin = spin + 1
-	RETURN
+END SUB
 donehere:
 END SUB
 
@@ -2426,24 +2393,33 @@ a = terrain(index): IF a = 239 GOTO best
 IF (a = 94 OR a = 35) AND RND < .99 GOTO best
 IF a = 42 AND RND < .95 GOTO best
 
-IF y > 1 THEN y = unity(index) - 1: x = unitx(index) - 1: GOSUB eval
-IF y > 1 THEN y = unity(index) - 1: x = unitx(index) + 1: GOSUB eval
-IF y < 22 THEN y = unity(index) + 1: x = unitx(index) - 1: GOSUB eval
-IF y < 22 THEN y = unity(index) + 1: x = unitx(index) + 1: GOSUB eval
-IF x > 1 THEN x = unitx(index) - 2: GOSUB eval
-IF x < 59 THEN x = unitx(index) + 2: GOSUB eval
+	DIM z AS INTEGER
+	DIM y AS INTEGER
+	DIM x AS INTEGER
+	IF unity(index) > 1 THEN y = unity(index) - 1: x = unitx(index) - 1: IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
+	IF unity(index) > 1 THEN y = unity(index) - 1: x = unitx(index) + 1: IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
+	IF unity(index) < 22 THEN y = unity(index) + 1: x = unitx(index) - 1: IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
+	IF unity(index) < 22 THEN y = unity(index) + 1: x = unitx(index) + 1: IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
+	IF unitx(index) > 1 THEN x = unitx(index) - 2: y = unity(index): IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
+	IF unitx(index) < 59 THEN x = unitx(index) + 2: y = unity(index): IF EvaluateLocation%(x, y, z, index) THEN GOTO improve
 
 a = 1 + INT(m1 * RND): IF side = 2 THEN a = a + m1
 IF (strength(a) > 0 AND uorder(a) <> 99) AND LEFTY$(index) <> "R" THEN uorder(index) = 100 * unity(a) + unitx(a)
 GOTO best
 
-eval:
-IF x < 1 THEN x = 1
-IF x > 59 THEN x = 59
-IF y < 1 THEN y = 1
-IF y > 22 THEN y = 22
-z = SCREEN(y + 1, x): IF z = 35 OR z = 42 XOR z = 94 XOR z = 239 GOTO improve
-RETURN
+' GOSUB eval converted to SUB - Returns true if location should trigger improve
+FUNCTION EvaluateLocation% (x AS INTEGER, y AS INTEGER, z AS INTEGER, index AS INTEGER)
+	IF x < 1 THEN x = 1
+	IF x > 59 THEN x = 59
+	IF y < 1 THEN y = 1
+	IF y > 22 THEN y = 22
+	z = SCREEN(y + 1, x)
+	IF z = 35 OR z = 42 XOR z = 94 XOR z = 239 THEN
+		EvaluateLocation% = 1
+	ELSE
+		EvaluateLocation% = 0
+	END IF
+END FUNCTION
 
 afraid:
 CALL flee(index)
@@ -2578,6 +2554,11 @@ a$ = ""
 spin = 0
 redoz:
 spin = spin + 1
+' QB64-compatible file existence check
+IF NOT _FILEEXISTS(file$) THEN
+	a$ = "Unknown"
+	EXIT SUB
+END IF
 OPEN "I", 1, file$
 	INPUT #1, a
 	x = 1 + INT(a * RND)
@@ -2656,7 +2637,7 @@ result = xbar + pct! * SQR(vary)
 END SUB
 
 SUB over (flag)
-OPEN "O", 1, "outcome.&&&"
+OPEN "O", 1, "data\outcome.&&&"
 WRITE #1, 3 - sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))    'scale down unit size
 CLOSE #1
 END
@@ -2780,7 +2761,10 @@ COLOR 11
 total& = 0: FOR k = 1 TO bigg(1): total& = total& + strength(k): NEXT k
 t = 0
 FOR k = 1 TO bigg(1)
-	GOSUB fog
+	DIM a$ AS STRING
+	DIM B$ AS STRING
+	DIM c$ AS STRING
+	CALL FormatUnitStats(k, a$, B$, c$)
 	IF side = 2 AND Visible(k) = 0 GOTO hide1
 	IF uorder(k) = 99 GOTO hide1
 	t$ = unit$(k): IF LEN(unit$(k)) > 9 THEN t$ = LEFT$(unit$(k), 9)
@@ -2788,13 +2772,13 @@ FOR k = 1 TO bigg(1)
 	IF t >= 20 AND flag = 0 THEN
 	COLOR 4
 	PRINT bigg(1); mtx$(1); total&
-	GOSUB hold8: CLS
+	CALL WaitForKey: CLS
 	flag = 1
 	COLOR 11
 END IF
 hide1: NEXT k
 COLOR 4
-PRINT bigg(1); mtx$(1); total&: GOSUB hold8: CLS
+PRINT bigg(1); mtx$(1); total&: CALL WaitForKey: CLS
 
 total& = 0: FOR k = m2 TO bigg(2): total& = total& + strength(k): NEXT k
 COLOR 9: PRINT sname$(2); " Forces"
@@ -2803,14 +2787,17 @@ mtx$(1) = "Units    " + sname$(2) + " Forces:"
 t = 0
 COLOR 11
 FOR k = m2 TO bigg(2)
-	GOSUB fog
+	DIM a$ AS STRING
+	DIM B$ AS STRING
+	DIM c$ AS STRING
+	CALL FormatUnitStats(k, a$, B$, c$)
 	IF side = 1 AND Visible(k) = 0 GOTO hide2
 	IF uorder(k) = 99 GOTO hide2
 	t$ = unit$(k): IF LEN(unit$(k)) > 9 THEN t$ = LEFT$(unit$(k), 9)
 	IF strength(k) > 0 THEN PRINT k; TAB(9); name$(k); TAB(24); a; TAB(32); t$; TAB(44); a$; TAB(54); B$; TAB(65); c$: t = t + 1
 IF t >= 20 AND flag = 0 THEN
 	COLOR 9
-	PRINT bigg(2) - m1; mtx$(1); total&: GOSUB hold8: CLS
+	PRINT bigg(2) - m1; mtx$(1); total&: CALL WaitForKey: CLS
 	PRINT sname$(2); " Forces"
 	PRINT mtx$(0)
 	flag = 1
@@ -2818,19 +2805,22 @@ IF t >= 20 AND flag = 0 THEN
 END IF
 hide2: NEXT k
 COLOR 9
-PRINT bigg(2) - m1; mtx$(1); total&: GOSUB hold8
+PRINT bigg(2) - m1; mtx$(1); total&: CALL WaitForKey
 GOTO runner
 
-hold8:
-LOCATE 24, 1: PRINT "hit a key";
-DO WHILE INKEY$ = "": LOOP
-RETURN
+' GOSUB hold8 converted to SUB
+SUB WaitForKey
+	LOCATE 24, 1: PRINT "hit a key";
+	DO WHILE INKEY$ = "": LOOP
+END SUB
 
-fog:
-CALL valid(k)
-a$ = morlev$(morale(k))
-B$ = ledlev$(leader(k))
-c$ = xplev$(xper(k))
+' GOSUB fog converted to SUB
+SUB FormatUnitStats (k AS INTEGER, a$ AS STRING, B$ AS STRING, c$ AS STRING)
+	CALL valid(k)
+	a$ = morlev$(morale(k))
+	B$ = ledlev$(leader(k))
+	c$ = xplev$(xper(k))
+END SUB
 CALL YouorMe(k, F): IF F = 1 THEN a = strength(k): RETURN
 a = .7 * strength(k) + .6 * RND * strength(k)
 IF RND > .7 THEN a$ = "?": IF RND > .5 THEN a$ = "Fearless"
@@ -2912,7 +2902,7 @@ dx = LEN(a$)
 FOR k = 1 TO dx
 xnew = unitx(index): ynew = unity(index)
 CALL curser(MID$(a$, k, 1), xnew, ynew)
-GOSUB run1: IF blox = 0 GOTO woe
+	CALL CheckRunLocation(xnew, ynew, id, blox): IF blox = 0 GOTO woe
 NEXT k
 '============================================================================
 rout = 1 + .05 * strength(index): IF RND > .5 THEN rout = rout * 2
@@ -2928,16 +2918,20 @@ leader(index) = leader(index) - 1: leader(defend) = leader(defend) + 1
 CALL flee(index)
 GOTO woe
 
-run1:
-blox = 0
-IF xnew < 1 XOR xnew > 55 THEN blox = 1: RETURN
-IF ynew < 1 XOR ynew > 20 THEN blox = 1: RETURN
-z = ASC(MID$(sdtext$(ynew + 1), xnew, 1))
-IF z = 233 THEN
-	IF possess <> id THEN blox = 1
-END IF
-CALL whois(xnew, ynew, Enemy, 0): IF Enemy > 0 THEN blox = 1
-RETURN
+' GOSUB run1 converted to SUB
+SUB CheckRunLocation (xnew AS INTEGER, ynew AS INTEGER, id AS INTEGER, blox AS INTEGER)
+	DIM z AS INTEGER
+	DIM Enemy AS INTEGER
+	
+	blox = 0
+	IF xnew < 1 XOR xnew > 55 THEN blox = 1: EXIT SUB
+	IF ynew < 1 XOR ynew > 20 THEN blox = 1: EXIT SUB
+	z = ASC(MID$(sdtext$(ynew + 1), xnew, 1))
+	IF z = 233 THEN
+		IF possess <> id THEN blox = 1
+	END IF
+	CALL whois(xnew, ynew, Enemy, 0): IF Enemy > 0 THEN blox = 1
+END SUB
 
 woe:
 IF blox > 0 GOTO steady
@@ -3045,9 +3039,9 @@ IF flag < 2 THEN
 	LOCATE 9, 59: PRINT "LOSSES     :"; score&(1)
 	COLOR 14: LOCATE 10, 62: IF possess = 1 THEN PRINT "HOLDS OBJECTIVE" ELSE PRINT SPACE$(17)
 	COLOR 4: LOCATE 2, 59: PRINT "Time Left :";
-	GOSUB tim1
+	CALL UpdateTimeDisplay(flag)
 ELSE
-	IF flag > 10 THEN GOSUB tim1: EXIT SUB
+	IF flag > 10 THEN CALL UpdateTimeDisplay(flag): EXIT SUB
 	COLOR 9
 	IF side = 2 THEN LOCATE 4, 60: PRINT CHR$(16)
 	LOCATE 5, 71: PRINT score&(2)
@@ -3055,15 +3049,16 @@ ELSE
 	IF side = 1 THEN LOCATE 8, 60: PRINT CHR$(16)
 	LOCATE 9, 71: PRINT score&(1)
 	COLOR 14
-	GOSUB tim1
+	CALL UpdateTimeDisplay(flag)
 END IF
 EXIT SUB
-tim1:
-IF flag = 0 OR flag = 12 THEN CALL BUTTON(58, 21, 4, "QUIET", 1 - quiet)
-IF timex = 32767 THEN RETURN
-COLOR 15: IF timelimit - timex < 21 THEN COLOR 12: IF bold < 4 THEN bold = 4
-LOCATE 2, 70: PRINT timelimit - timex
-RETURN
+' GOSUB tim1 converted to SUB
+SUB UpdateTimeDisplay (flag AS INTEGER)
+	IF flag = 0 OR flag = 12 THEN CALL BUTTON(58, 21, 4, "QUIET", 1 - quiet)
+	IF timex = 32767 THEN EXIT SUB
+	COLOR 15: IF timelimit - timex < 21 THEN COLOR 12: IF bold < 4 THEN bold = 4
+	LOCATE 2, 70: PRINT timelimit - timex
+END SUB
 END SUB
 
 SUB see (attack)
@@ -3210,8 +3205,8 @@ IF index < 1 OR terrain(index) <> 233 THEN EXIT SUB
 COLOR 4: IF index > 40 THEN COLOR 9
 CALL clrbot: COLOR 15: PRINT name$(index); " has taken the objective !";
 possess = 1
-IF index < m2 AND possess <> 1 THEN possess = 1: GOSUB yanks: s = m2: F = bigg(2)
-IF index > m1 AND possess <> 2 THEN possess = 2: GOSUB franks: s = 1: F = bigg(1)
+IF index < m2 AND possess <> 1 THEN possess = 1: CALL PlayYanksSound: s = m2: F = bigg(2)
+IF index > m1 AND possess <> 2 THEN possess = 2: CALL PlayFranksSound: s = 1: F = bigg(1)
 elan(possess) = elan(possess) + 10: CALL brittle(possess)
 FOR k = s TO F
 	IF INSTR("GRA", LEFTY$(k)) = 0 AND uorder(k) <> 99 THEN uorder(k) = 100 * objy + objx
@@ -3227,10 +3222,15 @@ NEXT k
 CALL scrcol(1)
 CALL TICK(.1 * mdly!)
 EXIT SUB
-franks: IF quiet > 0 THEN PLAY "MNMFt160o1g8.g16o2c4c4d4d4g4.e16c8."
-	RETURN
-yanks: IF quiet > 0 THEN PLAY "T150O3L8C;FCFG;A4G"
-       RETURN
+' GOSUB franks converted to SUB
+SUB PlayFranksSound
+	IF quiet > 0 THEN PLAY "MNMFt160o1g8.g16o2c4c4d4d4g4.e16c8."
+END SUB
+
+' GOSUB yanks converted to SUB
+SUB PlayYanksSound
+	IF quiet > 0 THEN PLAY "T150O3L8C;FCFG;A4G"
+END SUB
 END SUB
 
 SUB whois (x, y, Enemy, index)
@@ -3303,8 +3303,8 @@ SUB menu
 	LOCATE 1, 1, 0
 	IF mtx$(0) = "" THEN mtx$(0) = "M E N U"
 
-	IF wide = 0 THEN GOSUB mxw
-	IF tlx = 0 THEN GOSUB noadjust
+	IF wide = 0 THEN CALL CalculateMenuWidth(wide, ndx, size)
+	IF tlx = 0 THEN CALL AdjustMenuPosition(tlx, wide)
 	IF choose < 21 THEN choose = 1
 	IF choose > 21 THEN choose = choose - 21: IF choose > 21 THEN choose = 1
 	row = choose: IF row = 0 THEN row = 1
@@ -3336,44 +3336,57 @@ SUB menu
 sel1:
 	COLOR hilite
 	LOCATE tly + 2 + row, tlx + 2: PRINT mtx$(row)
-	GOSUB crsr
+	CALL GetMenuKey(a$, row, row1, size, choose)
 	IF ASC(a$) = 13 GOTO called
 	COLOR colour
 	LOCATE tly + 2 + row1, tlx + 2: PRINT mtx$(row1)
 	choose = row
 	GOTO sel1
 
-crsr:
+' GOSUB crsr converted to SUB - Note: Uses GOTO for flow control
+SUB GetMenuKey (a$ AS STRING, row AS INTEGER, row1 AS INTEGER, size AS INTEGER, choose AS INTEGER)
+	DIM k AS INTEGER
+	DIM c1$ AS STRING
+	DIM c2$ AS STRING
+	
 	DO: a$ = INKEY$: LOOP WHILE a$ = ""
 akey5:
-	IF ASC(a$) = 32 THEN choose = 99: GOTO called
-	IF ASC(a$) = 13 THEN RETURN
+	IF ASC(a$) = 32 THEN choose = 99: EXIT SUB
+	IF ASC(a$) = 13 THEN EXIT SUB
 	IF LEN(a$) = 2 GOTO arrows
-	IF ASC(a$) = 27 THEN choose = -1: GOTO called
+	IF ASC(a$) = 27 THEN choose = -1: EXIT SUB
 		row1 = row
 		FOR k = 1 TO size
 		c1$ = UCASE$(a$)
 		c2$ = UCASE$(LEFT$(mtx$(k), 1))
-		IF c1$ = c2$ THEN row = k: choose = row: GOSUB limits: GOTO called
+		IF c1$ = c2$ THEN row = k: choose = row: CALL LimitRow(row, size): EXIT SUB
 		NEXT k
-	GOTO crsr
+	CALL GetMenuKey(a$, row, row1, size, choose)
+	EXIT SUB
 arrows:
 	a$ = RIGHT$(a$, 1)
 	row1 = row
-	 IF a$ = "G" THEN row = 1: GOSUB limits: RETURN
-	 IF a$ = "H" THEN row = row - 1: GOSUB limits: RETURN
-	 IF a$ = "I" THEN row = 1:  GOSUB limits: RETURN
-	 IF a$ = "O" THEN row = size: GOSUB limits: RETURN
-	 IF a$ = "P" THEN row = row + 1: GOSUB limits: RETURN
-	 IF a$ = "Q" THEN row = size: GOSUB limits: RETURN
+	 IF a$ = "G" THEN row = 1: CALL LimitRow(row, size): EXIT SUB
+	 IF a$ = "H" THEN row = row - 1: CALL LimitRow(row, size): EXIT SUB
+	 IF a$ = "I" THEN row = 1: CALL LimitRow(row, size): EXIT SUB
+	 IF a$ = "O" THEN row = size: CALL LimitRow(row, size): EXIT SUB
+	 IF a$ = "P" THEN row = row + 1: CALL LimitRow(row, size): EXIT SUB
+	 IF a$ = "Q" THEN row = size: CALL LimitRow(row, size): EXIT SUB
+END SUB
 	 ' FRE(-1) not supported in QB64 - debug memory display feature removed
 	 ' IF a$ = "" THEN LOCATE 1, 1: PRINT FRE(-1)
 	 RETURN
-limits:
+' GOSUB limits converted to SUB
+SUB LimitRow (row AS INTEGER, size AS INTEGER)
 	IF row > size THEN row = 1
 	IF row < 1 THEN row = size
-	RETURN
-mxw:
+END SUB
+
+' GOSUB mxw converted to SUB
+SUB CalculateMenuWidth (wide AS INTEGER, ndx AS INTEGER, size AS INTEGER)
+	DIM i AS INTEGER
+	DIM l AS INTEGER
+	
 	wide = LEN(mtx$(0)) + 3
      
 	ndx = 0
@@ -3381,11 +3394,12 @@ mxw:
 	l = LEN(mtx$(i))
 	IF l > wide THEN wide = l: ndx = i
 	NEXT i
-   
-	RETURN
-noadjust:
+END SUB
+
+' GOSUB noadjust converted to SUB
+SUB AdjustMenuPosition (tlx AS INTEGER, wide AS INTEGER)
 	IF tlx = 0 THEN tlx = INT(39 - .5 * wide)
-	RETURN
+END SUB
 
 called:
 	IF quiet > 0 THEN SOUND 700, .5

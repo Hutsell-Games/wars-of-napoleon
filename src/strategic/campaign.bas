@@ -84,18 +84,30 @@ FUNCTION IsHarvestMonth% ()
     END IF
 END FUNCTION
 
+'============================================================================
+' SaveGame - Save current game state to file
+'============================================================================
+' Parameters:
+'   slot (INTEGER) - Save slot number (1-9, 0=quick save)
+' Description:
+'   Saves complete game state to NWS<slot>.SAV file. Includes all game data:
+'   month, year, side, turn, cash, income, armies, cities, etc.
+' Side Effects:
+'   Creates or overwrites save file
+'   Displays save progress message
+'============================================================================
 SUB SaveGame (slot AS INTEGER)
     ' Save game to NWSx.SAV (x = 1-8) or NWS9.SAV (autosave)
     ' Format based on CWS save system, adapted for WON
     
     DIM filename AS STRING
     IF slot = 9 THEN
-        filename = "NWS9.SAV"
+        filename = "saved\NWS9.SAV"
     ELSE
-        filename = "NWS" + LTRIM$(STR$(slot)) + ".SAV"
+        filename = "saved\NWS" + LTRIM$(STR$(slot)) + ".SAV"
     END IF
     
-    COLOR 11: CALL clrbot: PRINT "Saving";
+    CALL ShowStatusMessage("Saving", 11)
     
     OPEN "O", 1, filename
     ' Write game state
@@ -148,22 +160,34 @@ SUB SaveGame (slot AS INTEGER)
     PRINT "."
 END SUB
 
+'============================================================================
+' LoadGame - Load game state from file
+'============================================================================
+' Parameters:
+'   slot (INTEGER) - Save slot number (1-9, 0=quick save)
+' Description:
+'   Loads complete game state from NWS<slot>.SAV file. Restores all game data.
+' Side Effects:
+'   Restores game state from file
+'   Displays load progress message
+'   Exits early if file not found
+'============================================================================
 SUB LoadGame (slot AS INTEGER)
     ' Load game from NWSx.SAV (x = 1-8) or NWS9.SAV (autosave)
     
     DIM filename AS STRING
     IF slot = 9 THEN
-        filename = "NWS9.SAV"
+        filename = "saved\NWS9.SAV"
     ELSE
-        filename = "NWS" + LTRIM$(STR$(slot)) + ".SAV"
+        filename = "saved\NWS" + LTRIM$(STR$(slot)) + ".SAV"
     END IF
     
     IF FileExists%(filename) = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "Save file not found"
+        CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
     
-    COLOR 11: CALL clrbot: PRINT "Loading";
+    CALL ShowStatusMessage("Loading", 11)
     
     OPEN "I", 1, filename
     ' Read game state
@@ -232,9 +256,9 @@ FUNCTION GetSaveFileList$ (count AS INTEGER)
     count = 0
     FOR i = 1 TO 9
         IF i = 9 THEN
-            filename = "NWS9.SAV"
+            filename = "saved\NWS9.SAV"
         ELSE
-            filename = "NWS" + LTRIM$(STR$(i)) + ".SAV"
+            filename = "saved\NWS" + LTRIM$(STR$(i)) + ".SAV"
         END IF
         
         IF FileExists%(filename) <> 0 THEN

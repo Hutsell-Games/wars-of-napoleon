@@ -20,6 +20,7 @@ END
 ' $INCLUDE: 'src/common/game_state_helpers.bas'
 ' $INCLUDE: 'src/common/config.bas'
 ' $INCLUDE: 'src/common/utilities.bas'
+' $INCLUDE: 'src/common/error_handling.bas'
 ' $INCLUDE: 'src/ui/menus.bas'
 ' $INCLUDE: 'src/ui/graphics.bas'
 ' $INCLUDE: 'src/strategic/campaign.bas'
@@ -34,6 +35,13 @@ END
 ' $INCLUDE: 'src/strategic/combat.bas'
 ' $INCLUDE: 'src/strategic/tactical_integration.bas'
 ' $INCLUDE: 'src/tactical/battle.bas'
+' $INCLUDE: 'src/tactical/core.bas'
+' $INCLUDE: 'src/tactical/ui.bas'
+' $INCLUDE: 'src/tactical/units.bas'
+' NAPOLEON.BAS subroutines extracted to napoleon_subs.bas to avoid main program execution
+' The original NAPOLEON.BAS had executable code that would run when included.
+' All SUB/FUNCTION definitions have been extracted to napoleon_subs.bas
+' $INCLUDE: 'src/tactical/napoleon_subs.bas'
 ' $INCLUDE: 'src/strategic/commands.bas'
 ' $INCLUDE: 'src/strategic/move_capital.bas'
 ' $INCLUDE: 'src/strategic/realism.bas'

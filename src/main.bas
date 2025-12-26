@@ -72,7 +72,7 @@ FUNCTION ShowMainMenu% ()
     INPUT "Select option (1-5): ", choice
     
     IF choice >= 1 AND choice <= 5 THEN
-        ShowMainMenu = choice
+        ShowMainMenu% = choice
     ELSE
         ShowMainMenu% = 0
     END IF
@@ -320,7 +320,7 @@ SUB RecruitMenu (side AS INTEGER)
     END IF
     
     DIM selected AS INTEGER
-    selected = ShowListMenu("Recruit Army", cityNames$, count)
+    selected = ShowListMenu%("Recruit Army", cityNames$, count)
     
     IF selected > 0 THEN
         ' Check if have enough money
@@ -329,13 +329,25 @@ SUB RecruitMenu (side AS INTEGER)
             EXIT SUB
         END IF
         
-        ' TODO: Show commander selection menu
+        ' Show commander selection menu
+        DIM commanderIndex AS INTEGER
         DIM commanderName AS STRING
         DIM commanderRating AS INTEGER
         
-        ' Placeholder - will implement commander selection
-        commanderName = "New Commander"
-        commanderRating = 5
+        ' Select commander (filter by city nationality for cohesion)
+        commanderIndex = SelectCommander%(side, citiesToRecruit(selected))
+        
+        IF commanderIndex = 0 THEN
+            ' User cancelled commander selection
+            EXIT SUB
+        END IF
+        
+        ' Get commander details
+        commanderName = commanders(commanderIndex).name
+        commanderRating = commanders(commanderIndex).rating
+        
+        ' Mark commander as unavailable (assigned to army)
+        commanders(commanderIndex).available = 0
         
         CALL RecruitArmy(side, citiesToRecruit(selected), commanderName, commanderRating)
         CALL SetGameStateCash(side, GetGameStateCash&(side) - 100)
@@ -382,7 +394,7 @@ SUB MoveOrdersMenu (side AS INTEGER)
     END IF
     
     DIM selected AS INTEGER
-    selected = ShowListMenu("Move Orders", armyNames$, count)
+    selected = ShowListMenu%("Move Orders", armyNames$, count)
     
     IF selected > 0 THEN
         ' Show destination cities
@@ -407,7 +419,7 @@ SUB MoveOrdersMenu (side AS INTEGER)
             
             IF destCount > 0 THEN
                 DIM destSelected AS INTEGER
-                destSelected = ShowListMenu("Select Destination", destNames$, destCount)
+                destSelected = ShowListMenu%("Select Destination", destNames$, destCount)
                 
                 IF destSelected > 0 THEN
                     CALL MoveArmy(armiesToMove(selected), destinations(destSelected))
@@ -471,8 +483,8 @@ SUB BuildShipMenu (side AS INTEGER)
     
     count = 0
     FOR i = 1 TO MAX_CITIES
-        ' Check if port city (placeholder - will check actual port status)
-        IF cities(i).name <> "" AND cities(i).owner = side THEN
+        ' Check if port city using cityMatrix(cityIndex, 7)
+        IF cities(i).name <> "" AND cities(i).owner = side AND cityMatrix(i, 7) = 1 THEN
             count = count + 1
             ports(count) = i
             portNames$(count) = cities(i).name + " (Cost: 100)"
@@ -485,7 +497,7 @@ SUB BuildShipMenu (side AS INTEGER)
     END IF
     
     DIM selected AS INTEGER
-    selected = ShowListMenu("Build Ship", portNames$, count)
+    selected = ShowListMenu%("Build Ship", portNames$, count)
     
     IF selected > 0 THEN
         CALL BuildShip(side, ports(selected))
@@ -507,8 +519,8 @@ SUB MoveFleetMenu (side AS INTEGER)
     
     count = 0
     FOR i = 1 TO MAX_CITIES
-        ' Check if port city
-        IF cities(i).name <> "" THEN
+        ' Check if port city using cityMatrix(cityIndex, 7)
+        IF cities(i).name <> "" AND cityMatrix(i, 7) = 1 THEN
             count = count + 1
             ports(count) = i
             portNames$(count) = cities(i).name
@@ -521,7 +533,7 @@ SUB MoveFleetMenu (side AS INTEGER)
     END IF
     
     DIM selected AS INTEGER
-    selected = ShowListMenu("Move Fleet To", portNames$, count)
+    selected = ShowListMenu%("Move Fleet To", portNames$, count)
     
     IF selected > 0 THEN
         CALL MoveFleet(side, ports(selected))
@@ -662,7 +674,7 @@ SUB ExecuteMovement (armyIndex AS INTEGER)
             DIM defenderIndex AS INTEGER
             defenderIndex = occupied(destination)
             DIM winner AS INTEGER
-            winner = ResolveCombat(armyIndex, defenderIndex, destination)
+            winner = ResolveCombat%(armyIndex, defenderIndex, destination)
         ELSE
             ' Move to city
             armies(armyIndex).loc = destination
@@ -726,7 +738,7 @@ SUB ResolveAllCombats
                 END IF
                 
                 ' Resolve combat (may trigger tactical battle)
-                winner = ResolveCombat(attackerIndex, defenderIndex, i)
+                winner = ResolveCombat%(attackerIndex, defenderIndex, i)
                 
                 ' Process result
                 CALL ProcessCombatResult(attackerIndex, defenderIndex, i, winner)
@@ -759,14 +771,14 @@ SUB EndGame (winner AS INTEGER)
     END IF
     
     PRINT
-    PRINT "French Victory Points:"; GetVictoryPoints(1)
-    PRINT "Allied Victory Points:"; GetVictoryPoints(2)
+    PRINT "French Victory Points:"; GetVictoryPoints&(1)
+    PRINT "Allied Victory Points:"; GetVictoryPoints&(2)
     
     ' Award end game bonus
     CALL AwardEndGameBonus(winner)
     
     ' Save high score
-    CALL SaveHighScore(winner, GetVictoryPoints(winner))
+    CALL SaveHighScore(winner, GetVictoryPoints&(winner))
     
     PRINT
     PRINT "Press any key to continue..."

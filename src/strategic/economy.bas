@@ -68,16 +68,11 @@ SUB AutoSupply
         FOR i = 1 TO MAX_ARMIES
             IF armies(i).size > 0 THEN
                 ' Determine side
-                IF i >= FRENCH_START AND i < ALLIED_START THEN
-                    IF side = 1 THEN
-                        cost = (armies(i).size / 1000) * SUPPLY_AUTO_COST
-                        totalCost = totalCost + cost
-                    END IF
-                ELSEIF i >= ALLIED_START THEN
-                    IF side = 2 THEN
-                        cost = (armies(i).size / 1000) * SUPPLY_AUTO_COST
-                        totalCost = totalCost + cost
-                    END IF
+                DIM armySide AS INTEGER
+                armySide = GetArmySide%(i)
+                IF armySide = side THEN
+                    cost = (armies(i).size / 1000) * SUPPLY_AUTO_COST
+                    totalCost = totalCost + cost
                 END IF
             END IF
         NEXT i
@@ -88,10 +83,11 @@ SUB AutoSupply
             FOR i = 1 TO MAX_ARMIES
                 IF armies(i).size > 0 THEN
                     ' Determine side and supply
-                    IF (side = 1 AND i >= FRENCH_START AND i < ALLIED_START) OR _
-                       (side = 2 AND i >= ALLIED_START) THEN
+                    DIM armySide AS INTEGER
+                    armySide = GetArmySide%(i)
+                    IF armySide = side THEN
                         armies(i).supply = armies(i).supply + 1
-                        IF armies(i).supply > 10 THEN armies(i).supply = 10
+                        armies(i).supply = ClampValue%(armies(i).supply, 0, 10)
                     END IF
                 END IF
             NEXT i
@@ -106,20 +102,20 @@ SUB ManualSupply (armyIndex AS INTEGER)
     DIM side AS INTEGER
     DIM cost AS SINGLE
     
-    IF armies(armyIndex).size = 0 THEN EXIT SUB
+    IF armies(armyIndex).size = 0 THEN EXIT SUB ' Not an error - empty army
     
     ' Determine side
-    IF armyIndex >= FRENCH_START AND armyIndex < ALLIED_START THEN
-        side = 1
-    ELSE
-        side = 2
+    side = GetArmySide%(armyIndex)
+    IF side = 0 THEN
+        CALL HandleValidationError("Invalid army index " + LTRIM$(STR$(armyIndex)) + " in ManualSupply")
+        EXIT SUB
     END IF
     
     cost = (armies(armyIndex).size / 1000) * SUPPLY_MANUAL_COST
     
     IF GetGameStateCash&(side) < cost THEN
-        COLOR 11: CALL clrbot: PRINT "Insufficient funds for supply"
-        EXIT SUB
+        CALL ShowStatusMessage("Insufficient funds for supply", 11)
+        EXIT SUB ' Not an error - insufficient funds is expected
     END IF
     
     CALL SetGameStateCash(side, GetGameStateCash&(side) - cost)

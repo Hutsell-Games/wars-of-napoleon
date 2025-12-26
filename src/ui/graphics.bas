@@ -5,22 +5,74 @@
 ' Ported from original game with QB64 compatibility
 
 ' Note: game_types.bas, city.bas, and army.bas are included in main.bas
+' Note: utilities.bas provides FileExists% function
 
 SUB InitializeGraphics
     ' Initialize graphics system
     ' Load graphics files, set up display
+    ' Graphics files are in data/graphics/ directory
     
     ' Set graphics mode
     SCREEN 12 ' VGA 640x480
     
-    ' Load graphics files (placeholder - will load .EGA, .VGA files)
-    ' Graphics files are in data/graphics/ directory
-    ' DEF SEG = VARSEG(graphic(1))
-    ' BLOAD "data/graphics/cwsicon.vga", VARPTR(graphic(1))
-    ' DEF SEG
+    ' Load graphics files
+    ' Note: Graphics are loaded on-demand by iconload() in tactical battles
+    ' For strategic map, we use simple drawing functions
+    ' If specific graphics are needed, they can be loaded here
+    
+    ' Attempt to load main graphics file if it exists
+    ' The graphic() array is used for storing loaded graphics data
+    DIM graphicsPath AS STRING
+    graphicsPath = "data/graphics/"
+    
+    ' Check if graphics directory exists
+    ' Note: iconload() in napoleon_subs.bas handles tactical battle graphics
+    ' Strategic graphics use simple drawing, so no file loading needed here
+    
+    ' For now, graphics are loaded on-demand:
+    ' - Tactical battle graphics: Loaded by iconload() when battle starts
+    ' - Strategic map graphics: Drawn using simple shapes (circles, lines, etc.)
+    ' - If specific strategic graphics files are needed, add loading here
     
     CLS
 END SUB
+
+FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
+    ' Load a graphics file into the graphics array
+    ' Returns: 1 on success, 0 on failure
+    ' Uses QB64 BLOAD which works directly with arrays
+    
+    DIM fullPath AS STRING
+    DIM fileExists AS INTEGER
+    
+    ' Construct full path
+    IF INSTR(filename, "data/graphics/") = 0 THEN
+        fullPath = "data/graphics/" + filename
+    ELSE
+        fullPath = filename
+    END IF
+    
+    ' Check if file exists
+    fileExists = FileExists%(fullPath)
+    IF fileExists = 0 THEN
+        LoadGraphicsFile% = 0 ' File doesn't exist
+        EXIT FUNCTION
+    END IF
+    
+    ' Load graphics file using QB64 BLOAD
+    ' QB64 BLOAD works directly with arrays - no DEF SEG needed
+    ON ERROR GOTO loadError
+    
+    BLOAD fullPath, graphicsArray(1)
+    
+    ON ERROR GOTO 0
+    LoadGraphicsFile% = 1 ' Success
+    EXIT FUNCTION
+    
+loadError:
+    ON ERROR GOTO 0
+    LoadGraphicsFile% = 0 ' Failed to load
+END FUNCTION
 
 SUB DrawStrategicMap
     ' Draw strategic map

@@ -20,7 +20,8 @@ SUB InitializeReports
     
     ' Initialize history file if enabled
     IF config_history = 1 THEN
-        IF FileExists%("NWS.HIS") <> 0 THEN
+        ' QB64-compatible file existence check
+        IF _FILEEXISTS("NWS.HIS") THEN
             ' Backup old history
             SHELL "copy NWS.HIS oldhist.ory"
         END IF
@@ -30,6 +31,15 @@ SUB InitializeReports
     END IF
 END SUB
 
+'============================================================================
+' ShowFriendlyArmyReport - Display friendly army status report
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to show report for (1=French, 2=Allies)
+' Description:
+'   Displays detailed report of friendly army units, including strength,
+'   location, and status. Pauses for user input.
+'============================================================================
 SUB ShowFriendlyArmyReport (side AS INTEGER)
     ' Report 1: Friendly Army report
     ' Shows status of all friendly armies and game statistics
@@ -156,9 +166,20 @@ SUB ShowForceSummary
     ' Shows on map the strength of all armies (in 100's of men)
     ' Hot key F4 to access directly
     
-    ' This will display on the map - placeholder for now
-    COLOR 11: CALL clrbot: PRINT "Force Summary - Showing army strengths on map"
-    ' TODO: Implement map display with army strengths
+    ' Draw strategic map with army strengths displayed
+    CALL DrawStrategicMap
+    
+    ' Display title and legend
+    COLOR 15 ' White
+    LOCATE 1, 1
+    PRINT "FORCE SUMMARY - "; GetCurrentMonth$
+    PRINT STRING$(80, "-")
+    PRINT "Army strengths shown in hundreds of men"
+    PRINT "Blue = French, Red = Allied"
+    PRINT "Press any key to continue..."
+    
+    ' Wait for user input
+    DO WHILE INKEY$ = "": LOOP
 END SUB
 
 SUB ShowIntelligenceReport (side AS INTEGER)
@@ -215,18 +236,27 @@ SUB ShowBattleSummary
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowRecapReport - Display game history/recap report
+'============================================================================
+' Description:
+'   Displays the game history file (NWS.HIS) containing all battle summaries
+'   and major events. Allows user to scroll through history.
+' Side Effects:
+'   Reads from NWS.HIS file (checks for existence first)
+'============================================================================
 SUB ShowRecapReport
     ' Report 7: Recap report (History)
     ' Available only if HISTORY option is ON
     ' Scrolls through chronicle of game history
     
     IF config_history = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "History option is disabled"
-        EXIT SUB
+        CALL ShowStatusMessage("History option is disabled", 11)
+        EXIT SUB ' Not an error - feature disabled
     END IF
     
     IF FileExists%("NWS.HIS") = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "No history file found"
+        CALL HandleFileNotFound("NWS.HIS")
         EXIT SUB
     END IF
     
@@ -236,6 +266,7 @@ SUB ShowRecapReport
     PRINT
     
     DIM lineText AS STRING
+    
     OPEN "I", 1, "NWS.HIS"
     DO WHILE NOT EOF(1)
         LINE INPUT #1, lineText
@@ -249,6 +280,23 @@ SUB ShowRecapReport
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' RecordBattleHistory - Record battle result to history file
+'============================================================================
+' Parameters:
+'   attackerName (STRING) - Name of attacking army/commander
+'   attackerStrength (LONG) - Total strength of attacker
+'   attackerCasualties (LONG) - Casualties suffered by attacker
+'   defenderName (STRING) - Name of defending army/commander
+'   defenderStrength (LONG) - Total strength of defender
+'   defenderCasualties (LONG) - Casualties suffered by defender
+'   cityName (STRING) - Name of city where battle occurred (empty if no city)
+' Description:
+'   Records battle summary to history file (NWS.HIS) and battle summary file (BATTSUMM).
+'   Only records if history is enabled in configuration.
+' Side Effects:
+'   Appends to NWS.HIS and BATTSUMM files
+'============================================================================
 SUB RecordBattleHistory (attackerName AS STRING, attackerStrength AS LONG, attackerCasualties AS LONG, _
                          defenderName AS STRING, defenderStrength AS LONG, defenderCasualties AS LONG, _
                          winnerName AS STRING, cityName AS STRING)
@@ -266,7 +314,7 @@ SUB RecordBattleHistory (attackerName AS STRING, attackerStrength AS LONG, attac
     CLOSE #2
     
     ' Also update BATTSUMM file
-    OPEN "A", 3, "BATTSUMM"
+    OPEN "A", 3, "data\BATTSUMM"
     PRINT #3, entry
     CLOSE #3
 END SUB

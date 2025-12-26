@@ -28,8 +28,8 @@ CONST VICTORY_ROUT = 2
 SUB InitializeBattleMap
     ' Initialize 27x20 hex grid battle map
     ' Random terrain generation
-    ' TODO: Implement randmap SUB from NAPOLEON.BAS
-    ' CALL randmap ' From NAPOLEON.BAS
+    ' This uses the randmap SUB from NAPOLEON.BAS
+    CALL randmap
 END SUB
 
 FUNCTION ResolveMeleeCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, intensity AS INTEGER)
@@ -74,8 +74,9 @@ SUB ResolveArtilleryBombardment (artilleryIndex AS INTEGER, targetIndex AS INTEG
     DIM damage AS INTEGER
     
     ' Check line of sight
+    DIM F AS INTEGER
     CALL los(artilleryIndex, targetIndex, F, 0)
-    IF F < 0 THEN EXIT SUB ' No line of sight
+    IF F < 0 OR F = 0 THEN EXIT SUB ' No line of sight
     
     ' Calculate range
     CALL ranger(artilleryIndex, range)
@@ -131,28 +132,126 @@ SUB ResolveCavalryCharge (cavalryIndex AS INTEGER, targetIndex AS INTEGER)
     END IF
 END SUB
 
-FUNCTION CheckVictoryConditions% ()
-    ' Check tactical victory conditions
-    ' Returns winner (1 or 2) or 0 if battle continues
+'============================================================================
+' Helper Function: CheckObjectiveControl
+'============================================================================
+' Checks if a side controls the objective (terrain = 233)
+' Parameters:
+'   sideNum (INTEGER) - Side number (1 or 2)
+' Returns:
+'   INTEGER - 1 if side controls objective, 0 otherwise
+'============================================================================
+FUNCTION CheckObjectiveControl% (sideNum AS INTEGER)
+    DIM k AS INTEGER
+    DIM startIndex AS INTEGER
+    DIM endIndex AS INTEGER
     
-    DIM winner AS INTEGER
-    winner = 0
-    
-    ' Condition 1: Objective Control
-    ' Check if objective is controlled by one side
-    DIM objControlled AS INTEGER
-    objControlled = 0
-    ' This will check objective hex control (placeholder)
-    
-    ' Condition 2: Esprit de Corps
-    ' Check if one side's esprit de corps is too low (army routs)
-    IF elan(1) < 20 THEN
-        winner = 2 ' Side 2 wins (side 1 routed)
-    ELSEIF elan(2) < 20 THEN
-        winner = 1 ' Side 1 wins (side 2 routed)
+    ' Determine unit range for this side
+    IF sideNum = 1 THEN
+        startIndex = 1
+        endIndex = bigg(1)
+    ELSE
+        startIndex = m2
+        endIndex = bigg(2)
     END IF
     
-    CheckVictoryConditions% = winner
+    ' Check if any unit from this side is on the objective
+    FOR k = startIndex TO endIndex
+        IF strength(k) > 0 AND uorder(k) <> 99 AND terrain(k) = 233 THEN
+            CheckObjectiveControl% = 1
+            EXIT FUNCTION
+        END IF
+    NEXT k
+    
+    CheckObjectiveControl% = 0
+END FUNCTION
+
+'============================================================================
+' CheckVictoryConditions - Check tactical battle victory conditions
+'============================================================================
+' Returns winner (1 or 2) or 0 if battle continues
+' Uses early returns for clarity and performance
+'
+' VICTORY CONDITIONS (checked in order):
+' --------------------------------------
+' 1. Objective Control:
+'    - If one side previously controlled objective (possess = 1 or 2)
+'    - And that side loses control (no units on objective hex)
+'    - And the other side gains control (has units on objective hex)
+'    - Then the other side wins immediately
+'    - Objective hex is identified by terrain = 233
+'
+' 2. Army Rout (Esprit de Corps):
+'    - If one side's elan (esprit de corps) drops to 0 or below
+'    - That side is considered routed
+'    - The other side wins immediately
+'    - Note: brittle() subroutine also checks this and calls over() if needed
+'    - This check provides redundancy for safety
+'
+' If no condition is met, battle continues (returns 0)
+'============================================================================
+FUNCTION CheckVictoryConditions% ()
+    
+    ' ============================================================
+    ' CONDITION 1: OBJECTIVE CONTROL
+    ' ============================================================
+    ' Check if objective control has changed hands
+    ' possess variable tracks who last controlled objective (set by victory() SUB)
+    ' If possess = 0, no one has controlled objective yet (battle just started)
+    
+    IF possess = 1 THEN
+        ' Side 1 previously controlled objective - check if they still do
+        IF CheckObjectiveControl%(1) = 0 THEN
+            ' Side 1 lost control - check if side 2 now controls it
+            IF CheckObjectiveControl%(2) = 1 THEN
+                ' Side 2 captured objective - they win
+                CheckVictoryConditions% = sidex(2)
+                EXIT FUNCTION
+            END IF
+            ' If neither side controls it now, battle continues
+        END IF
+        ' If side 1 still controls it, battle continues
+    ELSEIF possess = 2 THEN
+        ' Side 2 previously controlled objective - check if they still do
+        IF CheckObjectiveControl%(2) = 0 THEN
+            ' Side 2 lost control - check if side 1 now controls it
+            IF CheckObjectiveControl%(1) = 1 THEN
+                ' Side 1 captured objective - they win
+                CheckVictoryConditions% = sidex(1)
+                EXIT FUNCTION
+            END IF
+            ' If neither side controls it now, battle continues
+        END IF
+        ' If side 2 still controls it, battle continues
+    END IF
+    ' If possess = 0, no one has controlled objective yet, battle continues
+    
+    ' ============================================================
+    ' CONDITION 2: ARMY ROUT (ESPRIT DE CORPS)
+    ' ============================================================
+    ' Check if one side's morale/cohesion has completely collapsed
+    ' elan[] array tracks esprit de corps for each side (1-2)
+    ' When elan drops to 0 or below, that side routs
+    ' brittle() subroutine also monitors this and calls over() if needed
+    ' This check provides redundancy for safety
+    
+    IF elan(1) <= 0 THEN
+        ' Side 1 routed - side 2 wins
+        CheckVictoryConditions% = sidex(2)
+        EXIT FUNCTION
+    END IF
+    
+    IF elan(2) <= 0 THEN
+        ' Side 2 routed - side 1 wins
+        CheckVictoryConditions% = sidex(1)
+        EXIT FUNCTION
+    END IF
+    
+    ' ============================================================
+    ' NO VICTORY CONDITION MET
+    ' ============================================================
+    ' Battle continues - return 0
+    CheckVictoryConditions% = 0
 END FUNCTION
 
 SUB UpdateEspritDeCorps (side AS INTEGER, change AS INTEGER)
@@ -170,6 +269,7 @@ END SUB
 FUNCTION CheckLineOfSight% (fromIndex AS INTEGER, toIndex AS INTEGER)
     ' Check line of sight between units
     ' Affected by terrain: mountains/hills = increased, forests/swamps = decreased
+    ' Returns: -1 = friendly, 0 = no LOS, 1 = enemy in LOS
     
     DIM result AS INTEGER
     CALL los(fromIndex, toIndex, result, 0)

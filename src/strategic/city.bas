@@ -10,8 +10,16 @@
 ' Note: cityMatrix array declared in declarations.bas
 ' Note: City type and fortification constants are in declarations.bas
 
+'============================================================================
+' InitializeCities - Initialize all cities to empty state
+'============================================================================
+' Description:
+'   Resets all city data structures to default empty values.
+'   Called at game start before loading scenario data.
+' Side Effects:
+'   Clears all cities array and cityMatrix
+'============================================================================
 SUB InitializeCities
-    ' Initialize all cities to empty state
     DIM i AS INTEGER
     DIM j AS INTEGER
     
@@ -31,10 +39,19 @@ SUB InitializeCities
     NEXT i
 END SUB
 
+'============================================================================
+' LoadCityData - Load city data from scenario map file
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario (determines which map file to load)
+' Description:
+'   Loads city data from EUROxxxx.MAP file based on scenario year.
+'   Format per WON.TXT: City #, x, y, name, owner, income value, etc.
+' Side Effects:
+'   Updates cities array and cityMatrix with loaded data
+'   May exit early if file not found (with error message)
+'============================================================================
 SUB LoadCityData (scenarioYear AS INTEGER)
-    ' Load city data from EUROxxxx.MAP file
-    ' Format per WON.DOC:
-    ' City #, x coordinate, y coordinate, city name (text), owner, income value,
     ' connection city 1, connection city 2, connection city 3, connection city 4,
     ' connection city 5, connection city 6, port indicator, fortification level
     ' Cities MUST be in alphabetical order
@@ -44,7 +61,7 @@ SUB LoadCityData (scenarioYear AS INTEGER)
     filename = "data/scenarios/EURO" + LTRIM$(STR$(scenarioYear)) + ".MAP"
     
     IF FileExists%(filename) = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "City file not found:"; filename
+        CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
     
@@ -134,7 +151,7 @@ SUB LoadCityData (scenarioYear AS INTEGER)
     
     CLOSE #1
     
-    COLOR 11: CALL clrbot: PRINT "Loaded"; lineCount; "cities from"; filename
+    CALL ShowStatusMessage("Loaded " + LTRIM$(STR$(lineCount)) + " cities from " + filename, 11)
 END SUB
 
 SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
@@ -177,30 +194,49 @@ SUB FortifyCity (cityIndex AS INTEGER)
     ' Maximum: FORT_PLUS_PLUS (level 2)
     
     IF cities(cityIndex).fort >= FORT_PLUS_PLUS THEN
-        COLOR 11: CALL clrbot: PRINT cities(cityIndex).name; " already at maximum fortification"
-        EXIT SUB
+        CALL ShowStatusMessage(cities(cityIndex).name + " already at maximum fortification", 11)
+        EXIT SUB ' Not an error - valid state check
     END IF
     
     DIM cost AS INTEGER
     cost = 200
     
     IF GetGameStateCash&(gameState.side) < cost THEN
-        COLOR 11: CALL clrbot: PRINT "Fortification costs"; cost; "money units"
-        EXIT SUB
+        CALL ShowStatusMessage("Fortification costs " + LTRIM$(STR$(cost)) + " money units", 11)
+        EXIT SUB ' Not an error - insufficient funds is expected
     END IF
     
     cities(cityIndex).fort = cities(cityIndex).fort + 1
         CALL SetGameStateCash(gameState.side, GetGameStateCash&(gameState.side) - cost)
     
-    COLOR 11: CALL clrbot: PRINT cities(cityIndex).name; " fortification increased to level"; cities(cityIndex).fort
+    CALL ShowStatusMessage(cities(cityIndex).name + " fortification increased to level " + LTRIM$(STR$(cities(cityIndex).fort)), 11)
 END SUB
 
+'============================================================================
+' RazeFortifications - Destroy city fortifications
+'============================================================================
+' Parameters:
+'   cityIndex (INTEGER) - Index of city whose fortifications to destroy
+' Description:
+'   Destroys all fortifications at a city. Typically called when capturing
+'   an unoccupied fortified city.
+' Side Effects:
+'   - Sets cities(cityIndex).fort to FORT_NONE
+'   - Displays destruction message
+'============================================================================
 SUB RazeFortifications (cityIndex AS INTEGER)
-    ' Destroy fortifications when capturing unoccupied fortified city
     cities(cityIndex).fort = FORT_NONE
-    COLOR 11: CALL clrbot: PRINT "Fortifications at"; cities(cityIndex).name; "destroyed"
+    CALL ShowStatusMessage("Fortifications at " + cities(cityIndex).name + " destroyed", 11)
 END SUB
 
+'============================================================================
+' GetCityIncome - Calculate total income from cities for a side
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to calculate income for (1=French, 2=Allies)
+' Returns:
+'   LONG - Total income from all cities owned by the side
+'============================================================================
 FUNCTION GetCityIncome& (side AS INTEGER)
     ' Calculate total income for side from controlled cities
     DIM i AS INTEGER
@@ -216,6 +252,14 @@ FUNCTION GetCityIncome& (side AS INTEGER)
     GetCityIncome& = total
 END FUNCTION
 
+'============================================================================
+' GetCityVictoryPoints - Calculate total victory points from cities for a side
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to calculate victory points for (1=French, 2=Allies)
+' Returns:
+'   LONG - Total victory points from all cities owned by the side
+'============================================================================
 FUNCTION GetCityVictoryPoints& (side AS INTEGER)
     ' Calculate total victory points for side
     DIM i AS INTEGER
