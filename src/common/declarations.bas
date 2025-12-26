@@ -57,6 +57,13 @@ CONST NAT_SPANISH = 6
 CONST SUPPLY_AUTO_COST = 0.002 ' Per 1,000 men
 CONST SUPPLY_MANUAL_COST = 0.001 ' Per 1,000 men (cheaper)
 
+' Recruitment and army constants
+CONST RECRUITMENT_COST = 100 ' Cost to recruit a new army
+CONST DEFAULT_ARMY_SIZE = 10000 ' Default starting size for newly recruited armies
+CONST SHIP_COST = 100 ' Cost to build a ship
+CONST OBJECTIVE_BONUS = 100 ' Victory points bonus for capturing objective city
+CONST END_GAME_BONUS = 100 ' Victory points bonus for triggering end game condition
+
 ' Report type constants
 CONST REPORT_FRIENDLY_ARMY = 1
 CONST REPORT_ENEMY_ARMY = 2
@@ -181,6 +188,10 @@ DECLARE SUB BuffClear ()
 DECLARE FUNCTION ShowMainMenu% ()
 DECLARE FUNCTION SelectCommander% (side AS INTEGER, cityIndex AS INTEGER)
 DECLARE FUNCTION SelectScenario% ()
+DECLARE FUNCTION GetCurrentMonth$ ()
+DECLARE FUNCTION GetVictoryPoints& (side AS INTEGER)
+DECLARE SUB AwardEndGameBonus (side AS INTEGER)
+DECLARE SUB SaveHighScore (side AS INTEGER, score AS LONG)
 
 ' Army management function declarations
 DECLARE SUB MarkCommanderAvailable (armyIndex AS INTEGER)
@@ -190,6 +201,9 @@ DECLARE FUNCTION GetFileSize& (filename AS STRING)
 DECLARE SUB LogMessage (message AS STRING)
 DECLARE SUB CloseLogFile
 DECLARE SUB ShowHelp (topic AS STRING)
+DECLARE FUNCTION GetSaveFileList$ (count AS INTEGER)
+DECLARE FUNCTION CanRecruitInCity% (cityIndex AS INTEGER)
+DECLARE SUB DrawStrategicMap
 
 ' Function declarations for tactical battle system
 DECLARE FUNCTION RunTacticalBattleLoop% (side AS INTEGER, sidex(1 TO 2) AS INTEGER)
@@ -270,7 +284,7 @@ DECLARE SUB DisableMouse
 
 ' Graphics function declarations
 DECLARE FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
-DECLARE SUB InitializeGraphics
+DECLARE FUNCTION InitializeGraphics% ()
 
 ' Realism function declarations
 DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)

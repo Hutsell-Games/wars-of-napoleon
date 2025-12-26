@@ -109,7 +109,11 @@ SUB SaveGame (slot AS INTEGER)
     
     CALL ShowStatusMessage("Saving", 11)
     
-    OPEN "O", 1, filename
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%(filename, "O", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     ' Write game state
     WRITE #1, gameState.month, gameState.year, gameState.side, gameState.turn
     WRITE #1, gameState.cashFrench, gameState.cashAllied
@@ -189,7 +193,11 @@ SUB LoadGame (slot AS INTEGER)
     
     CALL ShowStatusMessage("Loading", 11)
     
-    OPEN "I", 1, filename
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%(filename, "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     ' Read game state
     INPUT #1, gameState.month, gameState.year, gameState.side, gameState.turn
     INPUT #1, gameState.cashFrench, gameState.cashAllied

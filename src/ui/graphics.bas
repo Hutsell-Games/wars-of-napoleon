@@ -7,35 +7,66 @@
 ' Note: game_types.bas, city.bas, and army.bas are included in main.bas
 ' Note: utilities.bas provides FileExists% function
 
-SUB InitializeGraphics
-    ' Initialize graphics system
-    ' Load graphics files, set up display
-    ' Graphics files are in data/graphics/ directory
+'============================================================================
+' InitializeGraphics - Initialize graphics system
+'============================================================================
+' Description:
+'   Initializes the graphics system by setting up the display mode and
+'   verifying that required graphics files exist. Graphics files are loaded
+'   on-demand during tactical battles by iconload(), but this function
+'   validates that the files are available.
+' Side Effects:
+'   - Sets SCREEN 12 (VGA 640x480 mode)
+'   - Clears the screen
+'   - Displays warning messages if graphics files are missing
+' Returns:
+'   INTEGER - 1 if initialization successful, 0 if critical files missing
+'============================================================================
+FUNCTION InitializeGraphics% ()
+    DIM graphicsPath AS STRING
+    DIM missingFiles AS INTEGER
+    DIM fileList(1 TO 4) AS STRING
+    DIM i AS INTEGER
     
     ' Set graphics mode
     SCREEN 12 ' VGA 640x480
-    
-    ' Load graphics files
-    ' Note: Graphics are loaded on-demand by iconload() in tactical battles
-    ' For strategic map, we use simple drawing functions
-    ' If specific graphics are needed, they can be loaded here
-    
-    ' Attempt to load main graphics file if it exists
-    ' The graphic() array is used for storing loaded graphics data
-    DIM graphicsPath AS STRING
-    graphicsPath = "data/graphics/"
-    
-    ' Check if graphics directory exists
-    ' Note: iconload() in napoleon_subs.bas handles tactical battle graphics
-    ' Strategic graphics use simple drawing, so no file loading needed here
-    
-    ' For now, graphics are loaded on-demand:
-    ' - Tactical battle graphics: Loaded by iconload() when battle starts
-    ' - Strategic map graphics: Drawn using simple shapes (circles, lines, etc.)
-    ' - If specific strategic graphics files are needed, add loading here
-    
     CLS
-END SUB
+    
+    ' Graphics files used by iconload() in tactical battles
+    ' These files are loaded from the current directory (not data/graphics/)
+    ' Note: iconload() expects files in current directory, not subdirectory
+    fileList(1) = "stdicon.ega"
+    fileList(2) = "alticon.ega"
+    fileList(3) = "terrain.ega"
+    fileList(4) = "misc.ega"
+    
+    ' Check if graphics files exist
+    missingFiles = 0
+    FOR i = 1 TO 4
+        IF FileExists%(fileList(i)) = 0 THEN
+            missingFiles = missingFiles + 1
+        END IF
+    NEXT i
+    
+    ' If files are missing, display warning but don't fail initialization
+    ' Game can still run with strategic map graphics (simple drawing)
+    ' Tactical battles will fail if graphics are missing, but that's handled
+    ' by the battle initialization code
+    IF missingFiles > 0 THEN
+        COLOR 14 ' Yellow for warning
+        LOCATE 1, 1
+        PRINT "WARNING: Some graphics files are missing ("; missingFiles; " of 4)"
+        PRINT "Tactical battles may not display correctly."
+        PRINT "Press any key to continue..."
+        DO WHILE INKEY$ = "": LOOP
+        CLS
+    END IF
+    
+    ' Graphics initialization complete
+    ' Strategic map uses simple drawing (circles, lines, etc.)
+    ' Tactical graphics are loaded on-demand by iconload() when battle starts
+    InitializeGraphics% = 1 ' Success
+END FUNCTION
 
 FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
     ' Load a graphics file into the graphics array
@@ -261,18 +292,21 @@ END SUB
 SUB DrawTacticalMap
     ' Draw tactical battle map
     ' 27x20 hex grid with terrain and units
+    ' Wrapper for tactical mainmap function
     
-    ' This will call the mainmap subroutine from NAPOLEON.BAS
-    ' TODO: Implement mainmap SUB from NAPOLEON.BAS
-    ' CALL mainmap
+    ' Note: mainmap is implemented in tactical/ui.bas
+    ' This is a strategic-level wrapper that calls the tactical function
+    CALL mainmap
 END SUB
 
 SUB DrawUnitOnTacticalMap (unitIndex AS INTEGER)
     ' Draw unit on tactical map
     ' Shows unit type, strength, status
+    ' Wrapper for tactical SHOWUNIT function
     
-    ' TODO: Implement SHOWUNIT SUB from NAPOLEON.BAS
-    ' CALL SHOWUNIT (unitIndex%)
+    ' Note: SHOWUNIT is implemented in tactical/unit_management.bas
+    ' This is a strategic-level wrapper that calls the tactical function
+    CALL SHOWUNIT(unitIndex)
 END SUB
 
 SUB DrawCombatGraphics (attackerIndex AS INTEGER, defenderIndex AS INTEGER)

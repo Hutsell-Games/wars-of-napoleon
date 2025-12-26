@@ -8,6 +8,19 @@
 ' Note: Supply cost constants are in declarations.bas
 ' Note: campaign.bas, army.bas are included in main.bas
 
+'============================================================================
+' UpdateIncome - Update income for both sides based on city control
+'============================================================================
+' Description:
+'   Calculates and updates income for both sides based on cities they
+'   control. Each city's value contributes to the controlling side's income.
+'   Income is added to cash reserves, which are capped at 19,999.
+'   Called at the start of each turn.
+' Side Effects:
+'   - Updates gameState income for both sides
+'   - Adds income to cash reserves
+'   - Caps cash at maximum value (19,999)
+'============================================================================
 SUB UpdateIncome
     ' Update income for both sides based on city control
     ' Called at start of each turn
@@ -40,6 +53,18 @@ SUB UpdateIncome
     IF GetGameStateCash&(2) > 19999 THEN CALL SetGameStateCash(2, 19999)
 END SUB
 
+'============================================================================
+' AutoSupply - Automatic supply distribution for all armies
+'============================================================================
+' Description:
+'   Automatically supplies all armies for both sides. Cost is 0.002 money
+'   units per 1,000 men. Supply is free during harvest months (July and
+'   September). Each army receives +1 supply up to a maximum of 10.
+'   Supply is only applied if the side has sufficient funds.
+' Side Effects:
+'   - Increases supply for all armies (if funds available)
+'   - Deducts supply costs from cash reserves
+'============================================================================
 SUB AutoSupply
     ' Automatic supply distribution
     ' Cost: 0.002 money units per 1,000 men
@@ -93,6 +118,20 @@ SUB AutoSupply
     NEXT side
 END SUB
 
+'============================================================================
+' ManualSupply - Manually supply a specific army
+'============================================================================
+' Parameters:
+'   armyIndex (INTEGER) - Index of army to supply
+' Description:
+'   Manually supplies a specific army. Cost is 0.001 money units per 1,000
+'   men, which is cheaper than automatic supply. The army receives +1
+'   supply up to a maximum of 10. Only applies if sufficient funds available.
+' Side Effects:
+'   - Increases army supply by 1 (up to max 10)
+'   - Deducts supply cost from cash reserves
+'   - Displays error if insufficient funds
+'============================================================================
 SUB ManualSupply (armyIndex AS INTEGER)
     ' Manual supply for specific army
     ' Cost: 0.001 money units per 1,000 men (cheaper than auto)
@@ -120,9 +159,20 @@ SUB ManualSupply (armyIndex AS INTEGER)
     armies(armyIndex).supply = armies(armyIndex).supply + 1
     IF armies(armyIndex).supply > 10 THEN armies(armyIndex).supply = 10
     
-    COLOR 11: CALL clrbot: PRINT armies(armyIndex).name; " supplied manually"
+    CALL ShowStatusMessage(armies(armyIndex).name + " supplied manually", 11)
 END SUB
 
+'============================================================================
+' ConsumeSupply - Consume supply for all armies
+'============================================================================
+' Description:
+'   Reduces supply by 1 for all active armies each turn. Supply is not
+'   consumed during harvest months (July, September) when free supply
+'   is available. Armies with 0 supply fight at 50% combat effectiveness.
+'   Called at the end of each turn.
+' Side Effects:
+'   - Reduces supply by 1 for all armies (minimum 0)
+'============================================================================
 SUB ConsumeSupply
     ' Consume supply for all armies
     ' Units use 1 supply per turn (except harvest months)
@@ -141,21 +191,50 @@ SUB ConsumeSupply
     NEXT i
 END SUB
 
+'============================================================================
+' GetRecruitmentCost - Get cost to recruit a new army
+'============================================================================
+' Returns:
+'   INTEGER - Cost in money units to recruit a new army
+'============================================================================
 FUNCTION GetRecruitmentCost% ()
     ' Get cost to recruit new army
-    GetRecruitmentCost% = 100
+    GetRecruitmentCost% = RECRUITMENT_COST
 END FUNCTION
 
+'============================================================================
+' GetFortificationCost - Get cost per fortification level
+'============================================================================
+' Returns:
+'   INTEGER - Cost in money units per fortification level
+'============================================================================
 FUNCTION GetFortificationCost% ()
     ' Get cost per fortification level
     GetFortificationCost% = 200
 END FUNCTION
 
+'============================================================================
+' GetShipCost - Get cost to build a ship
+'============================================================================
+' Returns:
+'   INTEGER - Cost in money units to build one ship
+'============================================================================
 FUNCTION GetShipCost% ()
     ' Get cost to build ship
-    GetShipCost% = 100
+    GetShipCost% = SHIP_COST
 END FUNCTION
 
+'============================================================================
+' IsOutOfSupply - Check if army is out of supply
+'============================================================================
+' Parameters:
+'   armyIndex (INTEGER) - Index of army to check
+' Returns:
+'   INTEGER - 1 if army has 0 supply, 0 otherwise
+' Description:
+'   Checks if an army is out of supply (supply = 0). Out-of-supply armies
+'   fight at 50% combat effectiveness.
+'============================================================================
 FUNCTION IsOutOfSupply% (armyIndex AS INTEGER)
     ' Check if army is out of supply
     IsOutOfSupply% = 0

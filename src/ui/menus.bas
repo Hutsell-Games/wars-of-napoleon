@@ -80,6 +80,13 @@ SUB DrawMenu (selected AS INTEGER)
     DIM height AS INTEGER
     
     ' Calculate menu dimensions
+    ' Note: mtx$ is declared as mtx$(0 TO 20) in declarations.bas
+    ' Clamp size to prevent array bounds overflow
+    IF size > 20 THEN
+        CALL HandleWarning("Menu size (" + LTRIM$(STR$(size)) + ") exceeds maximum (20), clamping to 20")
+        size = 20
+    END IF
+    
     width = 0
     FOR i = 0 TO size
         IF LEN(mtx$(i)) > width THEN width = LEN(mtx$(i))

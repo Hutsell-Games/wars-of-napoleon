@@ -121,29 +121,72 @@ FUNCTION CheckEndGameConditions% ()
     END IF
 END FUNCTION
 
+'============================================================================
+' AwardVictoryPoints - Award victory points to a side
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to award points to (1=French, 2=Allies)
+'   amount (LONG) - Number of victory points to award
+' Description:
+'   Adds victory points to the specified side's total. Used for various
+'   game events (battles, city captures, etc.).
+'============================================================================
 SUB AwardVictoryPoints (side AS INTEGER, amount AS LONG)
     ' Award victory points to side
     CALL SetGameStateVictory(side, GetGameStateVictory&(side) + amount)
 END SUB
 
+'============================================================================
+' AwardBattleVictory - Award victory points for winning a battle
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side that won the battle (1=French, 2=Allies)
+' Description:
+'   Awards +1 victory point for winning a battle.
+'============================================================================
 SUB AwardBattleVictory (side AS INTEGER)
     ' Award victory points for winning battle
     ' +1 per battle won
     AwardVictoryPoints side, 1
 END SUB
 
+'============================================================================
+' AwardArmyCapture - Award victory points for capturing an army
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side that captured the army (1=French, 2=Allies)
+' Description:
+'   Awards +25 victory points for capturing/destroying an enemy army.
+'============================================================================
 SUB AwardArmyCapture (side AS INTEGER)
     ' Award victory points for capturing army
     ' +25 bonus
     AwardVictoryPoints side, 25
 END SUB
 
+'============================================================================
+' AwardEndGameBonus - Award end game bonus for triggering victory condition
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side that triggered end condition (1=French, 2=Allies)
+' Description:
+'   Awards +100 victory points bonus when a side triggers an end game
+'   condition (control, casualties, objectives, etc.).
+'============================================================================
 SUB AwardEndGameBonus (side AS INTEGER)
     ' Award end game bonus for triggering end condition
     ' +100 VP bonus
-    AwardVictoryPoints side, 100
+    AwardVictoryPoints side, END_GAME_BONUS
 END SUB
 
+'============================================================================
+' GetVictoryPoints - Get total victory points for a side
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to get points for (1=French, 2=Allies)
+' Returns:
+'   LONG - Total victory points for the side
+'============================================================================
 FUNCTION GetVictoryPoints& (side AS INTEGER)
     ' Get total victory points for side
     GetVictoryPoints& = GetGameStateVictory&(side)

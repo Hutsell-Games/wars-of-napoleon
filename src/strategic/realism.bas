@@ -20,9 +20,9 @@ SUB SetRealismMode (enabled AS INTEGER)
     ' Set realism mode
     realismMode = enabled
     IF enabled = 1 THEN
-        COLOR 11: CALL clrbot: PRINT "Realism mode enabled"
+        CALL ShowStatusMessage("Realism mode enabled", 11)
     ELSE
-        COLOR 11: CALL clrbot: PRINT "Realism mode disabled"
+        CALL ShowStatusMessage("Realism mode disabled", 11)
     END IF
 END SUB
 
@@ -32,7 +32,7 @@ FUNCTION GetRecruitmentSize& (cityIndex AS INTEGER)
     ' Normal mode: Fixed recruitment
     
     DIM baseSize AS LONG
-    baseSize = 10000 ' Default recruitment size
+    baseSize = DEFAULT_ARMY_SIZE ' Default recruitment size
     
     IF realismMode = 1 THEN
         ' City size affects recruitment
@@ -52,7 +52,9 @@ FUNCTION CanRecruitInCityRealism% (cityIndex AS INTEGER)
     
     IF realismMode = 1 THEN
         ' Check if city was originally friendly/neutral
-        ' This requires tracking original ownership (to be implemented)
+        ' TODO: Track original ownership for realism mode:
+        '   - Store original owner when city is captured
+        '   - Check if city returns to original owner when isolated
         ' For now, allow if currently owned
         IF cities(cityIndex).owner = CITY_FRENCH OR cities(cityIndex).owner = CITY_ALLIED THEN
             CanRecruitInCityRealism% = 1
@@ -97,7 +99,7 @@ FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
     DIM connectedCity AS INTEGER
     
     ' Validate city index
-    IF cityIndex <= 0 OR cityIndex > MAX_CITIES THEN
+    IF ValidateCityIndex%(cityIndex, "IsCityIsolated") = 0 THEN
         IsCityIsolated% = 0 ' Invalid city, consider not isolated
         EXIT FUNCTION
     END IF

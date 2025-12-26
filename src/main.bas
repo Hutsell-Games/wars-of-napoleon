@@ -33,13 +33,28 @@ END SUB
 
 SUB InitializeGame
     ' Initialize all game systems
+    ' Initializes all subsystems in the correct order
+    ' Graphics must be initialized early as other systems may depend on it
     
-    ' Load configuration
+    ' Load configuration first (needed by other initialization functions)
     CALL LoadConfig
     
     ' Initialize subsystems
     CALL InitializeMenus
-    CALL InitializeGraphics
+    ' Initialize graphics early (sets SCREEN 12, validates graphics files)
+    IF InitializeGraphics%() = 0 THEN
+        ' Graphics initialization failed - display error but continue
+        ' Game can still run with limited graphics
+        COLOR 12 ' Red for error
+        LOCATE 1, 1
+        PRINT "Graphics initialization completed with warnings."
+        PRINT "Game will continue but some features may not work correctly."
+        PRINT "Press any key to continue..."
+        DO WHILE INKEY$ = "": LOOP
+        CLS
+    END IF
+    
+    ' Initialize game data structures
     CALL InitializeArmies
     CALL InitializeCities
     CALL InitializeNaval
@@ -51,14 +66,15 @@ SUB InitializeGame
     CALL InitializePBM
     CALL InitializeMouse
     
-    ' Set up graphics
-    SCREEN 12
+    ' Clear screen after all initialization
     CLS
 END SUB
 
 FUNCTION ShowMainMenu% ()
     ' Display main menu and get user choice
     ' Returns menu option selected
+    
+    DIM choice AS INTEGER
     
     CLS
     COLOR 15: PRINT "WARS OF NAPOLEON"
@@ -106,7 +122,7 @@ SUB LoadGameMenu
     filename = GetSaveFileList$(count)
     
     IF count = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "No save files found"
+        CALL ShowStatusError("No save files found")
         EXIT SUB
     END IF
     
@@ -127,7 +143,7 @@ SUB ContinuePBMGame
     ' Continue PBM game
     
     IF pbmEnabled = 0 THEN
-        COLOR 11: CALL clrbot: PRINT "PBM mode not enabled"
+        CALL ShowStatusError("PBM mode not enabled")
         EXIT SUB
     END IF
     
@@ -175,9 +191,126 @@ END SUB
 SUB ConfigurationMenu
     ' Configuration menu
     ' Allows changing game settings
+    ' Display settings, sound, game balance, etc.
     
-    CALL ShowInfo("Configuration menu - Settings can be changed here")
-    ' TODO: Implement full configuration menu
+    DIM choice AS INTEGER
+    DIM newValue AS INTEGER
+    DIM prompt AS STRING
+    
+    DO
+        CLS
+        COLOR 15: PRINT "CONFIGURATION MENU"
+        PRINT STRING$(80, "-")
+        PRINT "Current Settings:"
+        PRINT
+        PRINT "1. Side: "; 
+        IF config_side = 1 THEN PRINT "French" ELSE PRINT "Allies"
+        PRINT "2. Sound: ";
+        IF config_sound = 0 THEN PRINT "None"
+        IF config_sound = 1 THEN PRINT "Sounds Only"
+        IF config_sound = 2 THEN PRINT "Sounds + Music"
+        PRINT "3. Play Balance: "; config_balance; " (1=Allies++, 3=Balanced, 5=French++)"
+        PRINT "4. Computer Aggression: "; config_aggression; " (1=Low, 5=High)"
+        PRINT "5. Number of Players: "; config_players
+        PRINT "6. Display Speed: "; config_display; " (1=Very Fast, 2=Normal, 4=Very Slow)"
+        PRINT "7. Random Events: "; config_randevent; " (0=Off, 3=Favor Allies, 5=Neutral, 7=Favor French)"
+        PRINT "8. History: ";
+        IF config_history = 0 THEN PRINT "Off" ELSE PRINT "On"
+        PRINT "9. Tactical Battles: ";
+        IF config_tactical = 0 THEN PRINT "Off" ELSE PRINT "On"
+        PRINT
+        PRINT "0. Save and Exit"
+        PRINT
+        INPUT "Select option to change (0-9): ", choice
+        
+        SELECT CASE choice
+            CASE 1 ' Side
+                PRINT "Select side (1=French, 2=Allies): "
+                INPUT newValue
+                IF newValue >= 1 AND newValue <= 2 THEN
+                    config_side = newValue
+                    CALL ShowInfo("Side changed")
+                ELSE
+                    CALL ShowError("Invalid value (1-2)")
+                END IF
+            CASE 2 ' Sound
+                PRINT "Sound setting (0=None, 1=Sounds Only, 2=Sounds+Music): "
+                INPUT newValue
+                IF newValue >= 0 AND newValue <= 2 THEN
+                    config_sound = newValue
+                    CALL ShowInfo("Sound setting changed")
+                ELSE
+                    CALL ShowError("Invalid value (0-2)")
+                END IF
+            CASE 3 ' Play Balance
+                PRINT "Play Balance (1=Allies++, 3=Balanced, 5=French++): "
+                INPUT newValue
+                IF newValue >= 1 AND newValue <= 5 THEN
+                    config_balance = newValue
+                    CALL ShowInfo("Play balance changed")
+                ELSE
+                    CALL ShowError("Invalid value (1-5)")
+                END IF
+            CASE 4 ' Aggression
+                PRINT "Computer Aggression (1=Low, 5=High): "
+                INPUT newValue
+                IF newValue >= 1 AND newValue <= 5 THEN
+                    config_aggression = newValue
+                    CALL ShowInfo("Aggression level changed")
+                ELSE
+                    CALL ShowError("Invalid value (1-5)")
+                END IF
+            CASE 5 ' Players
+                PRINT "Number of Players (1-2): "
+                INPUT newValue
+                IF newValue >= 1 AND newValue <= 2 THEN
+                    config_players = newValue
+                    CALL ShowInfo("Number of players changed")
+                ELSE
+                    CALL ShowError("Invalid value (1-2)")
+                END IF
+            CASE 6 ' Display Speed
+                PRINT "Display Speed (1=Very Fast, 2=Normal, 4=Very Slow): "
+                INPUT newValue
+                IF newValue = 1 OR newValue = 2 OR newValue = 4 THEN
+                    config_display = newValue
+                    CALL ShowInfo("Display speed changed")
+                ELSE
+                    CALL ShowError("Invalid value (1, 2, or 4)")
+                END IF
+            CASE 7 ' Random Events
+                PRINT "Random Events (0=Off, 3=Favor Allies, 5=Neutral, 7=Favor French): "
+                INPUT newValue
+                IF newValue >= 0 AND newValue <= 7 THEN
+                    config_randevent = newValue
+                    CALL ShowInfo("Random events setting changed")
+                ELSE
+                    CALL ShowError("Invalid value (0-7)")
+                END IF
+            CASE 8 ' History
+                PRINT "History (0=Off, 1=On): "
+                INPUT newValue
+                IF newValue >= 0 AND newValue <= 1 THEN
+                    config_history = newValue
+                    CALL ShowInfo("History setting changed")
+                ELSE
+                    CALL ShowError("Invalid value (0-1)")
+                END IF
+            CASE 9 ' Tactical Battles
+                PRINT "Tactical Battles (0=Off, 1=On): "
+                INPUT newValue
+                IF newValue >= 0 AND newValue <= 1 THEN
+                    config_tactical = newValue
+                    CALL ShowInfo("Tactical battles setting changed")
+                ELSE
+                    CALL ShowError("Invalid value (0-1)")
+                END IF
+            CASE 0 ' Save and Exit
+                CALL SaveConfig
+                CALL ShowInfo("Configuration saved")
+                EXIT DO
+        END SELECT
+    LOOP
 END SUB
 
 SUB ToggleRealism
@@ -309,7 +442,7 @@ SUB RecruitMenu (side AS INTEGER)
             IF CanRecruitInCity(i) = 1 THEN
                 count = count + 1
                 citiesToRecruit(count) = i
-                cityNames$(count) = cities(i).name + " (Cost: 100)"
+                cityNames$(count) = cities(i).name + " (Cost: " + LTRIM$(STR$(RECRUITMENT_COST)) + ")"
             END IF
         END IF
     NEXT i
@@ -324,8 +457,8 @@ SUB RecruitMenu (side AS INTEGER)
     
     IF selected > 0 THEN
         ' Check if have enough money
-        IF GetGameStateCash&(side) < 100 THEN
-            CALL ShowError("Insufficient funds (need 100)")
+        IF GetGameStateCash&(side) < RECRUITMENT_COST THEN
+            CALL ShowError("Insufficient funds (need " + LTRIM$(STR$(RECRUITMENT_COST)) + ")")
             EXIT SUB
         END IF
         
@@ -350,7 +483,7 @@ SUB RecruitMenu (side AS INTEGER)
         commanders(commanderIndex).available = 0
         
         CALL RecruitArmy(side, citiesToRecruit(selected), commanderName, commanderRating)
-        CALL SetGameStateCash(side, GetGameStateCash&(side) - 100)
+        CALL SetGameStateCash(side, GetGameStateCash&(side) - RECRUITMENT_COST)
     END IF
 END SUB
 
@@ -487,7 +620,7 @@ SUB BuildShipMenu (side AS INTEGER)
         IF cities(i).name <> "" AND cities(i).owner = side AND cityMatrix(i, 7) = 1 THEN
             count = count + 1
             ports(count) = i
-            portNames$(count) = cities(i).name + " (Cost: 100)"
+            portNames$(count) = cities(i).name + " (Cost: " + LTRIM$(STR$(RECRUITMENT_COST)) + ")"
         END IF
     NEXT i
     
@@ -542,24 +675,83 @@ END SUB
 
 SUB BombardMenu (side AS INTEGER)
     ' Bombard city menu
+    ' Shows list of port cities where fleet can bombard
     
     IF fleets(side).size = 0 THEN
         CALL ShowInfo("No fleet available")
         EXIT SUB
     END IF
     
-    CALL ShowInfo("Select city to bombard (to be implemented)")
+    DIM i AS INTEGER
+    DIM count AS INTEGER
+    DIM targetCities(1 TO MAX_CITIES) AS INTEGER
+    DIM cityNames$(1 TO MAX_CITIES)
+    
+    count = 0
+    FOR i = 1 TO MAX_CITIES
+        ' Check if port city and fleet is at that location
+        IF cities(i).name <> "" AND cityMatrix(i, 7) = 1 THEN
+            IF fleets(side).loc = i THEN
+                count = count + 1
+                targetCities(count) = i
+                cityNames$(count) = cities(i).name
+            END IF
+        END IF
+    NEXT i
+    
+    IF count = 0 THEN
+        CALL ShowInfo("Fleet must be at a port city to bombard")
+        EXIT SUB
+    END IF
+    
+    DIM selected AS INTEGER
+    selected = ShowListMenu%("Bombard City", cityNames$, count)
+    
+    IF selected > 0 THEN
+        CALL BombardCity(side, targetCities(selected))
+    END IF
 END SUB
 
 SUB BlockadeMenu (side AS INTEGER)
     ' Blockade port menu
+    ' Shows list of enemy ports where fleet can blockade
     
     IF fleets(side).size = 0 THEN
         CALL ShowInfo("No fleet available")
         EXIT SUB
     END IF
     
-    CALL ShowInfo("Select port to blockade (to be implemented)")
+    DIM enemySide AS INTEGER
+    enemySide = 3 - side
+    
+    DIM i AS INTEGER
+    DIM count AS INTEGER
+    DIM targetPorts(1 TO MAX_CITIES) AS INTEGER
+    DIM portNames$(1 TO MAX_CITIES)
+    
+    count = 0
+    FOR i = 1 TO MAX_CITIES
+        ' Check if enemy port and fleet is at that location
+        IF cities(i).name <> "" AND cityMatrix(i, 7) = 1 THEN
+            IF cities(i).owner = enemySide AND fleets(side).loc = i THEN
+                count = count + 1
+                targetPorts(count) = i
+                portNames$(count) = cities(i).name
+            END IF
+        END IF
+    NEXT i
+    
+    IF count = 0 THEN
+        CALL ShowInfo("Fleet must be at an enemy port to blockade")
+        EXIT SUB
+    END IF
+    
+    DIM selected AS INTEGER
+    selected = ShowListMenu%("Blockade Port", portNames$, count)
+    
+    IF selected > 0 THEN
+        CALL BlockadePort(side, targetPorts(selected))
+    END IF
 END SUB
 
 SUB RaidCommerceMenu (side AS INTEGER)
@@ -575,13 +767,41 @@ END SUB
 
 SUB InvasionMenu (side AS INTEGER)
     ' Marine invasion menu
+    ' Shows list of neutral coastal cities for invasion
     
     IF fleets(side).size < 2 THEN
         CALL ShowInfo("Need at least 2 ships for invasion")
         EXIT SUB
     END IF
     
-    CALL ShowInfo("Select neutral city for invasion (to be implemented)")
+    DIM i AS INTEGER
+    DIM count AS INTEGER
+    DIM targetCities(1 TO MAX_CITIES) AS INTEGER
+    DIM cityNames$(1 TO MAX_CITIES)
+    
+    count = 0
+    FOR i = 1 TO MAX_CITIES
+        ' Check if neutral port city and fleet is at that location
+        IF cities(i).name <> "" AND cityMatrix(i, 7) = 1 THEN
+            IF cities(i).owner = CITY_NEUTRAL AND fleets(side).loc = i THEN
+                count = count + 1
+                targetCities(count) = i
+                cityNames$(count) = cities(i).name
+            END IF
+        END IF
+    NEXT i
+    
+    IF count = 0 THEN
+        CALL ShowInfo("Fleet must be at a neutral port city for invasion")
+        EXIT SUB
+    END IF
+    
+    DIM selected AS INTEGER
+    selected = ShowListMenu%("Marine Invasion", cityNames$, count)
+    
+    IF selected > 0 THEN
+        CALL MarineInvasion(side, targetCities(selected))
+    END IF
 END SUB
 
 SUB ReportsMenu (side AS INTEGER)
@@ -662,7 +882,11 @@ END SUB
 
 SUB ExecuteMovement (armyIndex AS INTEGER)
     ' Execute army movement
-    ' Placeholder - will implement full movement logic
+    ' TODO: Implement full movement logic:
+    '   - Check movement costs
+    '   - Handle terrain effects
+    '   - Check for enemy armies in path
+    '   - Handle supply during movement
     
     DIM destination AS INTEGER
     destination = armies(armyIndex).move

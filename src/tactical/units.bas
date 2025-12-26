@@ -94,16 +94,26 @@ END FUNCTION
 
 FUNCTION CanArtilleryMove% (unitIndex AS INTEGER)
     ' Check if artillery can move
-    ' Artillery must limber before moving
+    ' Artillery must limber before moving (if limber mode is enabled)
     
     IF GetUnitType%(unitIndex) <> UNIT_ARTILLERY THEN
         CanArtilleryMove% = 1
         EXIT FUNCTION
     END IF
     
-    ' Check if limbered (placeholder - will check limber status)
-    ' Artillery must use L key to limber before moving
-    CanArtilleryMove% = 1 ' Placeholder
+    ' If limber mode is disabled, artillery can always move
+    IF limber = 0 THEN
+        CanArtilleryMove% = 1
+        EXIT FUNCTION
+    END IF
+    
+    ' Check if artillery is limbered (unit$ starts with "L")
+    ' Limbered artillery can move, unlimbered cannot
+    IF LEFTY$(unitIndex) = "L" THEN
+        CanArtilleryMove% = 1 ' Limbered - can move
+    ELSE
+        CanArtilleryMove% = 0 ' Not limbered - cannot move
+    END IF
 END FUNCTION
 
 FUNCTION GetGeneralBonus! (generalIndex AS INTEGER, unitIndex AS INTEGER)
@@ -147,10 +157,14 @@ END SUB
 SUB ProcessArtilleryLimber (unitIndex AS INTEGER)
     ' Process artillery limbering
     ' Artillery must limber before moving
+    ' Calls limbo function to handle limbering (adds "L" prefix to unit$)
     
     IF GetUnitType%(unitIndex) = UNIT_ARTILLERY THEN
-        ' Set limbered flag (placeholder)
-        COLOR 11: CALL clrbot: PRINT name$(unitIndex); " limbered - ready to move"
+        ' Call limbo to limber the artillery (flag=0 means direct limber without confirmation)
+        CALL limbo(unitIndex, 0)
+        IF LEFTY$(unitIndex) = "L" THEN
+            COLOR 11: CALL clrbot: PRINT name$(unitIndex); " limbered - ready to move"
+        END IF
     END IF
 END SUB
 

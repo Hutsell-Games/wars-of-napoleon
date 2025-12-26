@@ -46,12 +46,7 @@ FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex A
         EXIT FUNCTION ' No defender
     END IF
     
-    ' Calculate ratio (attacker:defender) - prevent division by zero
-    IF defenderStrength = 0 THEN
-        ShouldTriggerTacticalBattle% = 0 ' No defender, no tactical battle
-        EXIT FUNCTION
-    END IF
-    
+    ' Calculate ratio (attacker:defender) - division by zero already prevented above
     ratio = attackerStrength / defenderStrength
     
     ' Check if ratio is between 1:3 and 3:1
@@ -215,15 +210,17 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' DETERMINE WINNER AND LOSER
     ' ============================================================
     ' result.winner contains side ID (1 or 2), convert to army index
+    ' This mapping is critical: tactical layer uses side IDs (1/2),
+    ' but strategic layer needs army indices to update the correct army
     winner = result.winner
     IF winner = attackerSide THEN
-        ' Attacker won
+        ' Attacker won - map side ID back to strategic army index
         winnerSide = attackerSide
         loserSide = defenderSide
         winner = attackerIndex ' Convert to strategic army index
         loser = defenderIndex
     ELSE
-        ' Defender won
+        ' Defender won - map side ID back to strategic army index
         winnerSide = defenderSide
         loserSide = attackerSide
         winner = defenderIndex ' Convert to strategic army index
@@ -235,10 +232,13 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' ============================================================
     ' Casualties are in scaled units (hundreds), same as strategic size
     ' Example: 50 casualties (hundreds) = 5000 men lost
+    ' The tactical battle returns casualties in the same units as strategic
+    ' army sizes, so we can directly subtract them
     armies(attackerIndex).size = armies(attackerIndex).size - result.casualties1
     armies(defenderIndex).size = armies(defenderIndex).size - result.casualties2
     
     ' Ensure strengths don't go negative (safety check)
+    ' This prevents invalid states if casualty calculation had errors
     IF armies(attackerIndex).size < 0 THEN armies(attackerIndex).size = 0
     IF armies(defenderIndex).size < 0 THEN armies(defenderIndex).size = 0
     
@@ -246,6 +246,8 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' UPDATE EXPERIENCE
     ' ============================================================
     ' Winner gains experience (max 10)
+    ' Experience increases combat effectiveness, so winners get stronger
+    ' over time while losers don't benefit from defeats
     IF armies(winner).exper < 10 THEN
         armies(winner).exper = armies(winner).exper + 1
     END IF
@@ -254,6 +256,9 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' CITY CONTROL TRANSFER
     ' ============================================================
     ' If attacker wins, they capture the city
+    ' Note: CaptureCity is defined in src/strategic/city.bas (line 160)
+    ' Only attackers can capture cities; defenders just hold them
+    ' cityIndex > 0 check ensures we're at a city, not open terrain
     IF winnerSide = attackerSide AND cityIndex > 0 THEN
         CaptureCity cityIndex, attackerSide
     END IF
@@ -262,10 +267,17 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' RETREAT PROCESSING
     ' ============================================================
     ' Loser must retreat if army still exists
+    ' If army is destroyed (size = 0), mark commander available instead
+    ' This handles two scenarios:
+    '   1. Army survives but must retreat (ProcessRetreat finds friendly city)
+    '   2. Army destroyed (commander freed, army cleared)
     IF armies(loser).size > 0 THEN
+        ' Army survives - attempt retreat to adjacent friendly city
+        ' ProcessRetreat will find best retreat path or surrender if none
         ProcessRetreat loser, cityIndex
     ELSE
         ' Army destroyed - mark commander as available
+        ' This allows the commander to be reassigned to a new army
         CALL MarkCommanderAvailable(loser)
         armies(loser).size = 0
         armies(loser).name = ""
@@ -273,9 +285,14 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     END IF
     
     ' Update battle statistics
+    ' Note: UpdateBattleStats is defined in src/strategic/reports.bas (line 322)
+    ' Tracks overall battle performance for both sides
     UpdateBattleStats winnerSide, result.casualties1, result.casualties2
     
     ' Record in history
+    ' Note: RecordBattleHistory is defined in src/strategic/reports.bas (line 300)
+    ' Records battle details for end-game reports and replay
+    ' Note: We add casualties back to size to get pre-battle strength for display
     RecordBattleHistory armies(attackerIndex).name, armies(attackerIndex).size + result.casualties1, result.casualties1, _
                         armies(defenderIndex).name, armies(defenderIndex).size + result.casualties2, result.casualties2, _
                         armies(winner).name, cities(cityIndex).name
@@ -283,6 +300,25 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ProcessTacticalResults% = winnerSide
 END FUNCTION
 
+'============================================================================
+' ResolveStrategicCombat - Resolve combat using strategic-level calculations
+'============================================================================
+' Parameters:
+'   attackerIndex (INTEGER) - Index of attacking army
+'   defenderIndex (INTEGER) - Index of defending army
+'   cityIndex (INTEGER) - Index of city where combat occurs (0 if no city)
+' Returns:
+'   INTEGER - Winner side (1=attacker, 2=defender)
+' Description:
+'   Resolves combat using strategic-level calculations when tactical battles
+'   are disabled or when force ratio exceeds 3:1. This provides a faster
+'   resolution method that doesn't require launching the tactical battle system.
+'   Delegates actual combat calculations to the combat.bas module.
+' Side Effects:
+'   - Updates army strengths based on combat results
+'   - May capture city if attacker wins
+'   - Awards victory points to winner
+'============================================================================
 FUNCTION ResolveStrategicCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cityIndex AS INTEGER)
     ' Strategic-level combat resolution
     ' Used when tactical battles are disabled or force ratio > 3:1
@@ -299,6 +335,23 @@ FUNCTION ResolveStrategicCombat% (attackerIndex AS INTEGER, defenderIndex AS INT
     ResolveStrategicCombat% = winner
 END FUNCTION
 
+'============================================================================
+' ProcessRetreat - Process retreat for losing army after battle
+'============================================================================
+' Parameters:
+'   armyIndex (INTEGER) - Index of army that must retreat
+'   fromCity (INTEGER) - City index where battle occurred (starting retreat point)
+' Description:
+'   Handles retreat logic for a losing army after combat. Searches for an
+'   adjacent friendly city to retreat to. If no friendly city is available,
+'   the army surrenders and is destroyed. The commander is marked as
+'   available for reassignment if the army is destroyed.
+' Side Effects:
+'   - Moves army to retreat city if found
+'   - Destroys army if no retreat path available
+'   - Marks commander as available if army destroyed
+'   - Awards army capture victory points to enemy if army surrenders
+'============================================================================
 SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
     ' Process retreat for losing army
     ' Finds adjacent friendly city or surrenders if none available
@@ -341,6 +394,7 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
         armies(armyIndex).size = 0
         armies(armyIndex).name = ""
         armies(armyIndex).loc = 0
+        ' Note: AwardArmyCapture is defined in src/strategic/victory.bas (line 135)
         AwardArmyCapture 3 - side ' Award to enemy
     END IF
 END SUB

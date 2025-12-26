@@ -130,7 +130,11 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
     DIM objectiveCities(1 TO 2) AS INTEGER
     DIM armyIndex AS INTEGER
     
-    OPEN "I", 1, filename
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%(filename, "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     
     ' Read starting month and year
     INPUT #1, startMonth, startYear
@@ -190,7 +194,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
             armies(armyIndex).move = 0
             
             ' Mark city as occupied (validate cityIndex first)
-            IF cityIndex >= 1 AND cityIndex <= MAX_CITIES THEN
+            IF ValidateCityIndex%(cityIndex, "InitializeScenario - French armies") = 1 THEN
                 occupied(cityIndex) = armyIndex
             END IF
         END IF
@@ -221,7 +225,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
             armies(armyIndex).move = 0
             
             ' Mark city as occupied (validate cityIndex first)
-            IF cityIndex >= 1 AND cityIndex <= MAX_CITIES THEN
+            IF ValidateCityIndex%(cityIndex, "InitializeScenario - Allied armies") = 1 THEN
                 occupied(cityIndex) = armyIndex
             END IF
         END IF
@@ -288,7 +292,11 @@ SUB LoadCommanderData (scenarioYear AS INTEGER)
         commanders(i).available = 1
     NEXT i
     
-    OPEN "I", 1, filename
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%(filename, "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     
     ' Load French commanders (first 25)
     FOR i = 1 TO 25

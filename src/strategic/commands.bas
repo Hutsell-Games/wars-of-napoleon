@@ -41,8 +41,7 @@ FUNCTION SelectCommander% (side AS INTEGER, cityIndex AS INTEGER)
     
     ' Validate cityIndex if provided
     IF cityIndex > 0 THEN
-        IF cityIndex < 1 OR cityIndex > MAX_CITIES THEN
-            CALL ShowStatusError("Invalid city index")
+        IF ValidateCityIndex%(cityIndex, "SelectCommander") = 0 THEN
             SelectCommander% = 0
             EXIT FUNCTION
         END IF
@@ -335,16 +334,164 @@ END SUB
 
 SUB DetachArmyCommand (side AS INTEGER)
     ' Detach command - split army
-    ' Placeholder - will implement army splitting
+    ' Splits army into two armies (30% split)
+    ' Requires minimum 6,500 men
     
-    CALL ShowInfo("Detach command - Split army (to be implemented)")
+    DIM i AS INTEGER
+    DIM startIndex AS INTEGER
+    DIM endIndex AS INTEGER
+    DIM count AS INTEGER
+    DIM armiesToDetach(1 TO MAX_ARMIES) AS INTEGER
+    DIM armyNames$(1 TO MAX_ARMIES)
+    
+    IF side = 1 THEN
+        startIndex = FRENCH_START
+        endIndex = FRENCH_START + 19
+    ELSE
+        startIndex = ALLIED_START
+        endIndex = ALLIED_START + 19
+    END IF
+    
+    count = 0
+    FOR i = startIndex TO endIndex
+        ' Check if army has at least 6,500 men (minimum for detach)
+        IF armies(i).size >= 6500 THEN
+            count = count + 1
+            armiesToDetach(count) = i
+            armyNames$(count) = armies(i).name + " (" + LTRIM$(STR$(armies(i).size)) + " men)"
+        END IF
+    NEXT i
+    
+    IF count = 0 THEN
+        CALL ShowInfo("No armies with 6,500+ men available to detach")
+        EXIT SUB
+    END IF
+    
+    DIM selected AS INTEGER
+    selected = ShowListMenu%("Detach Army", armyNames$, count)
+    
+    IF selected > 0 THEN
+        DIM armyIndex AS INTEGER
+        DIM detachedSize AS LONG
+        DIM newArmyIndex AS INTEGER
+        DIM cityIndex AS INTEGER
+        DIM j AS INTEGER
+        
+        armyIndex = armiesToDetach(selected)
+        
+        ' Calculate 30% of army size
+        detachedSize = armies(armyIndex).size * 0.3
+        
+        ' Check if remaining army would be too small
+        IF armies(armyIndex).size - detachedSize < 1000 THEN
+            CALL ShowError("Detaching would leave army too small (minimum 1,000 men)")
+            EXIT SUB
+        END IF
+        
+        ' Find available army slot for detached army
+        cityIndex = armies(armyIndex).loc
+        newArmyIndex = 0
+        
+        FOR j = startIndex TO endIndex
+            IF armies(j).size = 0 THEN
+                newArmyIndex = j
+                EXIT FOR
+            END IF
+        NEXT j
+        
+        IF newArmyIndex = 0 THEN
+            CALL ShowError("No available army slot for detached units")
+            EXIT SUB
+        END IF
+        
+        ' Create detached army
+        armies(newArmyIndex).name = armies(armyIndex).name + " (Detached)"
+        armies(newArmyIndex).size = detachedSize
+        armies(newArmyIndex).lead = armies(armyIndex).lead
+        armies(newArmyIndex).exper = armies(armyIndex).exper
+        armies(newArmyIndex).supply = armies(armyIndex).supply
+        armies(newArmyIndex).loc = cityIndex
+        armies(newArmyIndex).move = -1 ' Cannot move this turn
+        armies(newArmyIndex).nationality = armies(armyIndex).nationality
+        
+        ' Reduce original army size
+        armies(armyIndex).size = armies(armyIndex).size - detachedSize
+        
+        ' Update occupation if needed
+        IF occupied(cityIndex) = armyIndex THEN
+            ' Keep original army as occupier
+            occupied(cityIndex) = armyIndex
+        END IF
+        
+        CALL ShowInfo("Army detached: " + LTRIM$(STR$(detachedSize)) + " men")
+    END IF
 END SUB
 
 SUB DrillArmyCommand (side AS INTEGER)
     ' Drill command - improve army experience
-    ' Placeholder - will implement drilling
+    ' Increases experience by 1 (max 5)
+    ' Cost: 50 money units
+    ' Army cannot move this turn
     
-    CALL ShowInfo("Drill command - Improve experience (to be implemented)")
+    DIM i AS INTEGER
+    DIM startIndex AS INTEGER
+    DIM endIndex AS INTEGER
+    DIM count AS INTEGER
+    DIM armiesToDrill(1 TO MAX_ARMIES) AS INTEGER
+    DIM armyNames$(1 TO MAX_ARMIES)
+    
+    IF side = 1 THEN
+        startIndex = FRENCH_START
+        endIndex = FRENCH_START + 19
+    ELSE
+        startIndex = ALLIED_START
+        endIndex = ALLIED_START + 19
+    END IF
+    
+    count = 0
+    FOR i = startIndex TO endIndex
+        ' Check if army can drill (has men, experience < 5, not already moving)
+        IF armies(i).size > 0 AND armies(i).exper < 5 AND armies(i).move = 0 THEN
+            count = count + 1
+            armiesToDrill(count) = i
+            armyNames$(count) = armies(i).name + " (Exp: " + LTRIM$(STR$(armies(i).exper)) + "/5)"
+        END IF
+    NEXT i
+    
+    IF count = 0 THEN
+        CALL ShowInfo("No armies available to drill (must have experience < 5 and no move orders)")
+        EXIT SUB
+    END IF
+    
+    DIM selected AS INTEGER
+    selected = ShowListMenu%("Drill Army", armyNames$, count)
+    
+    IF selected > 0 THEN
+        DIM armyIndex AS INTEGER
+        DIM cost AS INTEGER
+        
+        armyIndex = armiesToDrill(selected)
+        cost = 50
+        
+        ' Check if have enough money
+        IF GetGameStateCash&(side) < cost THEN
+            CALL ShowError("Insufficient funds (need " + LTRIM$(STR$(cost)) + ")")
+            EXIT SUB
+        END IF
+        
+        ' Increase experience (max 5)
+        IF armies(armyIndex).exper < 5 THEN
+            armies(armyIndex).exper = armies(armyIndex).exper + 1
+        END IF
+        
+        ' Prevent movement this turn
+        armies(armyIndex).move = -1
+        
+        ' Deduct cost
+        CALL SetGameStateCash(side, GetGameStateCash&(side) - cost)
+        
+        CALL ShowInfo(armies(armyIndex).name + " drilled. Experience: " + LTRIM$(STR$(armies(armyIndex).exper)))
+    END IF
 END SUB
 
 SUB RelieveCommanderCommand (side AS INTEGER)

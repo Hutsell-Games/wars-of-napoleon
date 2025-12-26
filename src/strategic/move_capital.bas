@@ -25,13 +25,13 @@ SUB MoveCapital (side AS INTEGER, newCityIndex AS INTEGER)
     cost = 500
     
     IF GetGameStateCash&(side) < cost THEN
-        COLOR 11: CALL clrbot: PRINT "Move capital costs"; cost; "money units"
+        CALL ShowStatusError("Move capital costs " + LTRIM$(STR$(cost)) + " money units")
         EXIT SUB
     END IF
     
     ' Check if city is owned by side
     IF cities(newCityIndex).owner <> side THEN
-        COLOR 11: CALL clrbot: PRINT "Capital must be moved to owned city"
+        CALL ShowStatusError("Capital must be moved to owned city")
         EXIT SUB
     END IF
     
@@ -56,7 +56,7 @@ SUB MoveCapital (side AS INTEGER, newCityIndex AS INTEGER)
         cities(capitalCity(side)).objective = 0
     END IF
     
-    COLOR 11: CALL clrbot: PRINT "Capital moved to"; cities(newCityIndex).name
+    CALL ShowStatusMessage("Capital moved to " + cities(newCityIndex).name, 11)
 END SUB
 
 FUNCTION IsCapitalCity% (cityIndex AS INTEGER)

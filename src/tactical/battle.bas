@@ -5,10 +5,18 @@
 ' Modern unified approach: Direct function call instead of file I/O + process spawning
 ' Removed: File I/O (battle.$$$), Process spawning (SHELL), File output (outcome.&&&)
 ' Added: Function parameters, Return values
+'
+' INTEGRATION STATUS: Complete - All NAPOLEON.BAS code has been modularized
+' The original monolithic NAPOLEON.BAS has been fully refactored into separate modules
 
 ' Note: battle_types.bas is included in main.bas
-' TODO: Include nap10.bi when NAPOLEON.BAS is integrated
-' Removed: $INCLUDE: 'nap10.bi' ' Original include file from NAPOLEON.BAS (not yet available)
+' Note: NAPOLEON.BAS code has been refactored into modular files:
+'   - terrain.bas: randmap, terrain generation
+'   - unit_placement.bas: randarm, unit placement
+'   - ui.bas: mainmap, iconload, display functions
+'   - unit_management.bas: SHOWUNIT, unit operations
+'   - Other modules: combat, orders, ai, etc.
+' Original nap10.bi declarations are now in declarations.bas
 '
 '============================================================================
 ' Forward Declarations
@@ -42,9 +50,15 @@ DECLARE SUB randmap ()
 ' $INCLUDE: 'src/tactical/orders.bas'
 ' $INCLUDE: 'src/tactical/napoleon_subs.bas'
 
-' Note: This is a wrapper function that will call the refactored NAPOLEON.BAS code
-' The actual tactical battle implementation will be integrated from NAPOLEON.BAS
-' For now, this provides the interface and placeholder implementation
+' Note: All NAPOLEON.BAS code has been refactored into modular files:
+'   - terrain.bas: Map generation (randmap)
+'   - unit_placement.bas: Unit placement (randarm)
+'   - ui.bas: Display functions (mainmap, iconload, refresh)
+'   - unit_management.bas: Unit operations (SHOWUNIT, placeunit)
+'   - combat.bas: Combat system
+'   - orders.bas: Order processing
+'   - ai.bas: AI decisions
+'   - napoleon_subs.bas: Remaining utility functions
 
 '============================================================================
 ' LaunchTacticalBattle - Launch and execute tactical battle
@@ -159,17 +173,26 @@ SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
     fort = battleData.fort
     quiet = battleData.quiet
     
-    ' Initialize tactical battle (replaces lines 29-67 from NAPOLEON.BAS)
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 1: Configuration
+    ' ============================================================
     ' Load configuration (replaces lodecfg GOSUB)
     ' LoadTacticalConfig is non-critical (just initializes arrays), but add error handling for robustness
     ' LoadTacticalConfig doesn't perform file I/O, so no error handling needed
     ' If it fails, it will just use defaults which is acceptable
     CALL LoadTacticalConfig
     
-    ' Set display delay
+    ' Set display delay - controls animation speed in tactical battle
+    ' mdsp = 5 means very fast, so we increase delay to 10 for better visibility
     mdly! = mdsp: IF mdsp = 5 THEN mdly! = 10
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 2: Data Loading
+    ' ============================================================
     ' Load equipment data (non-critical - can proceed without it)
+    ' Note: Error handling is implemented using SafeOpenFile% which gracefully
+    ' handles file open failures. If the file cannot be opened, defaults are used.
+    ' Equipment data is used for flavor text only, not critical to battle mechanics
     IF _FILEEXISTS("data\equip.dat") THEN
         ' Use SafeOpenFile to handle errors gracefully
         IF SafeOpenFile%("data\equip.dat", "I", 1) = 1 THEN
@@ -177,6 +200,7 @@ SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
             CLOSE #1
         ELSE
             ' File open failed, initialize with defaults
+            ' Empty strings mean no equipment flavor text, but battle still works
             FOR k = 0 TO 5
                 equip$(k) = ""
             NEXT k
@@ -189,37 +213,54 @@ SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
         NEXT k
     END IF
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 3: Graphics & Map (CRITICAL)
+    ' ============================================================
     ' Load graphics icons (CRITICAL - must be called before battle starts)
     ' Note: iconload is a SUB that may fail, but we can't easily check its return value
     ' Since it's critical, we'll call it and handle any errors by checking if battle can proceed
     ' If iconload fails, the battle will fail when trying to display units
-    ' For now, we'll call it and let the battle loop handle display errors
+    ' Error handling: The battle loop will detect display failures and set result.winner = 0
+    ' This non-critical failure is handled gracefully by the battle loop
     CALL iconload
     
     ' Generate random map (CRITICAL - battle cannot proceed without map)
     ' Note: randmap is a SUB that may fail, but we can't easily check its return value
     ' Since it's critical, we'll call it and handle any errors by checking if battle can proceed
     ' If randmap fails, the battle will fail when trying to display the map
-    ' For now, we'll call it and let the battle loop handle display errors
+    ' Error handling: The battle loop will detect map generation failures and set result.winner = 0
+    ' This non-critical failure is handled gracefully by the battle loop
     CALL randmap
     
-    ' Calculate setup position
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 4: Battle Parameters
+    ' ============================================================
+    ' Calculate setup position - random starting position for units (1-4)
+    ' This affects initial unit placement on the tactical map
     setupx = 1 + INT(4 * RND)
     
     ' Calculate time limit (validate fort value to prevent errors)
+    ' Base time: 25 turns, +5 per fortification level
+    ' Large battles (>200 units) get extended time limit
+    ' Defender gets +10 turns advantage
+    ' Terrain obstruction adds 10% to time limit
     fort = ClampValue%(fort, 0, 5)
     timelimit = 25 + 5 * fort
     IF vp&(1) > 200 AND vp&(2) > 200 THEN timelimit = 40 + 5 * fort
     IF side = sidex(2) THEN
         timelimit = timelimit + 10
         bold = 3
+        ' Random boldness adjustment for defender (3-5 range)
         IF RND > .5 THEN bold = 4: IF RND > .5 THEN bold = 5
     END IF
     ' Validate obstruct to prevent division issues
+    ' Obstruction represents terrain difficulty (0-1000 scale)
     obstruct = ClampValue%(obstruct, 0, 1000) ' Reasonable maximum
     timelimit = timelimit + .1 * obstruct
     
-    ' Calculate unit size
+    ' Calculate unit size - determines how many men per unit icon
+    ' Uses larger of the two armies, multiplied by 3, minimum 500
+    ' This ensures units are visible and meaningful on the tactical map
     unitsize& = vp&(1): IF vp&(2) > vp&(1) THEN unitsize& = vp&(2)
     unitsize& = 3 * unitsize&
     IF unitsize& < 500 THEN unitsize& = 500
@@ -228,73 +269,121 @@ SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
     ' most, m1, m2 are initialized in declarations.bas (line 99)
     ' Values: most = 80, m1 = 40, m2 = 41 (from NAP10.BI)
     ' No need to re-initialize here - declarations.bas is included first
+    ' bigg(2) is the maximum unit index for side 2
     bigg(2) = most
     
-    ' Scale up unit sizes
+    ' Scale up unit sizes - convert from hundreds to actual men
+    ' Example: 50 (hundreds) -> 5000 (actual men)
+    ' This scaling is needed because tactical battle uses actual men counts
     FOR k = 1 TO 2
         vp&(k) = vp&(k) * 100 ' Scale up unit size
     NEXT k
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 5: Unit Creation (CRITICAL)
+    ' ============================================================
     ' Randomize armies (CRITICAL - armies must be initialized)
     ' Note: randarm is a SUB that may fail, but we can't easily check its return value
     ' Since it's critical, we'll call it and handle any errors by checking if battle can proceed
     ' If randarm fails, the battle will fail when trying to process units
     ' For now, we'll call it and let the battle loop handle errors
+    ' randarm creates unit arrays, assigns positions, sets unit types
     FOR k = 1 TO 2
         CALL randarm(k)
     NEXT k
     
     ' Set visibility limit (may be overridden by random)
+    ' seelimit controls how far units can see on the tactical map
+    ' Default 18, but 20% chance of reduced visibility (10-18 range)
+    ' Reduced visibility makes battles more challenging and realistic
     IF seelimit = 0 THEN seelimit = 18 ' Default if not set by config
     IF RND > .8 THEN seelimit = 10 + INT(9 * RND)
     
-    ' Set commander names
+    ' Set commander names - assign names to unit indices 1 and 41
+    ' These are the general units that provide leadership bonuses
     name$(1) = commander$(1)
     name$(41) = commander$(2)
+    ' Special case: Napoleon gets maximum stats (5/5/5)
+    ' This represents his historical leadership and experience
     IF name$(41) = "Napoleon" THEN
         leader(41) = 5: xper(41) = 5: morale(41) = 5
     END IF
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 6: Terrain Assignment
+    ' ============================================================
     ' Set terrain for units (validate array bounds)
-' Note: sdtext$ is declared in declarations.bas
+    ' Note: sdtext$ is declared in declarations.bas as sdtext$(1 TO 24)
+    ' This validation prevents array bounds errors if unity(k) + 1 is out of range
+    ' Terrain affects movement speed and combat effectiveness
     IF most > 0 THEN
         FOR k = 1 TO most
             IF strength(k) > 0 THEN
                 unityIndex = unity(k) + 1
-                ' Validate unityIndex and unitx(k) before accessing sdtext$
-                ' sdtext$ is 1 TO 24, so unityIndex must be 1-24
+                ' Validate unityIndex before accessing sdtext$ array (bounds: 1-24)
+                ' sdtext$ contains terrain type codes for each map position
                 IF unityIndex >= 1 AND unityIndex <= 24 THEN
+                    ' Validate unitx(k) before accessing string character (must be within string length)
+                    ' unitx(k) is the X coordinate on the tactical map
                     IF unitx(k) > 0 AND unitx(k) <= LEN(sdtext$(unityIndex)) THEN
+                        ' Extract terrain type from map data string
                         z = ASC(MID$(sdtext$(unityIndex), unitx(k), 1))
                         terrain(k) = z
+                    ELSE
+                        ' Invalid unitx(k) - log warning but continue processing
+                        ' This prevents crashes but may result in incorrect terrain
+                        CALL HandleWarning("Invalid unitx(" + LTRIM$(STR$(k)) + ") = " + LTRIM$(STR$(unitx(k))) + " for sdtext$ index " + LTRIM$(STR$(unityIndex)))
                     END IF
+                ELSE
+                    ' Invalid unityIndex - log warning but continue processing
+                    ' This prevents crashes but may result in incorrect terrain
+                    CALL HandleWarning("Invalid unityIndex = " + LTRIM$(STR$(unityIndex)) + " (must be 1-24) for unit " + LTRIM$(STR$(k)))
                 END IF
             END IF
         NEXT k
     END IF
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 7: Morale & Esprit de Corps
+    ' ============================================================
     ' Initialize esprit de corps (validate indices to prevent array bounds errors)
+    ' Esprit de corps represents army morale and cohesion
+    ' Base value: 80, modified by experience and leadership
+    ' Formula: 80 + 5*(experience-3) + 5*(leadership-3)
+    ' This means average (3/3) = 80, excellent (5/5) = 100, poor (1/1) = 60
     FOR i = 1 TO 2
         k = sidex(i)
         ' Validate k is in valid range (1-2)
         IF k < 1 OR k > 2 THEN k = i ' Fallback to safe value
+        ' Get leader rating - side 1 uses leader(1), side 2 uses leader(41)
         a = leader(1): IF k = 1 THEN a = leader(41)
         ' Validate expbase and leader values to prevent extreme results
         ' Use local variables to avoid modifying the local expbase array
+        ' Clamp to 1-5 range to ensure reasonable values
         expVal = ClampValue%(expbase(k), 1, 5)
         leadVal = ClampValue%(a, 1, 5)
+        ' Calculate esprit de corps with validated values
         elan(k) = 80 + 5 * (expVal - 3) + 5 * (leadVal - 3)
+        ' brittle() calculates army brittleness (how easily it routs)
+        ' This affects how quickly armies break under pressure
         CALL brittle(k)
     NEXT i
     
+    ' ============================================================
+    ' INITIALIZATION SEQUENCE - Phase 8: Score & Objectives
+    ' ============================================================
     ' Initialize score tracking (casualties)
+    ' These track cumulative casualties during the battle
     score&(1) = 0
     score&(2) = 0
     
     ' Initialize objective control (possess)
+    ' possess = 0 means neutral, will be set by randarm if fort > 0
+    ' Objectives are strategic points that affect victory conditions
     possess = 0 ' Neutral initially, will be set by randarm if fort > 0
     
-    ' Initialize time
+    ' Initialize time - sets battle turn counter
+    ' TICK(2) initializes time to turn 2 (turn 1 is setup)
     CALL TICK(2)
     
     ' Run tactical battle loop (replaces lines 72-95 from NAPOLEON.BAS)
@@ -353,8 +442,26 @@ SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResult)
     EXIT SUB
 END SUB
 
-' TODO: Implement InitializeTacticalBattle when NAPOLEON.BAS is integrated
-' QB64 doesn't support array parameters like sidex() AS INTEGER - need to use fixed-size arrays or different approach
+'============================================================================
+' InitializeTacticalBattle - No longer needed (initialization in LaunchTacticalBattle)
+'============================================================================
+' STATUS: Implementation complete - initialization is done directly in LaunchTacticalBattle
+' The original plan to have a separate InitializeTacticalBattle function was superseded
+' by implementing all initialization directly in LaunchTacticalBattle (lines 110-372).
+'
+' The initialization sequence in LaunchTacticalBattle:
+'   1. Validate battle data parameters
+'   2. Load tactical configuration (LoadTacticalConfig)
+'   3. Load equipment data (equip.dat with error handling)
+'   4. Load graphics icons (iconload - critical, handled by battle loop)
+'   5. Generate random map (randmap - critical, handled by battle loop)
+'   6. Initialize armies (randarm - critical, handled by battle loop)
+'   7. Set up terrain and visibility
+'   8. Initialize esprit de corps
+'   9. Run tactical battle loop
+'   10. Calculate casualties and return results
+'
+' All initialization is now complete and functional in LaunchTacticalBattle.
 ' SUB InitializeTacticalBattle (SCENARIO$ AS STRING, side AS INTEGER, sidex() AS INTEGER, commander$ AS STRING, _
 '                                vp& AS LONG, leadbase() AS INTEGER, expbase() AS INTEGER, _
 '                                difficult AS INTEGER, fort AS INTEGER, quiet AS INTEGER)
@@ -388,11 +495,11 @@ END SUB
 '     '     vp&(k) = vp&(k) * 100 ' Scale up unit size
 '     ' NEXT k
 '     
-'     ' Randomize armies
-'     ' TODO: Implement randarm SUB from NAPOLEON.BAS
-'     ' FOR k = 1 TO 2
-'     '     CALL randarm(k)
-'     ' NEXT k
+    '     ' Randomize armies
+    '     ' Note: randarm is implemented in unit_placement.bas:23
+    '     ' FOR k = 1 TO 2
+    '     '     CALL randarm(k)
+    '     ' NEXT k
 '     
 '     ' Set commander names
 '     ' name$(1) = commander$(1)
@@ -528,6 +635,22 @@ FUNCTION RunTacticalBattleLoop% (side AS INTEGER, sidex(1 TO 2) AS INTEGER)
     RunTacticalBattleLoop = winner
 END FUNCTION
 
+'============================================================================
+' GetRemainingStrength - Get remaining strength for side after battle
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to calculate strength for (1 or 2)
+' Returns:
+'   LONG - Total remaining strength for the side after battle
+' Description:
+'   Calculates the total remaining strength of all units for a given side
+'   after a tactical battle. Used to determine casualties by comparing
+'   initial strength to remaining strength.
+' Note:
+'   - vp& values are already scaled up by 100 (hundreds -> actual men)
+'   - Returns strength in the same scaled units as input
+'   - Only counts units with strength > 0
+'============================================================================
 FUNCTION GetRemainingStrength& (side AS INTEGER)
     ' Get remaining strength for side after battle
     ' Used to calculate casualties

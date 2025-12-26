@@ -102,7 +102,9 @@ END FUNCTION
 FUNCTION FormatNumber$ (number AS LONG)
     ' Format number with commas
     ' Returns formatted string
-    ' Placeholder - will implement formatting
+    ' TODO: Implement proper number formatting with commas (e.g., 1,234,567)
+    '   - Convert to string
+    '   - Insert commas every 3 digits from right
     FormatNumber$ = LTRIM$(STR$(number))
 END FUNCTION
 
@@ -207,9 +209,10 @@ END SUB
 
 SUB DebugPrint (message AS STRING)
     ' Debug print (only in debug mode)
-    ' Placeholder - will implement debug system
-    ' Commented out for now - will use debug flag when implemented
-    ' PRINT "DEBUG: "; message
+    ' Checks DEBUG flag from declarations.bas and prints message if DEBUG = 1
+    IF DEBUG = 1 THEN
+        PRINT "DEBUG: "; message
+    END IF
 END SUB
 
 '============================================================================
@@ -606,7 +609,29 @@ END FUNCTION
 ' Side Effects:
 '   Opens file handle for subsequent I/O operations
 '============================================================================
+' Shared error flag for file operations (module-level)
+DIM SHARED fileOpenErrorFlag AS INTEGER
+DIM SHARED fileOpenErrorMessage AS STRING
+
 FUNCTION SafeOpenFile% (filename AS STRING, mode AS STRING, fileNumber AS INTEGER)
+    ' Open file with proper error handling
+    ' Validates inputs and attempts to open file
+    ' Returns 1 on success, 0 on failure
+    
+    ' Validate mode parameter
+    IF mode <> "I" AND mode <> "O" AND mode <> "A" THEN
+        CALL HandleCriticalError("Invalid file mode: " + mode)
+        SafeOpenFile% = 0
+        EXIT FUNCTION
+    END IF
+    
+    ' Validate file number
+    IF fileNumber < 1 OR fileNumber > 255 THEN
+        CALL HandleCriticalError("Invalid file number: " + LTRIM$(STR$(fileNumber)))
+        SafeOpenFile% = 0
+        EXIT FUNCTION
+    END IF
+    
     ' For input mode, check if file exists first
     IF mode = "I" THEN
         IF FileExists%(filename) = 0 THEN
@@ -615,26 +640,35 @@ FUNCTION SafeOpenFile% (filename AS STRING, mode AS STRING, fileNumber AS INTEGE
         END IF
     END IF
     
-    ' Open file - attempt to open and catch any errors
-    ' Note: Without ON ERROR GOTO, we can't catch OPEN errors directly
-    ' However, we can validate inputs and use a different approach
-    ' For QB64, we'll attempt the open and if it fails, the error will propagate
-    ' But we want to return 0 on failure, so we need to handle this differently
+    ' Attempt to open the file with error handling
+    ' Use ON ERROR RESUME NEXT to suppress errors, then check if open succeeded
+    fileOpenErrorFlag = 0
+    fileOpenErrorMessage = ""
     
-    ' Since we can't use ON ERROR GOTO, we'll validate the inputs and attempt the open
-    ' If the open fails, QB64 will raise an error that should be handled at a higher level
-    ' However, for this function to work without ON ERROR GOTO, we need to ensure
-    ' the file exists for input mode (already checked) and that the mode is valid
-    
-    ' Attempt to open the file
-    ' Note: In QB64, OPEN may fail for various reasons (permissions, disk full, etc.)
-    ' Without ON ERROR GOTO, we can't catch these errors
-    ' The best we can do is validate inputs and attempt the open
-    ' If it fails, the error will propagate to the caller
-    
-    ' For now, we'll use a simple approach: validate and attempt open
-    ' The caller should handle any errors that occur
+    ' Set error handler to resume next (suppress errors temporarily)
+    ON ERROR RESUME NEXT
     OPEN mode, fileNumber, filename
+    
+    ' Check if error occurred
+    IF ERR <> 0 THEN
+        ' Error occurred - determine error message
+        IF mode = "I" THEN
+            fileOpenErrorMessage = "Failed to open file for reading: " + filename
+        ELSEIF mode = "O" THEN
+            fileOpenErrorMessage = "Failed to open file for writing: " + filename + " (disk full or permission denied?)"
+        ELSE
+            fileOpenErrorMessage = "Failed to open file for appending: " + filename
+        END IF
+        
+        fileOpenErrorFlag = 1
+        CALL HandleCriticalError(fileOpenErrorMessage)
+        ON ERROR GOTO 0 ' Clear error handler
+        SafeOpenFile% = 0
+        EXIT FUNCTION
+    END IF
+    
+    ' Clear error handler - file opened successfully
+    ON ERROR GOTO 0
     SafeOpenFile% = 1
 END FUNCTION
 

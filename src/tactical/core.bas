@@ -54,9 +54,14 @@ FUNCTION ResolveMeleeCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER
     attackerEffectiveness = attackerEffectiveness * intensity
     defenderEffectiveness = defenderEffectiveness * intensity
     
-    ' Terrain effects (placeholder - will implement terrain bonuses)
+    ' TODO: Implement terrain effects:
+    '   - Hills: +1 defense
+    '   - Forests: +1 defense, -1 movement
+    '   - Rivers: +2 defense, difficult to cross
     
-    ' Unit type effects (placeholder - will implement unit type bonuses)
+    ' TODO: Implement unit type effects:
+    '   - Cavalry: +1 attack in open terrain
+    '   - Artillery: +2 attack at range
     
     ' Calculate damage
     damage = INT(attackerStrength * attackerEffectiveness * RND)

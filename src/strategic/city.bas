@@ -81,8 +81,11 @@ SUB LoadCityData (scenarioYear AS INTEGER)
     ' Initialize cities first
     CALL InitializeCities
     
-    ' Try to open file as text
-    OPEN "I", 1, filename
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%(filename, "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     
     lineCount = 0
     i = 1
@@ -154,6 +157,22 @@ SUB LoadCityData (scenarioYear AS INTEGER)
     CALL ShowStatusMessage("Loaded " + LTRIM$(STR$(lineCount)) + " cities from " + filename, 11)
 END SUB
 
+'============================================================================
+' CaptureCity - Capture city for new owner
+'============================================================================
+' Parameters:
+'   cityIndex (INTEGER) - Index of city being captured
+'   newOwner (INTEGER) - New owner side (1=French, 2=Allies)
+' Description:
+'   Transfers city ownership from old owner to new owner. Updates income
+'   and victory point tracking for both sides. Reduces fortification level
+'   by 1 when captured. Awards objective city bonus if applicable.
+' Side Effects:
+'   - Updates city ownership
+'   - Adjusts income for both sides
+'   - Awards victory points to new owner
+'   - Reduces fortification by 1 level
+'============================================================================
 SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
     ' Capture city for new owner
     ' Updates ownership, income, victory points
@@ -178,7 +197,7 @@ SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
             
             ' Objective city bonus
             IF cities(cityIndex).objective = 1 THEN
-                CALL SetGameStateVictory(newOwner, GetGameStateVictory&(newOwner) + 100)
+                CALL SetGameStateVictory(newOwner, GetGameStateVictory&(newOwner) + OBJECTIVE_BONUS)
             END IF
         END IF
     
@@ -188,6 +207,20 @@ SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
     END IF
 END SUB
 
+'============================================================================
+' FortifyCity - Increase city fortification level
+'============================================================================
+' Parameters:
+'   cityIndex (INTEGER) - Index of city to fortify
+' Description:
+'   Increases the fortification level of a city. Cost is 200 money units
+'   per level. Maximum fortification is FORT_PLUS_PLUS (level 2).
+'   Fortifications provide defensive bonuses in combat.
+' Side Effects:
+'   - Increases cities(cityIndex).fort by 1
+'   - Deducts cost from cash reserves
+'   - Displays error if at maximum or insufficient funds
+'============================================================================
 SUB FortifyCity (cityIndex AS INTEGER)
     ' Increase fortification level
     ' Cost: 200 money units per level
@@ -278,6 +311,17 @@ FUNCTION GetCityVictoryPoints& (side AS INTEGER)
     GetCityVictoryPoints& = total
 END FUNCTION
 
+'============================================================================
+' GetCityNationality - Get nationality of city
+'============================================================================
+' Parameters:
+'   cityIndex (INTEGER) - Index of city
+' Returns:
+'   INTEGER - Nationality code of the city (from scenario data)
+' Description:
+'   Returns the nationality code assigned to the city in scenario data.
+'   Used for cohesion calculations and recruitment restrictions.
+'============================================================================
 FUNCTION GetCityNationality% (cityIndex AS INTEGER)
     ' Get nationality of city
     ' Returns nationality code from city data

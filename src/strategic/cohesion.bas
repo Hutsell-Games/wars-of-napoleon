@@ -218,9 +218,9 @@ SUB FixCohesionWithRelieve (armyIndex AS INTEGER, newCommanderName AS STRING, ne
     IF newCommanderNationality = armies(armyIndex).nationality THEN
         ' Use RELIEVE command
         RelieveCommander armyIndex, newCommanderName, newCommanderRating
-        COLOR 11: CALL clrbot: PRINT "Cohesion fixed - commander nationality now matches army"
+        CALL ShowStatusMessage("Cohesion fixed - commander nationality now matches army", 11)
     ELSE
-        COLOR 11: CALL clrbot: PRINT "New commander nationality does not match army"
+        CALL ShowStatusWarning("New commander nationality does not match army")
     END IF
 END SUB
 

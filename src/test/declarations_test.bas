@@ -283,32 +283,7 @@ DECLARE SUB DisableMouse
 
 ' Graphics function declarations
 DECLARE FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
-DECLARE SUB InitializeGraphics
+DECLARE FUNCTION InitializeGraphics% ()
 
 ' Realism function declarations
 DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
-
-' Shared capitals
-' Note: capitalCity is declared in declarations.bas
-
-' Shared realism
-' Note: realismMode is declared in declarations.bas
-
-' Shared PBM
-' Note: pbmEnabled is declared in declarations.bas
-
-' Shared mouse
-' Note: mouseEnabled is declared in declarations.bas
-
-' Shared menu system
-' Note: mtx$ is declared in declarations.bas
-' Note: choose is declared in declarations.bas
-' Note: tlx is declared in declarations.bas
-' Note: tly is declared in declarations.bas
-' Note: colour is declared in declarations.bas
-' Note: hilite is declared in declarations.bas
-' Note: size is declared in declarations.bas
-
-' Month names
-' Note: month$ is declared in declarations.bas
-' Note: month$ initialization moved to InitializeCampaign to avoid module-level executable code
