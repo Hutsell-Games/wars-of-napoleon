@@ -56,6 +56,7 @@ CONST NAT_SPANISH = 6
 ' Supply cost constants
 CONST SUPPLY_AUTO_COST = 0.002 ' Per 1,000 men
 CONST SUPPLY_MANUAL_COST = 0.001 ' Per 1,000 men (cheaper)
+CONST MOVEMENT_SUPPLY_COST = 1 ' Supply points consumed per movement
 
 ' Recruitment and army constants
 CONST RECRUITMENT_COST = 100 ' Cost to recruit a new army
@@ -63,6 +64,67 @@ CONST DEFAULT_ARMY_SIZE = 10000 ' Default starting size for newly recruited armi
 CONST SHIP_COST = 100 ' Cost to build a ship
 CONST OBJECTIVE_BONUS = 100 ' Victory points bonus for capturing objective city
 CONST END_GAME_BONUS = 100 ' Victory points bonus for triggering end game condition
+
+' Strategic combat constants
+CONST LEADERSHIP_BASE_RATING = 5 ' Base leadership rating for effectiveness calculation
+CONST LEADERSHIP_MODIFIER = 0.1 ' Leadership effectiveness modifier per point above/below base
+CONST EXPERIENCE_MODIFIER = 0.05 ' Experience effectiveness modifier per point
+CONST OUT_OF_SUPPLY_EFFECTIVENESS = 0.5 ' Combat effectiveness when out of supply (50%)
+CONST FORT_PLUS_DEFENDER_BONUS = 1.5 ' Defender bonus for FORT_PLUS (50% increase)
+CONST FORT_PLUS_PLUS_DEFENDER_BONUS = 2.0 ' Defender bonus for FORT_PLUS_PLUS (100% increase)
+CONST COMBAT_WINNER_CASUALTIES = 0.1 ' Casualties for winner (10%)
+CONST COMBAT_LOSER_CASUALTIES = 0.15 ' Casualties for loser (15%)
+CONST COMBAT_ROLL_MIN = 0.8 ' Minimum combat roll multiplier (80% of strength)
+CONST COMBAT_ROLL_MAX = 1.2 ' Maximum combat roll multiplier (120% of strength)
+CONST MAX_EXPERIENCE = 10 ' Maximum experience level
+
+' Economic constants
+CONST MAX_CASH = 19999 ' Maximum cash reserves
+CONST MAX_SUPPLY = 10 ' Maximum supply level
+CONST FORTIFICATION_COST = 200 ' Cost per fortification level
+
+' Cohesion constants
+CONST COHESION_PENALTY_MULTIPLIER = 0.75 ' Combat effectiveness when out of cohesion (25% reduction)
+
+' Army management constants
+CONST ARMY_RANGE_SIZE = 19 ' Number of armies per side (FRENCH_START to FRENCH_START+19, ALLIED_START to ALLIED_START+19)
+CONST MAX_COMBINED_ARMY_SIZE = 400000 ' Maximum combined army size in men
+
+' Tactical battle constants
+CONST MAX_OBSTRUCTION_VALUE = 1000 ' Maximum obstruction value for terrain difficulty
+CONST MAX_TERRAIN_MAP_ROWS = 24 ' Maximum number of terrain map rows (sdtext$ array size)
+CONST DEFAULT_TERRAIN_CLEAR = 232 ' Default terrain type (clear/road)
+CONST MAX_STAT_RATING = 5 ' Maximum stat rating (leadership, experience, morale)
+CONST ERROR_CASUALTY_ESTIMATE = 0.5 ' Casualty estimate when battle fails (50% of initial strength)
+
+' Naval constants
+CONST MAX_FLEET_SIZE = 10 ' Maximum number of ships per fleet
+CONST MARINE_INVASION_MIN_SHIPS = 2 ' Minimum ships required for marine invasion
+CONST MARINE_INVASION_ARMY_SIZE = 5000 ' Size of army created by marine invasion
+CONST ENGLISH_NAVAL_BONUS = 1.1 ' English naval combat bonus (10% advantage)
+CONST SHIP_HITS_TO_SINK = 10 ' Number of hits a ship can take before sinking
+CONST NAVAL_COMBAT_HIT_CHANCE = 0.5 ' Base chance for a ship to score a hit (50%)
+CONST COMMERCE_RAID_INCOME_REDUCTION = 10 ' Income reduction per ship for commerce raiding
+CONST COMMERCE_RAID_SHIP_LOSS_CHANCE = 0.2 ' Chance of losing a ship during commerce raid (20%)
+
+' Victory point constants
+CONST VICTORY_POINTS_BATTLE_WIN = 1 ' Victory points for winning a battle
+CONST VICTORY_POINTS_ARMY_CAPTURE = 25 ' Victory points for capturing/destroying an enemy army
+CONST HIGH_SCORE_TOP_COUNT = 5 ' Number of top scores to track
+
+' Supply calculation constants
+CONST SUPPLY_CALCULATION_DIVISOR = 1000 ' Divisor for converting men to thousands (for supply cost calculation)
+
+' City and map constants
+CONST CITY_MATRIX_COLUMNS = 7 ' Number of columns in cityMatrix (6 connections + 1 port flag)
+CONST MAX_CITY_CONNECTIONS = 6 ' Maximum number of city connections
+CONST PORT_INDICATOR_THRESHOLD = 90 ' Port indicator threshold (>90 = port city)
+CONST PERCENTAGE_MULTIPLIER = 100 ' Multiplier for converting ratio to percentage
+
+' Naval bombardment constants
+CONST NAVAL_BOMBARD_DAMAGE_PER_SHIP = 0.05 ' Base damage per ship (5% per ship)
+CONST NAVAL_BOMBARD_FORT_REDUCTION = 0.15 ' Fortification damage reduction per level (15% per level)
+CONST NAVAL_BOMBARD_MIN_DAMAGE = 0.01 ' Minimum damage (1% even with maximum fortification)
 
 ' Report type constants
 CONST REPORT_FRIENDLY_ARMY = 1
@@ -123,6 +185,9 @@ DIM SHARED score&(1 TO 2) ' Score for each side
 DIM SHARED waver(1 TO 2) AS INTEGER ' Waver state for each side
 DIM SHARED stex$(1 TO 22) ' Status text
 DIM SHARED highscore(1 TO 2) AS INTEGER ' High score tracking
+DIM SHARED SCENARIO$ ' Scenario name for current battle
+DIM SHARED side AS INTEGER ' Current side (1=French, 2=Allies)
+DIM SHARED fort AS INTEGER ' Fortification level (0-5)
 DIM SHARED commander$(1 TO 2) ' Commander names
 DIM SHARED expbase(1 TO 2) AS INTEGER ' Base experience for each side
 DIM SHARED leadbase(1 TO 2) AS INTEGER ' Base leadership for each side
@@ -152,7 +217,7 @@ DIM SHARED graphic(1 TO 1564) AS INTEGER ' Graphics array
 
 ' Function declarations for NAPOLEON.BAS subroutines
 ' These will be included when NAPOLEON.BAS is integrated
-DECLARE SUB randmap ()
+DECLARE FUNCTION randmap% ()
 DECLARE SUB randarm (k%)
 DECLARE SUB mainmap ()
 DECLARE SUB SHOWUNIT (index%)
@@ -165,7 +230,7 @@ DECLARE SUB wipeout (index%)
 DECLARE SUB lowtime ()
 DECLARE SUB ranger (index%, range%)
 DECLARE SUB brittle (side%)
-DECLARE SUB iconload ()
+DECLARE FUNCTION iconload% ()
 DECLARE SUB scrcol (which%)
 DECLARE SUB Tara (x%, y%, flag%)
 DECLARE SUB YouorMe (index%, F%)
@@ -202,8 +267,14 @@ DECLARE SUB LogMessage (message AS STRING)
 DECLARE SUB CloseLogFile
 DECLARE SUB ShowHelp (topic AS STRING)
 DECLARE FUNCTION GetSaveFileList$ (count AS INTEGER)
-DECLARE FUNCTION CanRecruitInCity% (cityIndex AS INTEGER)
+DECLARE FUNCTION CanRecruitInCity% (cityIndex AS INTEGER, side AS INTEGER)
 DECLARE SUB DrawStrategicMap
+
+' Menu helper function declarations
+DECLARE FUNCTION BuildCityList% (cityIndices() AS INTEGER, cityNames() AS STRING, side AS INTEGER, requirePort AS INTEGER, requireOwned AS INTEGER, requireActive AS INTEGER, nameFormatter$ AS STRING)
+DECLARE FUNCTION BuildArmyList% (armyIndices() AS INTEGER, armyNames() AS STRING, side AS INTEGER, requireActive AS INTEGER, requireCanMove AS INTEGER, nameFormatter$ AS STRING)
+DECLARE FUNCTION ShowCitySelectionMenu% (title AS STRING, cityIndices() AS INTEGER, side AS INTEGER, requirePort AS INTEGER, requireOwned AS INTEGER, requireActive AS INTEGER, nameFormatter$ AS STRING, emptyMessage$ AS STRING)
+DECLARE FUNCTION ShowArmySelectionMenu% (title AS STRING, armyIndices() AS INTEGER, side AS INTEGER, requireActive AS INTEGER, requireCanMove AS INTEGER, nameFormatter$ AS STRING, emptyMessage$ AS STRING)
 
 ' Function declarations for tactical battle system
 DECLARE FUNCTION RunTacticalBattleLoop% (side AS INTEGER, sidex(1 TO 2) AS INTEGER)
@@ -230,11 +301,11 @@ scenario$ = ""
 DIM SHARED currentPhase AS INTEGER
 
 ' Shared arrays for strategic game
-DIM SHARED armies(1 TO 40) AS ArmyType
-DIM SHARED cities(1 TO 60) AS CityType
+DIM SHARED armies(1 TO MAX_ARMIES) AS ArmyType
+DIM SHARED cities(1 TO MAX_CITIES) AS CityType
 DIM SHARED fleets(1 TO 2) AS FleetType
-DIM SHARED occupied(1 TO 60) AS INTEGER
-DIM SHARED cityMatrix(1 TO 60, 1 TO 7) AS INTEGER
+DIM SHARED occupied(1 TO MAX_CITIES) AS INTEGER
+DIM SHARED cityMatrix(1 TO MAX_CITIES, 1 TO CITY_MATRIX_COLUMNS) AS INTEGER
 DIM SHARED gameState AS GameStateType
 
 ' Commander storage (50 total: 25 French, 25 Allied)
@@ -287,7 +358,25 @@ DECLARE FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEG
 DECLARE FUNCTION InitializeGraphics% ()
 
 ' Realism function declarations
-DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
+DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER, cities() AS CityType, cityMatrix() AS INTEGER)
+DECLARE FUNCTION GetRecruitmentSize& (cityIndex AS INTEGER, cities() AS CityType, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION GetIsolatedCityRecruitment& (cityIndex AS INTEGER, cities() AS CityType, cityMatrix() AS INTEGER, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION CanRecruitInCityRealism% (cityIndex AS INTEGER, cities() AS CityType, side AS INTEGER, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION GetDefenderAdvantage! (cityIndex AS INTEGER, cities() AS CityType, realismModeEnabled AS INTEGER)
+DECLARE SUB RestoreIsolatedCities
+
+' Performance cache function declarations
+DECLARE SUB InitializePerformanceCache
+DECLARE SUB InvalidateCombatStrengthCache (armyIndex AS INTEGER)
+DECLARE FUNCTION GetCachedCombatStrength& (armyIndex AS INTEGER)
+DECLARE SUB SetCachedCombatStrength (armyIndex AS INTEGER, strength AS LONG)
+DECLARE SUB InvalidateCityIsolationCache (cityIndex AS INTEGER)
+DECLARE FUNCTION GetCachedCityIsolation% (cityIndex AS INTEGER)
+DECLARE SUB SetCachedCityIsolation (cityIndex AS INTEGER, isolated AS INTEGER)
+DECLARE SUB RebuildArmyLocationIndex
+DECLARE SUB InvalidateArmyLocationIndex
+DECLARE FUNCTION GetArmiesAtLocation% (cityIndex AS INTEGER, armyIndices() AS INTEGER)
+DECLARE FUNCTION GetFirstArmyAtLocation% (cityIndex AS INTEGER)
 
 ' Shared capitals
 DIM SHARED capitalCity(1 TO 2) AS INTEGER
@@ -313,4 +402,18 @@ DIM SHARED size AS INTEGER
 ' Month names
 DIM SHARED month$(1 TO 12)
 ' Note: month$ initialization moved to InitializeCampaign to avoid module-level executable code
+
+' Performance cache structures
+' Combat strength cache: stores calculated combat strength for each army
+DIM SHARED combatStrengthCache(1 TO MAX_ARMIES) AS LONG
+DIM SHARED combatStrengthCacheValid(1 TO MAX_ARMIES) AS INTEGER
+
+' City isolation cache: stores isolation status for each city
+DIM SHARED cityIsolationCache(1 TO MAX_CITIES) AS INTEGER
+DIM SHARED cityIsolationCacheValid(1 TO MAX_CITIES) AS INTEGER
+
+' Army location index: maps city index to array of army indices at that location
+DIM SHARED armyLocationIndex(1 TO MAX_CITIES, 1 TO MAX_ARMIES) AS INTEGER
+DIM SHARED armyLocationIndexCount(1 TO MAX_CITIES) AS INTEGER
+DIM SHARED armyLocationIndexValid AS INTEGER
 

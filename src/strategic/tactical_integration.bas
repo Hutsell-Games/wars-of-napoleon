@@ -25,12 +25,34 @@ DECLARE SUB LaunchTacticalBattle (battleData AS BattleData, result AS BattleResu
 '   1. TACTICAL option enabled (from NWS.CFG)
 '   2. Force ratio between 1:3 and 3:1 (inclusive)
 '============================================================================
-FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex AS INTEGER)
+FUNCTION ShouldTriggerTacticalBattle% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, armies() AS ArmyType, tacticalEnabled AS INTEGER)
+    ' Determine if tactical battle should be triggered
+    '
+    ' Parameters:
+    '   attackerIndex (INTEGER) - Index of attacking army
+    '   defenderIndex (INTEGER) - Index of defending army
+    '   armies() (ArmyType) - Armies array (passed as parameter)
+    '   tacticalEnabled (INTEGER) - Tactical battles enabled flag (0=off, 1=on)
+    ' Returns:
+    '   INTEGER - 1 if tactical battle should be triggered, 0 otherwise
+    ' Description:
+    '   Accepts armies array and tactical flag as parameters instead of using
+    '   global state. Checks if conditions are met for tactical battle:
+    '   1. TACTICAL option enabled
+    '   2. Force ratio between 1:3 and 3:1 (inclusive)
     
     ShouldTriggerTacticalBattle% = 0
     
+    ' Validate inputs
+    IF attackerIndex < 1 OR attackerIndex > UBOUND(armies) THEN
+        EXIT FUNCTION
+    END IF
+    IF defenderIndex < 1 OR defenderIndex > UBOUND(armies) THEN
+        EXIT FUNCTION
+    END IF
+    
     ' Check TACTICAL option
-    IF config_tactical = 0 THEN
+    IF tacticalEnabled = 0 THEN
         EXIT FUNCTION ' Tactical battles disabled
     END IF
     
@@ -96,7 +118,7 @@ FUNCTION ResolveCombat% (attackerIndex AS INTEGER, defenderIndex AS INTEGER, cit
     END IF
     
     ' Check if tactical battle should be triggered
-    IF ShouldTriggerTacticalBattle%(attackerIndex, defenderIndex) = 1 THEN
+    IF ShouldTriggerTacticalBattle%(attackerIndex, defenderIndex, armies(), config_tactical) = 1 THEN
         ' ============================================================
         ' PREPARE BATTLE DATA FOR TACTICAL LAYER
         ' ============================================================
@@ -230,12 +252,12 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' ============================================================
     ' APPLY CASUALTIES
     ' ============================================================
-    ' Casualties are in scaled units (hundreds), same as strategic size
+    ' UNIT CONVERSION: Tactical battle returns casualties in hundreds,
+    ' but strategic army sizes are in raw men. Convert casualties back.
     ' Example: 50 casualties (hundreds) = 5000 men lost
-    ' The tactical battle returns casualties in the same units as strategic
-    ' army sizes, so we can directly subtract them
-    armies(attackerIndex).size = armies(attackerIndex).size - result.casualties1
-    armies(defenderIndex).size = armies(defenderIndex).size - result.casualties2
+    ' Strategic: 5000 men - (50 * 100) = 0 men
+    armies(attackerIndex).size = armies(attackerIndex).size - (result.casualties1 * 100)
+    armies(defenderIndex).size = armies(defenderIndex).size - (result.casualties2 * 100)
     
     ' Ensure strengths don't go negative (safety check)
     ' This prevents invalid states if casualty calculation had errors
@@ -271,7 +293,7 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
     ' This handles two scenarios:
     '   1. Army survives but must retreat (ProcessRetreat finds friendly city)
     '   2. Army destroyed (commander freed, army cleared)
-    IF armies(loser).size > 0 THEN
+    IF IsArmyActive%(loser) = 1 THEN
         ' Army survives - attempt retreat to adjacent friendly city
         ' ProcessRetreat will find best retreat path or surrender if none
         ProcessRetreat loser, cityIndex
@@ -282,6 +304,9 @@ FUNCTION ProcessTacticalResults% (result AS BattleResult, attackerIndex AS INTEG
         armies(loser).size = 0
         armies(loser).name = ""
         armies(loser).loc = 0
+        ' Invalidate caches (army destroyed, location changed)
+        CALL InvalidateArmyLocationIndex
+        CALL InvalidateCombatStrengthCache(loser)
     END IF
     
     ' Update battle statistics
@@ -324,6 +349,22 @@ FUNCTION ResolveStrategicCombat% (attackerIndex AS INTEGER, defenderIndex AS INT
     ' Used when tactical battles are disabled or force ratio > 3:1
     ' Delegates to combat.bas module
     
+    ' Validate inputs
+    IF ValidateArmyIndex%(attackerIndex, "ResolveStrategicCombat") = 0 THEN
+        ResolveStrategicCombat% = 2 ' Default to defender wins on error
+        EXIT FUNCTION
+    END IF
+    IF ValidateArmyIndex%(defenderIndex, "ResolveStrategicCombat") = 0 THEN
+        ResolveStrategicCombat% = 2 ' Default to defender wins on error
+        EXIT FUNCTION
+    END IF
+    IF cityIndex > 0 THEN
+        IF ValidateCityIndex%(cityIndex, "ResolveStrategicCombat") = 0 THEN
+            ResolveStrategicCombat% = 2 ' Default to defender wins on error
+            EXIT FUNCTION
+        END IF
+    END IF
+    
     DIM winner AS INTEGER
     
     ' Determine winner
@@ -356,27 +397,63 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
     ' Process retreat for losing army
     ' Finds adjacent friendly city or surrenders if none available
     
+    ' Validate inputs
+    IF ValidateArmyIndex%(armyIndex, "ProcessRetreat") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(fromCity, "ProcessRetreat") = 0 THEN
+        ' Invalid city - destroy army
+        armies(armyIndex).size = 0
+        armies(armyIndex).loc = 0
+        CALL MarkCommanderAvailable(armyIndex)
+        ' Invalidate caches (army destroyed, location changed)
+        CALL InvalidateArmyLocationIndex
+        CALL InvalidateCombatStrengthCache(armyIndex)
+        EXIT SUB
+    END IF
+    
+    ' Validate fromCity before accessing cityMatrix
+    ' cityMatrix bounds: 1 TO 60 (declared in declarations.bas)
+    IF fromCity <= 0 OR fromCity > MAX_CITIES THEN
+        CALL HandleWarning("Invalid fromCity = " + LTRIM$(STR$(fromCity)) + " in ProcessRetreat for army " + LTRIM$(STR$(armyIndex)))
+        ' Cannot process retreat with invalid city - destroy army
+        armies(armyIndex).size = 0
+        armies(armyIndex).loc = 0
+        CALL MarkCommanderAvailable(armyIndex)
+        ' Invalidate caches (army destroyed, location changed)
+        CALL InvalidateArmyLocationIndex
+        CALL InvalidateCombatStrengthCache(armyIndex)
+        EXIT SUB
+    END IF
+    
     DIM i AS INTEGER
     DIM bestCity AS INTEGER
     DIM bestValue AS INTEGER
+    DIM side AS INTEGER
     
     bestCity = 0
     bestValue = 0
+    side = GetArmySide%(armyIndex)
     
     ' Find best retreat city
     FOR i = 1 TO 7
+        ' Validate cityMatrix column access
+        IF ValidateCityMatrixColumn%(fromCity, i, "ProcessRetreat") = 0 THEN
+            EXIT FOR
+        END IF
+        
         DIM adjCity AS INTEGER
         adjCity = cityMatrix(fromCity, i)
         
         IF adjCity > 0 THEN
-            ' Check if friendly city
-            DIM side AS INTEGER
-            side = GetArmySide%(armyIndex)
-            
-            IF side > 0 AND cities(adjCity).owner = side AND occupied(adjCity) = 0 THEN
-                IF cities(adjCity).value > bestValue THEN
-                    bestValue = cities(adjCity).value
-                    bestCity = adjCity
+            ' Validate adjCity before accessing cities array
+            IF ValidateCityIndex%(adjCity, "ProcessRetreat - adjacent city") = 1 THEN
+                ' Check if friendly city
+                IF side > 0 AND IsCityOwnedBy%(adjCity, side) = 1 AND occupied(adjCity) = 0 THEN
+                    IF cities(adjCity).value > bestValue THEN
+                        bestValue = cities(adjCity).value
+                        bestCity = adjCity
+                    END IF
                 END IF
             END IF
         END IF
@@ -385,6 +462,8 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
     IF bestCity > 0 THEN
         ' Retreat to city
         armies(armyIndex).loc = bestCity
+        ' Invalidate caches (location changed)
+        CALL InvalidateArmyLocationIndex
         PlaceArmy armyIndex
         CALL ShowStatusMessage(armies(armyIndex).name + " retreats to " + cities(bestCity).name, 11)
     ELSE
@@ -395,7 +474,55 @@ SUB ProcessRetreat (armyIndex AS INTEGER, fromCity AS INTEGER)
         armies(armyIndex).name = ""
         armies(armyIndex).loc = 0
         ' Note: AwardArmyCapture is defined in src/strategic/victory.bas (line 135)
-        AwardArmyCapture 3 - side ' Award to enemy
+        ' Validate side before calculation: side must be 1 or 2, enemy side is 3 - side
+        IF side = 1 OR side = 2 THEN
+            AwardArmyCapture 3 - side ' Award to enemy
+        ELSE
+            CALL HandleWarning("Invalid side (" + LTRIM$(STR$(side)) + ") in ProcessRetreat for army " + LTRIM$(STR$(armyIndex)) + " - cannot award capture points")
+        END IF
     END IF
 END SUB
+
+'============================================================================
+' CalculateForceRatio - Calculate force ratio between two armies
+'============================================================================
+' Parameters:
+'   attackerIndex (INTEGER) - Index of attacking army
+'   defenderIndex (INTEGER) - Index of defending army
+'   armies() (ArmyType) - Armies array (passed as parameter)
+' Returns:
+'   SINGLE - Force ratio (attacker:defender), or 0.0 if invalid
+' Description:
+'   Calculates the force ratio between two armies. Returns 0.0 if either
+'   army index is invalid or defender strength is zero. This is a pure
+'   calculation function that doesn't modify state, making it ideal for
+'   testing and reuse.
+'============================================================================
+FUNCTION CalculateForceRatio! (attackerIndex AS INTEGER, defenderIndex AS INTEGER, armies() AS ArmyType)
+    ' Calculate force ratio between two armies
+    
+    ' Validate inputs
+    IF attackerIndex < 1 OR attackerIndex > UBOUND(armies) THEN
+        CalculateForceRatio! = 0.0
+        EXIT FUNCTION
+    END IF
+    IF defenderIndex < 1 OR defenderIndex > UBOUND(armies) THEN
+        CalculateForceRatio! = 0.0
+        EXIT FUNCTION
+    END IF
+    
+    DIM attackerStrength AS LONG
+    DIM defenderStrength AS LONG
+    
+    attackerStrength = armies(attackerIndex).size
+    defenderStrength = armies(defenderIndex).size
+    
+    IF defenderStrength = 0 THEN
+        CalculateForceRatio! = 0.0 ' Cannot calculate ratio with zero defender
+        EXIT FUNCTION
+    END IF
+    
+    ' Calculate ratio (attacker:defender)
+    CalculateForceRatio! = attackerStrength / defenderStrength
+END FUNCTION
 

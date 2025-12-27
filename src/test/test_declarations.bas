@@ -3,8 +3,10 @@
 '============================================================================
 ' This file includes a test-specific version of declarations.bas that has
 ' executable statements commented out to avoid "between SUB/FUNCTION" errors
+'
+' Note: declarations_test.bas (with CONST declarations) is now included
+' directly in test_runner_all.bas before any SUB/FUNCTION declarations.
+' This file only includes DECLARE statements.
 
-' Include test-specific declarations (executable statements commented out)
-'$INCLUDE: 'declarations_test.bas'
 '$INCLUDE: '../common/game_types.bas'
 

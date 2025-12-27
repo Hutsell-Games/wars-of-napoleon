@@ -5,7 +5,7 @@
 ' Ported from original game with QB64 compatibility
 
 ' Note: game_types.bas, city.bas, and army.bas are included in main.bas
-' Note: utilities.bas provides FileExists% function
+' Note: Uses QB64 builtin _FILEEXISTS function
 
 '============================================================================
 ' InitializeGraphics - Initialize graphics system
@@ -33,8 +33,7 @@ FUNCTION InitializeGraphics% ()
     CLS
     
     ' Graphics files used by iconload() in tactical battles
-    ' These files are loaded from the current directory (not data/graphics/)
-    ' Note: iconload() expects files in current directory, not subdirectory
+    ' iconload() checks data/graphics/ first, then falls back to current directory
     fileList(1) = "stdicon.ega"
     fileList(2) = "alticon.ega"
     fileList(3) = "terrain.ega"
@@ -43,7 +42,7 @@ FUNCTION InitializeGraphics% ()
     ' Check if graphics files exist
     missingFiles = 0
     FOR i = 1 TO 4
-        IF FileExists%(fileList(i)) = 0 THEN
+        IF NOT _FILEEXISTS(fileList(i)) THEN
             missingFiles = missingFiles + 1
         END IF
     NEXT i
@@ -74,7 +73,6 @@ FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
     ' Uses QB64 BLOAD which works directly with arrays
     
     DIM fullPath AS STRING
-    DIM fileExistsFlag AS INTEGER
     
     ' Construct full path
     IF INSTR(filename, "data/graphics/") = 0 THEN
@@ -84,8 +82,7 @@ FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEGER)
     END IF
     
     ' Check if file exists
-    fileExistsFlag = FileExists%(fullPath)
-    IF fileExistsFlag = 0 THEN
+    IF NOT _FILEEXISTS(fullPath) THEN
         LoadGraphicsFile% = 0 ' File doesn't exist
         EXIT FUNCTION
     END IF
@@ -136,14 +133,14 @@ SUB DrawStrategicMap
     
     ' Draw armies
     FOR i = 1 TO MAX_ARMIES
-        IF armies(i).size > 0 THEN
+        IF IsArmyActive%(i) = 1 THEN
             CALL DrawArmy(i)
         END IF
     NEXT i
     
     ' Draw fleets
     FOR i = 1 TO 2
-        IF fleets(i).size > 0 THEN
+        IF IsFleetActive%(i) = 1 THEN
             CALL DrawFleet(i)
         END IF
     NEXT i
@@ -210,17 +207,30 @@ SUB DrawCityConnections (cityIndex AS INTEGER)
     
     IF config_display < 1 THEN EXIT SUB ' Graphics level 0 = no connections
     
+    ' Validate cityIndex before accessing cityMatrix
+    IF ValidateCityIndex%(cityIndex, "DrawCityConnections") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM i AS INTEGER
     DIM connectedCity AS INTEGER
     
     COLOR 7 ' Gray for connections
     
     FOR i = 1 TO 7
+        ' Validate column index before accessing cityMatrix
+        IF ValidateCityMatrixColumn%(cityIndex, i, "DrawCityConnections") = 0 THEN
+            EXIT FOR
+        END IF
+        
         connectedCity = cityMatrix(cityIndex, i)
         IF connectedCity > 0 THEN
-            ' Draw line to connected city
-            LINE (cities(cityIndex).x, cities(cityIndex).y)-_
-                  (cities(connectedCity).x, cities(connectedCity).y), 7, , &HF0F0 ' Dotted line
+            ' Validate connected city index before accessing cities array
+            IF ValidateCityIndex%(connectedCity, "DrawCityConnections - connected city") = 1 THEN
+                ' Draw line to connected city
+                LINE (cities(cityIndex).x, cities(cityIndex).y)-_
+                      (cities(connectedCity).x, cities(connectedCity).y), 7, , &HF0F0 ' Dotted line
+            END IF
         END IF
     NEXT i
 END SUB

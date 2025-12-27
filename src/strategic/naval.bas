@@ -46,11 +46,11 @@ END SUB
 '============================================================================
 SUB BuildShip (side AS INTEGER, portCity AS INTEGER)
     ' Build ship in port city
-    ' Cost: 100 money units
-    ' Maximum: 10 ships per fleet
+    ' Cost: SHIP_COST money units
+    ' Maximum: MAX_FLEET_SIZE ships per fleet
     
-    IF fleets(side).size >= 10 THEN
-        CALL ShowStatusError("Maximum fleet size reached (10 ships)")
+    IF fleets(side).size >= MAX_FLEET_SIZE THEN
+        CALL HandleValidationError("Maximum fleet size reached (" + LTRIM$(STR$(MAX_FLEET_SIZE)) + " ships)")
         EXIT SUB
     END IF
     
@@ -58,17 +58,17 @@ SUB BuildShip (side AS INTEGER, portCity AS INTEGER)
     cost = SHIP_COST
     
     IF GetGameStateCash&(side) < cost THEN
-        CALL ShowStatusError("Ship costs " + LTRIM$(STR$(cost)) + " money units")
+        CALL HandleValidationError("Ship costs " + LTRIM$(STR$(cost)) + " money units")
         EXIT SUB
     END IF
     
-    ' Check if city is a port using cityMatrix(cityIndex, 7)
+    ' Check if city is a port using cityMatrix(cityIndex, CITY_MATRIX_COLUMNS)
     IF ValidateCityIndex%(portCity, "BuildShip") = 0 THEN
         EXIT SUB
     END IF
     
-    IF cityMatrix(portCity, 7) <> 1 THEN
-        CALL ShowStatusError("City is not a port")
+    IF IsPortCity%(portCity) = 0 THEN
+        CALL HandleValidationError("City is not a port")
         EXIT SUB
     END IF
     
@@ -97,8 +97,16 @@ SUB MoveFleet (side AS INTEGER, destinationPort AS INTEGER)
     ' Move fleet to destination port
     ' Fleets can move to any port per turn
     
-    IF fleets(side).size = 0 THEN
-        CALL ShowStatusError("No fleet to move")
+    ' Validate inputs
+    IF ValidateArmySide%(side, "MoveFleet") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(destinationPort, "MoveFleet") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF IsFleetActive%(side) = 0 THEN
+        CALL HandleValidationError("No fleet to move")
         EXIT SUB
     END IF
     
@@ -126,6 +134,14 @@ SUB ExecuteNavalCombat (side1 AS INTEGER, side2 AS INTEGER)
     ' Each ship can take 10 hits before sinking
     ' English ships have 10% combat advantage
     
+    ' Validate inputs
+    IF ValidateArmySide%(side1, "ExecuteNavalCombat") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateArmySide%(side2, "ExecuteNavalCombat") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM hits1 AS INTEGER
     DIM hits2 AS INTEGER
     DIM i AS INTEGER
@@ -137,17 +153,17 @@ SUB ExecuteNavalCombat (side1 AS INTEGER, side2 AS INTEGER)
     ' English advantage (side 2 = Allies, which includes England)
     englishBonus = 1.0
     IF side2 = 2 THEN
-        englishBonus = 1.1 ' 10% bonus
+        englishBonus = ENGLISH_NAVAL_BONUS ' 10% bonus
     END IF
     
     ' Combat resolution
-    ' Each ship can take 10 hits
+    ' Each ship can take SHIP_HITS_TO_SINK hits
     FOR i = 1 TO fleets(side1).size
-        IF RND < 0.5 THEN hits1 = hits1 + 1
+        IF RND < NAVAL_COMBAT_HIT_CHANCE THEN hits1 = hits1 + 1
     NEXT i
     
     FOR i = 1 TO fleets(side2).size
-        IF RND < 0.5 * englishBonus THEN hits2 = hits2 + 1
+        IF RND < NAVAL_COMBAT_HIT_CHANCE * englishBonus THEN hits2 = hits2 + 1
     NEXT i
     
     ' Remove sunk ships
@@ -157,7 +173,7 @@ SUB ExecuteNavalCombat (side1 AS INTEGER, side2 AS INTEGER)
     IF fleets(side1).size < 0 THEN fleets(side1).size = 0
     IF fleets(side2).size < 0 THEN fleets(side2).size = 0
     
-    CALL ShowStatusMessage("Naval combat: Side " + LTRIM$(STR$(side1)) + " lost " + LTRIM$(STR$(hits1 \ 10)) + " ships, Side " + LTRIM$(STR$(side2)) + " lost " + LTRIM$(STR$(hits2 \ 10)) + " ships", 11)
+    CALL ShowStatusMessage("Naval combat: Side " + LTRIM$(STR$(side1)) + " lost " + LTRIM$(STR$(hits1 \ SHIP_HITS_TO_SINK)) + " ships, Side " + LTRIM$(STR$(side2)) + " lost " + LTRIM$(STR$(hits2 \ SHIP_HITS_TO_SINK)) + " ships", 11)
 END SUB
 
 '============================================================================
@@ -167,11 +183,12 @@ END SUB
 '   side (INTEGER) - Side performing bombardment (1=French, 2=Allies)
 '   targetCity (INTEGER) - City index to bombard (must be a port)
 ' Description:
-'   Bombards a port city with a fleet. Reduces fortification level by 1.
-'   The fleet must be located at the target city. Future implementation
-'   will include damage to defending armies and ability to drive cities
-'   to neutrality.
+'   Bombards a port city with a fleet. Calculates damage based on fleet size
+'   (5% per ship) and applies it to defending enemy armies. Damage is reduced
+'   by fortification level (15% per level). Also reduces fortification level by 1.
+'   The fleet must be located at the target city.
 ' Side Effects:
+'   - Damages defending enemy armies based on fleet size and fortifications
 '   - Reduces city fortification by 1 level
 '   - Displays error if no fleet, wrong location, or not a port
 '============================================================================
@@ -179,13 +196,13 @@ SUB BombardCity (side AS INTEGER, targetCity AS INTEGER)
     ' Bombard city with fleet
     ' Damages defending armies, reduces fortifications, can drive cities to neutrality
     
-    IF fleets(side).size = 0 THEN
-        CALL ShowStatusError("No fleet available")
+    IF IsFleetActive%(side) = 0 THEN
+        CALL HandleValidationError("No fleet available")
         EXIT SUB
     END IF
     
     IF fleets(side).loc <> targetCity THEN
-        CALL ShowStatusError("Fleet must be in target city port")
+        CALL HandleValidationError("Fleet must be in target city port")
         EXIT SUB
     END IF
     
@@ -194,21 +211,61 @@ SUB BombardCity (side AS INTEGER, targetCity AS INTEGER)
         EXIT SUB
     END IF
     
-    IF cityMatrix(targetCity, 7) <> 1 THEN
-        CALL ShowStatusError("Target city is not a port")
+    IF IsPortCity%(targetCity) = 0 THEN
+        CALL HandleValidationError("Target city is not a port")
         EXIT SUB
     END IF
+    
+    ' Calculate damage based on fleet size
+    ' Base damage: 5% per ship, reduced by fortification level
+    DIM baseDamage AS SINGLE
+    DIM fortReduction AS SINGLE
+    DIM totalDamage AS LONG
+    DIM i AS INTEGER
+    DIM enemySide AS INTEGER
+    DIM armiesDamaged AS INTEGER
+    DIM damagePerArmy AS LONG
+    
+    baseDamage = fleets(side).size * NAVAL_BOMBARD_DAMAGE_PER_SHIP ' 5% per ship
+    fortReduction = cities(targetCity).fort * NAVAL_BOMBARD_FORT_REDUCTION ' 15% reduction per fort level
+    baseDamage = baseDamage * (1.0 - fortReduction)
+    IF baseDamage < NAVAL_BOMBARD_MIN_DAMAGE THEN baseDamage = NAVAL_BOMBARD_MIN_DAMAGE ' Minimum 1% damage
+    
+    ' Find defending armies in city (enemy side)
+    enemySide = 3 - side
+    armiesDamaged = 0
+    
+    FOR i = 1 TO MAX_ARMIES
+        IF IsArmyActive%(i) = 1 AND armies(i).loc = targetCity THEN
+            DIM armySide AS INTEGER
+            armySide = GetArmySide%(i)
+            
+            ' Only damage enemy armies
+            IF armySide = enemySide THEN
+                ' Calculate damage for this army
+                totalDamage = armies(i).size * baseDamage
+                damagePerArmy = totalDamage
+                
+                ' Apply damage
+                armies(i).size = armies(i).size - damagePerArmy
+                IF armies(i).size < 0 THEN armies(i).size = 0
+                
+                armiesDamaged = armiesDamaged + 1
+            END IF
+        END IF
+    NEXT i
     
     ' Reduce fortification
     IF cities(targetCity).fort > FORT_NONE THEN
         cities(targetCity).fort = cities(targetCity).fort - 1
     END IF
     
-    ' TODO: Implement actual damage calculation:
-    '   - Calculate damage based on fleet size
-    '   - Apply to defending armies in city
-    '   - Reduce fortification level
-    CALL ShowStatusMessage("City bombarded. Fortifications reduced", 11)
+    ' Show results
+    IF armiesDamaged > 0 THEN
+        CALL ShowStatusMessage("City bombarded. " + LTRIM$(STR$(armiesDamaged)) + " enemy army(ies) damaged. Fortifications reduced.", 11)
+    ELSE
+        CALL ShowStatusMessage("City bombarded. Fortifications reduced.", 11)
+    END IF
 END SUB
 
 '============================================================================
@@ -229,13 +286,21 @@ SUB BlockadePort (side AS INTEGER, targetPort AS INTEGER)
     ' Blockade port
     ' Reduces enemy supply in blockaded ports
     
-    IF fleets(side).size = 0 THEN
-        CALL ShowStatusError("No fleet available")
+    ' Validate inputs
+    IF ValidateArmySide%(side, "BlockadePort") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(targetPort, "BlockadePort") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF IsFleetActive%(side) = 0 THEN
+        CALL HandleValidationError("No fleet available")
         EXIT SUB
     END IF
     
     IF fleets(side).loc <> targetPort THEN
-        CALL ShowStatusError("Fleet must be in target port")
+        CALL HandleValidationError("Fleet must be in target port")
         EXIT SUB
     END IF
     
@@ -260,16 +325,21 @@ SUB RaidCommerce (side AS INTEGER)
     ' Commerce raiding
     ' Reduces enemy income, risks ship loss
     
-    IF fleets(side).size < 2 THEN
-        CALL ShowStatusError("Need at least 2 ships for commerce raiding")
+    ' Validate input
+    IF ValidateArmySide%(side, "RaidCommerce") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF fleets(side).size < MARINE_INVASION_MIN_SHIPS THEN
+        CALL HandleValidationError("Need at least " + LTRIM$(STR$(MARINE_INVASION_MIN_SHIPS)) + " ships for commerce raiding")
         EXIT SUB
     END IF
     
     DIM damage AS LONG
-    damage = fleets(side).size * 10 ' Base damage
+    damage = fleets(side).size * COMMERCE_RAID_INCOME_REDUCTION ' Base damage
     
     ' Risk of ship loss
-    IF RND < 0.2 THEN
+    IF RND < COMMERCE_RAID_SHIP_LOSS_CHANCE THEN
         fleets(side).size = fleets(side).size - 1
         CALL ShowStatusWarning("Raider lost a ship during commerce raid")
     END IF
@@ -291,31 +361,82 @@ END SUB
 '   targetCity (INTEGER) - Neutral city index to invade
 ' Description:
 '   Launches a small-scale marine invasion at a neutral city. Requires
-'   at least 2 ships. Future implementation will create a small army
-'   (5000 men) in the neutral city with a default commander.
+'   at least 2 ships. Creates a small army (5000 men) in the neutral city
+'   with a default commander. The army cannot move the turn it's created.
 ' Side Effects:
-'   - Launches invasion (future implementation)
-'   - Displays error if insufficient ships or city not neutral
+'   - Creates 5000-man army in target city
+'   - Assigns default commander and sets nationality
+'   - Marks city as occupied
+'   - Displays error if insufficient ships, city not neutral, or no army slots available
 '============================================================================
 SUB MarineInvasion (side AS INTEGER, targetCity AS INTEGER)
     ' Marine invasion at neutral cities
     ' Requires 2+ ships
     ' Small-scale invasion
     
-    IF fleets(side).size < 2 THEN
-        CALL ShowStatusError("Need at least 2 ships for marine invasion")
+    ' Validate inputs
+    IF ValidateArmySide%(side, "MarineInvasion") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(targetCity, "MarineInvasion") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF fleets(side).size < MARINE_INVASION_MIN_SHIPS THEN
+        CALL HandleValidationError("Need at least " + LTRIM$(STR$(MARINE_INVASION_MIN_SHIPS)) + " ships for marine invasion")
         EXIT SUB
     END IF
     
     IF cities(targetCity).owner <> CITY_NEUTRAL THEN
-        CALL ShowStatusError("Marine invasions only at neutral cities")
+        CALL HandleValidationError("Marine invasions only at neutral cities")
         EXIT SUB
     END IF
     
-    ' TODO: Implement invasion force creation:
-    '   - Create small army (5000 men) in neutral city
-    '   - Assign default commander
-    '   - Set nationality based on fleet owner
-    CALL ShowStatusMessage("Marine invasion launched at " + cities(targetCity).name, 11)
+    ' Find available army slot for this side
+    DIM i AS INTEGER
+    DIM startIndex AS INTEGER
+    DIM endIndex AS INTEGER
+    DIM armyCreated AS INTEGER
+    DIM defaultCommanderName AS STRING
+    
+    armyCreated = 0
+    
+    IF side = 1 THEN
+        startIndex = FRENCH_START
+        endIndex = FRENCH_START + 19
+        defaultCommanderName = "Marine Commander"
+    ELSE
+        startIndex = ALLIED_START
+        endIndex = ALLIED_START + 19
+        defaultCommanderName = "Marine Commander"
+    END IF
+    
+    ' Find empty army slot
+    FOR i = startIndex TO endIndex
+        IF armies(i).size = 0 THEN
+            ' Create invasion force
+            armies(i).name = defaultCommanderName
+            armies(i).size = MARINE_INVASION_ARMY_SIZE ' Small invasion force
+            armies(i).lead = MAX_STAT_RATING ' Default leadership rating
+            armies(i).exper = 0 ' No experience yet
+            armies(i).supply = 5 ' Start with some supply
+            armies(i).loc = targetCity
+            armies(i).move = -1 ' Cannot move this turn
+            armies(i).nationality = GetCityNationality%(targetCity)
+            
+            ' Mark city as occupied by this army
+            occupied(targetCity) = i
+            
+            armyCreated = 1
+            EXIT FOR
+        END IF
+    NEXT i
+    
+    IF armyCreated = 0 THEN
+        CALL HandleValidationError("No available army slot for invasion force")
+        EXIT SUB
+    END IF
+    
+    CALL ShowStatusMessage("Marine invasion launched at " + cities(targetCity).name + ". " + LTRIM$(STR$(MARINE_INVASION_ARMY_SIZE)) + " men landed.", 11)
 END SUB
 

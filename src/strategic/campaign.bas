@@ -12,6 +12,22 @@
 
 ' Note: gameState and currentPhase are declared in declarations.bas
 
+'============================================================================
+' InitializeCampaign - Initialize campaign for a scenario year
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario (e.g., 1796, 1805, 1812)
+' Description:
+'   Initializes a new campaign for the specified scenario year. Sets up
+'   month names, initializes game state (starting in March), sets initial
+'   cash/income/victory points to zero, and sets the current phase to
+'   PHASE_DECISION. Scenario data loading is handled separately by
+'   scenario.bas.
+' Side Effects:
+'   - Initializes month$ array with month names
+'   - Sets gameState to initial values
+'   - Sets currentPhase to PHASE_DECISION
+'============================================================================
 SUB InitializeCampaign (scenarioYear AS INTEGER)
     ' Initialize campaign for given scenario year
     scenario$ = LTRIM$(STR$(scenarioYear))
@@ -41,6 +57,21 @@ SUB InitializeCampaign (scenarioYear AS INTEGER)
     ' Load scenario data will be handled by scenario.bas
 END SUB
 
+'============================================================================
+' AdvanceTurn - Advance to next turn phase or next turn
+'============================================================================
+' Description:
+'   Advances the game through the turn sequence phases. The sequence is:
+'   Decision -> Move/Combat -> Update. When Update phase completes, advances
+'   time by 2 months, increments turn number, and switches sides for
+'   2-player games. Autosaves at the end of Decision phase.
+' Side Effects:
+'   - Advances currentPhase through turn sequence
+'   - Advances month/year when Update phase completes
+'   - Increments turn number
+'   - Switches sides for 2-player games
+'   - Autosaves at end of Decision phase
+'============================================================================
 SUB AdvanceTurn
     ' Advance to next turn (2 months)
     ' Sequence: Decision -> Move/Combat -> Update
@@ -70,11 +101,31 @@ SUB AdvanceTurn
     END IF
 END SUB
 
+'============================================================================
+' GetCurrentMonth - Get current month and year as formatted string
+'============================================================================
+' Returns:
+'   STRING - Current month name and year (e.g., "March 1805")
+' Description:
+'   Returns a formatted string containing the current month name and year
+'   from the game state. Used for display in reports and status messages.
+'============================================================================
 FUNCTION GetCurrentMonth$ ()
     ' Return current month name
     GetCurrentMonth$ = month$(gameState.month) + " " + LTRIM$(STR$(gameState.year))
 END FUNCTION
 
+'============================================================================
+' IsHarvestMonth - Check if current month is a harvest month
+'============================================================================
+' Returns:
+'   INTEGER - 1 if current month is July or September, 0 otherwise
+' Description:
+'   Checks if the current month is a harvest month (July or September).
+'   Harvest months provide free supply for all armies, representing the
+'   abundance of food during harvest season. Used by the economy system
+'   to determine supply costs.
+'============================================================================
 FUNCTION IsHarvestMonth% ()
     ' Check if current month is harvest month (July or September)
     ' Harvest months provide free supply
@@ -133,7 +184,7 @@ SUB SaveGame (slot AS INTEGER)
     ' Save city data
     FOR i = 1 TO MAX_CITIES
         WRITE #1, cities(i).name, cities(i).x, cities(i).y, cities(i).value
-        WRITE #1, cities(i).owner, cities(i).fort, cities(i).nationality, cities(i).objective
+        WRITE #1, cities(i).owner, cities(i).fort, cities(i).nationality, cities(i).objective, cities(i).originalOwner
         DIM j AS INTEGER
         FOR j = 1 TO 7
             WRITE #1, cityMatrix(i, j)
@@ -186,7 +237,7 @@ SUB LoadGame (slot AS INTEGER)
         filename = "saved\NWS" + LTRIM$(STR$(slot)) + ".SAV"
     END IF
     
-    IF FileExists%(filename) = 0 THEN
+    IF NOT _FILEEXISTS(filename) THEN
         CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
@@ -220,7 +271,7 @@ SUB LoadGame (slot AS INTEGER)
     ' Load city data
     FOR i = 1 TO MAX_CITIES
         INPUT #1, cities(i).name, cities(i).x, cities(i).y, cities(i).value
-        INPUT #1, cities(i).owner, cities(i).fort, cities(i).nationality, cities(i).objective
+        INPUT #1, cities(i).owner, cities(i).fort, cities(i).nationality, cities(i).objective, cities(i).originalOwner
         DIM j AS INTEGER
         FOR j = 1 TO 7
             INPUT #1, cityMatrix(i, j)
@@ -254,6 +305,21 @@ SUB LoadGame (slot AS INTEGER)
     PRINT "."
 END SUB
 
+'============================================================================
+' GetSaveFileList - Get list of available save files
+'============================================================================
+' Parameters:
+'   count (INTEGER) - Output parameter: Number of available save files found
+' Returns:
+'   STRING - First available save file name, or empty string if none found
+' Description:
+'   Scans for available save files (NWS1.SAV through NWS9.SAV) and returns
+'   the count of existing files via the output parameter. Returns the first
+'   available filename as the function result for compatibility. Used by
+'   the save/load menu to display available save slots.
+' Side Effects:
+'   - Sets count parameter with number of files found
+'============================================================================
 FUNCTION GetSaveFileList$ (count AS INTEGER)
     ' Get list of available save files
     ' Returns count of available files
@@ -269,7 +335,7 @@ FUNCTION GetSaveFileList$ (count AS INTEGER)
             filename = "saved\NWS" + LTRIM$(STR$(i)) + ".SAV"
         END IF
         
-        IF FileExists%(filename) <> 0 THEN
+        IF _FILEEXISTS(filename) THEN
             count = count + 1
             files$(count) = filename
         END IF

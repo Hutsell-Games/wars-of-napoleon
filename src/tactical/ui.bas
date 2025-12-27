@@ -15,6 +15,9 @@
 ' This applies to this file and all files included after it
 DEFINT A-Z
 
+' Module-level variables used by FormatUnitStats
+DIM SHARED a AS INTEGER
+
 '============================================================================
 ' Help System
 '============================================================================
@@ -142,70 +145,135 @@ END SUB
 '   Loads all unit icons (infantry, cavalry, artillery, generals) and terrain
 '   icons (trees, hills, water, etc.) from EGA files. Extracts sprites from
 '   loaded images.
+' Returns:
+'   INTEGER - 1 if all icons loaded successfully, 0 if any file failed to load
 '============================================================================
-SUB iconload
-SCREEN 9
-LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
-'----------------------------------------------------------------------------
-'                            UNIT Icons
-'----------------------------------------------------------------------------
-	' QB64-compatible BLOAD - works directly with arrays
-	BLOAD "stdicon.ega", Image(1)
-
-	PUT (100, 100), Image, PSET
-	GET (101, 101)-(116, 114), IAlly
-	GET (101, 115)-(116, 128), CAlly
-	GET (101, 129)-(116, 142), AAlly
-	GET (101, 143)-(116, 156), GAlly
-       
-	GET (117, 101)-(132, 114), IFrench
-	GET (117, 115)-(132, 128), CFrench
-	GET (117, 129)-(132, 142), AFrench
-	GET (117, 143)-(132, 156), GFrench
-'----------------------------------------------------------------------------
-'                            UNIT Icons..... ALTICON
-'----------------------------------------------------------------------------
-	' QB64-compatible BLOAD - works directly with arrays
-	BLOAD "alticon.ega", Image(1)
-
-	PUT (100, 100), Image, PSET
-	GET (101, 101)-(116, 114), LAAlly
-	GET (101, 115)-(116, 128), HSFrench
-	GET (101, 129)-(116, 142), WFrench
-	GET (101, 143)-(116, 156), RAlly
-
-	GET (117, 101)-(132, 114), LAFrench
-	GET (117, 115)-(132, 128), HSAlly
-	GET (117, 129)-(132, 142), Wally
-	GET (117, 143)-(132, 156), RFrench
-'----------------------------------------------------------------------------
-'                            Terrain Icons
-'----------------------------------------------------------------------------
-	' QB64-compatible BLOAD - works directly with arrays
-	BLOAD "terrain.ega", Image(1)
-	PUT (200, 100), Image, PSET
-	GET (200, 101)-(215, 114), Cterr
-	GET (200, 115)-(215, 128), Hterr
-	GET (200, 129)-(215, 142), Sterr
-	GET (200, 143)-(215, 156), Fterr
-	GET (217, 101)-(232, 114), Tterr
-	GET (217, 115)-(232, 128), Mterr
-	GET (217, 129)-(232, 142), Oterr
-	GET (217, 143)-(232, 156), Rterr
-'----------------------------------------------------------------------------
-'                         Miscellaneous Icons
-'----------------------------------------------------------------------------
-	' QB64-compatible BLOAD - works directly with arrays
-	BLOAD "misc.ega", Image(1)
-	PUT (300, 100), Image, PSET
-	GET (300, 101)-(315, 114), Wterr
-	GET (300, 115)-(315, 128), Vterr
-	GET (300, 129)-(315, 142), Explo
-	GET (300, 143)-(315, 156), Bridge
-	GET (317, 101)-(332, 114), Xhair
-	GET (317, 115)-(332, 128), Death
-	GET (317, 129)-(332, 142), Boat
-END SUB
+FUNCTION iconload% ()
+	DIM result AS INTEGER
+	DIM filePath AS STRING
+	
+	result = 1 ' Assume success
+	
+	SCREEN 9
+	LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
+	
+	'----------------------------------------------------------------------------
+	'                            UNIT Icons
+	'----------------------------------------------------------------------------
+	' Check if file exists before loading
+	filePath = "data\graphics\stdicon.ega"
+	IF NOT _FILEEXISTS(filePath) THEN
+		' Try alternative path (current directory)
+		filePath = "stdicon.ega"
+		IF NOT _FILEEXISTS(filePath) THEN
+			COLOR 12: LOCATE 2, 1: PRINT "ERROR: stdicon.ega not found"
+			result = 0
+		END IF
+	END IF
+	
+	IF result = 1 THEN
+		' QB64-compatible BLOAD - works directly with arrays
+		BLOAD filePath, Image(1)
+		
+		PUT (100, 100), Image, PSET
+		GET (101, 101)-(116, 114), IAlly
+		GET (101, 115)-(116, 128), CAlly
+		GET (101, 129)-(116, 142), AAlly
+		GET (101, 143)-(116, 156), GAlly
+		   
+		GET (117, 101)-(132, 114), IFrench
+		GET (117, 115)-(132, 128), CFrench
+		GET (117, 129)-(132, 142), AFrench
+		GET (117, 143)-(132, 156), GFrench
+	END IF
+	
+	'----------------------------------------------------------------------------
+	'                            UNIT Icons..... ALTICON
+	'----------------------------------------------------------------------------
+	IF result = 1 THEN
+		filePath = "data\graphics\alticon.ega"
+		IF NOT _FILEEXISTS(filePath) THEN
+			filePath = "alticon.ega"
+			IF NOT _FILEEXISTS(filePath) THEN
+				COLOR 12: LOCATE 2, 1: PRINT "ERROR: alticon.ega not found"
+				result = 0
+			END IF
+		END IF
+	END IF
+	
+	IF result = 1 THEN
+		' QB64-compatible BLOAD - works directly with arrays
+		BLOAD filePath, Image(1)
+		
+		PUT (100, 100), Image, PSET
+		GET (101, 101)-(116, 114), LAAlly
+		GET (101, 115)-(116, 128), HSFrench
+		GET (101, 129)-(116, 142), WFrench
+		GET (101, 143)-(116, 156), RAlly
+		
+		GET (117, 101)-(132, 114), LAFrench
+		GET (117, 115)-(132, 128), HSAlly
+		GET (117, 129)-(132, 142), Wally
+		GET (117, 143)-(132, 156), RFrench
+	END IF
+	
+	'----------------------------------------------------------------------------
+	'                            Terrain Icons
+	'----------------------------------------------------------------------------
+	IF result = 1 THEN
+		filePath = "data\graphics\terrain.ega"
+		IF NOT _FILEEXISTS(filePath) THEN
+			filePath = "terrain.ega"
+			IF NOT _FILEEXISTS(filePath) THEN
+				COLOR 12: LOCATE 2, 1: PRINT "ERROR: terrain.ega not found"
+				result = 0
+			END IF
+		END IF
+	END IF
+	
+	IF result = 1 THEN
+		' QB64-compatible BLOAD - works directly with arrays
+		BLOAD filePath, Image(1)
+		PUT (200, 100), Image, PSET
+		GET (200, 101)-(215, 114), Cterr
+		GET (200, 115)-(215, 128), Hterr
+		GET (200, 129)-(215, 142), Sterr
+		GET (200, 143)-(215, 156), Fterr
+		GET (217, 101)-(232, 114), Tterr
+		GET (217, 115)-(232, 128), Mterr
+		GET (217, 129)-(232, 142), Oterr
+		GET (217, 143)-(232, 156), Rterr
+	END IF
+	
+	'----------------------------------------------------------------------------
+	'                         Miscellaneous Icons
+	'----------------------------------------------------------------------------
+	IF result = 1 THEN
+		filePath = "data\graphics\misc.ega"
+		IF NOT _FILEEXISTS(filePath) THEN
+			filePath = "misc.ega"
+			IF NOT _FILEEXISTS(filePath) THEN
+				COLOR 12: LOCATE 2, 1: PRINT "ERROR: misc.ega not found"
+				result = 0
+			END IF
+		END IF
+	END IF
+	
+	IF result = 1 THEN
+		' QB64-compatible BLOAD - works directly with arrays
+		BLOAD filePath, Image(1)
+		PUT (300, 100), Image, PSET
+		GET (300, 101)-(315, 114), Wterr
+		GET (300, 115)-(315, 128), Vterr
+		GET (300, 129)-(315, 142), Explo
+		GET (300, 143)-(315, 156), Bridge
+		GET (317, 101)-(332, 114), Xhair
+		GET (317, 115)-(332, 128), Death
+		GET (317, 129)-(332, 142), Boat
+	END IF
+	
+	iconload% = result
+END FUNCTION
 
 '============================================================================
 ' Unit Inspection and Display
@@ -412,6 +480,34 @@ END SUB
 '============================================================================
 
 '============================================================================
+' Format Unit Stats - Format unit stats for report
+'============================================================================
+' Parameters:
+'   k (INTEGER) - Unit index
+'   a$, b$, c$ (STRING) - Output formatted strings (modified by reference)
+' Description:
+'   Formats unit statistics for display in reports. Shows actual stats for
+'   friendly units, estimated stats for enemy units.
+'============================================================================
+SUB FormatUnitStats (k AS INTEGER, moraleStr AS STRING, leaderStr AS STRING, xpStr AS STRING)
+	CALL valid(k)
+	CALL YouorMe(k, F)
+	IF F = 1 THEN
+		' Friendly unit - show actual stats
+		a = strength(k)
+		moraleStr = morlev$(morale(k))
+		leaderStr = ledlev$(leader(k))
+		xpStr = xplev$(xper(k))
+	ELSE
+		' Enemy unit - show estimated stats
+		a = .7 * strength(k) + .6 * RND * strength(k)
+		IF RND > .7 THEN moraleStr = "?": IF RND > .5 THEN moraleStr = "Fearless"
+		IF RND > .7 THEN leaderStr = "?": IF RND > .5 THEN leaderStr = "Brilliant"
+		IF RND > .7 THEN xpStr = "?": IF RND > .5 THEN xpStr = "Elite"
+	END IF
+END SUB
+
+'============================================================================
 ' Report - Display order of battle report
 '============================================================================
 ' Description:
@@ -432,16 +528,16 @@ total& = 0: FOR k = 1 TO bigg(1): total& = total& + strength(k): NEXT k
 t = 0
 FOR k = 1 TO bigg(1)
 	DIM a$ AS STRING
-	DIM B$ AS STRING
+	DIM b$ AS STRING
 	DIM c$ AS STRING
-	CALL FormatUnitStats(k, a$, B$, c$)
+	CALL FormatUnitStats(k, a$, b$, c$)
 	IF side = 2 AND Visible(k) = 0 THEN
 		' Hidden from side 2, skip
 	ELSEIF uorder(k) = 99 THEN
 		' Hidden unit, skip
 	ELSE
 	t$ = unit$(k): IF LEN(unit$(k)) > 9 THEN t$ = LEFT$(unit$(k), 9)
-		IF strength(k) > 0 THEN PRINT k; TAB(9); name$(k); TAB(24); a; TAB(32); t$; TAB(44); a$; TAB(54); B$; TAB(65); c$: t = t + 1
+		IF strength(k) > 0 THEN PRINT k; TAB(9); name$(k); TAB(24); a; TAB(32); t$; TAB(44); a$; TAB(54); b$; TAB(65); c$: t = t + 1
 		IF t >= 20 AND flag = 0 THEN
 			COLOR 4
 			PRINT bigg(1); mtx$(1); total&
@@ -462,16 +558,16 @@ t = 0
 COLOR 11
 FOR k = m2 TO bigg(2)
 	DIM a$ AS STRING
-	DIM B$ AS STRING
+	DIM b$ AS STRING
 	DIM c$ AS STRING
-	CALL FormatUnitStats(k, a$, B$, c$)
+	CALL FormatUnitStats(k, a$, b$, c$)
 		IF side = 1 AND Visible(k) = 0 THEN
 			' Hidden from side 1, skip
 		ELSEIF uorder(k) = 99 THEN
 			' Hidden unit, skip
 		ELSE
 			t$ = unit$(k): IF LEN(unit$(k)) > 9 THEN t$ = LEFT$(unit$(k), 9)
-			IF strength(k) > 0 THEN PRINT k; TAB(9); name$(k); TAB(24); a; TAB(32); t$; TAB(44); a$; TAB(54); B$; TAB(65); c$: t = t + 1
+			IF strength(k) > 0 THEN PRINT k; TAB(9); name$(k); TAB(24); a; TAB(32); t$; TAB(44); a$; TAB(54); b$; TAB(65); c$: t = t + 1
 			IF t >= 20 AND flag = 0 THEN
 				COLOR 9
 				PRINT bigg(2) - m1; mtx$(1); total&: CALL WaitForKey: CLS
@@ -489,34 +585,6 @@ FOR k = m2 TO bigg(2)
 	CLS
 	CALL mainmap
 	CALL refresh
-END SUB
-
-'============================================================================
-' Format Unit Stats - Format unit stats for report
-'============================================================================
-' Parameters:
-'   k (INTEGER) - Unit index
-'   a$, B$, c$ (STRING) - Output formatted strings (modified by reference)
-' Description:
-'   Formats unit statistics for display in reports. Shows actual stats for
-'   friendly units, estimated stats for enemy units.
-'============================================================================
-SUB FormatUnitStats (k AS INTEGER, a$ AS STRING, B$ AS STRING, c$ AS STRING)
-	CALL valid(k)
-	CALL YouorMe(k, F)
-	IF F = 1 THEN
-		' Friendly unit - show actual stats
-		a = strength(k)
-		a$ = morlev$(morale(k))
-		B$ = ledlev$(leader(k))
-		c$ = xplev$(xper(k))
-	ELSE
-		' Enemy unit - show estimated stats
-		a = .7 * strength(k) + .6 * RND * strength(k)
-		IF RND > .7 THEN a$ = "?": IF RND > .5 THEN a$ = "Fearless"
-		IF RND > .7 THEN B$ = "?": IF RND > .5 THEN B$ = "Brilliant"
-		IF RND > .7 THEN c$ = "?": IF RND > .5 THEN c$ = "Elite"
-	END IF
 END SUB
 
 '============================================================================
@@ -681,17 +749,17 @@ END SUB
 '   Processes keyboard input for menu navigation. Handles arrow keys,
 '   letter keys, Enter, Escape, and Space.
 '============================================================================
-SUB GetMenuKey (a$ AS STRING, row AS INTEGER, row1 AS INTEGER, size AS INTEGER, choose AS INTEGER)
+SUB GetMenuKey (keyStr AS STRING, row AS INTEGER, row1 AS INTEGER, size AS INTEGER, choose AS INTEGER)
 	DIM k AS INTEGER
 	DIM c1$ AS STRING
 	DIM c2$ AS STRING
 	
-	DO: a$ = INKEY$: LOOP WHILE a$ = ""
-	IF ASC(a$) = 32 THEN choose = 99: EXIT SUB
-	IF ASC(a$) = 13 THEN EXIT SUB
-	IF LEN(a$) = 2 THEN
+	DO: keyStr = INKEY$: LOOP WHILE keyStr = ""
+	IF ASC(keyStr) = 32 THEN choose = 99: EXIT SUB
+	IF ASC(keyStr) = 13 THEN EXIT SUB
+	IF LEN(keyStr) = 2 THEN
 		' Arrow key handling (arrows section)
-		c1$ = MID$(a$, 2, 1)
+		c1$ = MID$(keyStr, 2, 1)
 		IF ASC(c1$) = 72 THEN
 			' Up arrow
 			row = row - 1: IF row < 1 THEN row = size
@@ -702,14 +770,14 @@ SUB GetMenuKey (a$ AS STRING, row AS INTEGER, row1 AS INTEGER, size AS INTEGER, 
 		choose = row
 		EXIT SUB
 	END IF
-	IF ASC(a$) = 27 THEN choose = -1: EXIT SUB
+	IF ASC(keyStr) = 27 THEN choose = -1: EXIT SUB
 		row1 = row
 		FOR k = 1 TO size
-		c1$ = UCASE$(a$)
+		c1$ = UCASE$(keyStr)
 		c2$ = UCASE$(LEFT$(mtx$(k), 1))
 		IF c1$ = c2$ THEN row = k: choose = row: CALL LimitRow(row, size): EXIT SUB
 		NEXT k
-	CALL GetMenuKey(a$, row, row1, size, choose)
+	CALL GetMenuKey(keyStr, row, row1, size, choose)
 	EXIT SUB
 END SUB
 

@@ -3,8 +3,8 @@
 '============================================================================
 ' AI decision-making functions for tactical battle
 ' Handles unit AI behavior, engagement decisions, and location evaluation
-
-' $INCLUDE: 'core.bas'
+'
+' Note: core.bas is included in test_runner_all.bas before this file
 
 '============================================================================
 ' General AI - Main AI decision function for units
@@ -306,7 +306,7 @@ END SUB
 '   Handles enemy proximity checks and engagement decisions for AI units.
 '   Determines if unit should engage, retreat, or continue movement.
 '============================================================================
-FUNCTION CheckEnemyEngagement% (index AS INTEGER, t$ AS STRING, xloc AS INTEGER, yloc AS INTEGER)
+FUNCTION CheckEnemyEngagement% (index AS INTEGER, unitTypeStr AS STRING, xloc AS INTEGER, yloc AS INTEGER)
 	DIM s AS INTEGER
 	DIM F AS INTEGER
 	DIM Enemy AS INTEGER
@@ -327,7 +327,7 @@ FUNCTION CheckEnemyEngagement% (index AS INTEGER, t$ AS STRING, xloc AS INTEGER,
 	END IF
 	
 	' Enemy unit nearby - check if should engage
-	IF INSTR("A", t$) > 0 THEN
+	IF INSTR("A", unitTypeStr) > 0 THEN
 		' Artillery unit - fire cannon
 		CALL cannon(index, Enemy)
 		CheckEnemyEngagement% = 0
@@ -335,7 +335,7 @@ FUNCTION CheckEnemyEngagement% (index AS INTEGER, t$ AS STRING, xloc AS INTEGER,
 	END IF
 	
 	' Not artillery - check if should engage in melee
-	IF INSTR("GL", t$) > 0 THEN
+	IF INSTR("GL", unitTypeStr) > 0 THEN
 		' General or Limbered - continue to movement
 		CheckEnemyEngagement% = 1
 		EXIT FUNCTION
@@ -420,7 +420,7 @@ END FUNCTION
 '   Determines if a unit should engage an enemy based on combat calculations,
 '   unit orders, and battlefield conditions.
 '============================================================================
-FUNCTION ShouldEngageEnemy% (attack AS INTEGER, defend AS INTEGER, d AS INTEGER, flag AS INTEGER, u$ AS STRING)
+FUNCTION ShouldEngageEnemy% (attack AS INTEGER, defend AS INTEGER, d AS INTEGER, flag AS INTEGER, unitTypeStr AS STRING)
 	DIM pct! AS SINGLE
 	
 	' Calculate engagement probability

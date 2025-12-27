@@ -247,7 +247,7 @@ SUB ShowWarning (warningMessage AS STRING)
     COLOR 7 ' Reset
 END SUB
 
-FUNCTION ShowListMenu% (title AS STRING, items$(), itemCount AS INTEGER)
+FUNCTION ShowListMenu% (title AS STRING, items$, itemCount AS INTEGER)
     ' Show list menu with custom items
     ' Returns selected index (0 = cancelled)
     
@@ -286,4 +286,390 @@ SUB BubbleSortMenu (count AS INTEGER)
         IF swapped = 0 THEN EXIT FOR
     NEXT i
 END SUB
+
+'============================================================================
+' Generic Menu Helper Functions
+'============================================================================
+' These functions reduce code duplication by providing common menu patterns
+'============================================================================
+
+'============================================================================
+' SetupMenu - Configure menu with title and items
+'============================================================================
+' Parameters:
+'   title (STRING) - Menu title (stored in mtx$(0))
+'   items$ (STRING array) - Array of menu item strings
+'   itemCount (INTEGER) - Number of items in array
+'   menuX (INTEGER) - X position (optional, defaults to 67)
+'   menuY (INTEGER) - Y position (optional, defaults to 13)
+'   menuColor (INTEGER) - Menu border color (optional, defaults to 4)
+'   menuHilite (INTEGER) - Highlight color (optional, defaults to 11)
+' Description:
+'   Sets up menu variables (mtx$, size, tlx, tly, colour, hilite) for use
+'   with ShowMenu. This reduces duplication in menu setup code.
+' Side Effects:
+'   Modifies global menu variables: mtx$, size, tlx, tly, colour, hilite
+'============================================================================
+SUB SetupMenu (title AS STRING, items$, itemCount AS INTEGER, menuX AS INTEGER, menuY AS INTEGER, menuColor AS INTEGER, menuHilite AS INTEGER)
+    DIM i AS INTEGER
+    
+    ' Set title
+    mtx$(0) = title
+    
+    ' Set items
+    IF itemCount > 20 THEN
+        CALL HandleWarning("Menu item count (" + LTRIM$(STR$(itemCount)) + ") exceeds maximum (20), clamping to 20")
+        itemCount = 20
+    END IF
+    
+    size = itemCount
+    FOR i = 1 TO itemCount
+        mtx$(i) = items$(i)
+    NEXT i
+    
+    ' Set position (use defaults if 0 passed)
+    IF menuX > 0 THEN
+        tlx = menuX
+    ELSE
+        tlx = 67 ' Default
+    END IF
+    
+    IF menuY > 0 THEN
+        tly = menuY
+    ELSE
+        tly = 13 ' Default
+    END IF
+    
+    ' Set colors (use defaults if 0 passed)
+    IF menuColor > 0 THEN
+        colour = menuColor
+    ELSE
+        colour = 4 ' Default (red)
+    END IF
+    
+    IF menuHilite > 0 THEN
+        hilite = menuHilite
+    ELSE
+        hilite = 11 ' Default (cyan)
+    END IF
+END SUB
+
+'============================================================================
+' ShowSimpleMenu% - Display and get selection from simple menu
+'============================================================================
+' Parameters:
+'   title (STRING) - Menu title
+'   items$ (STRING array) - Array of menu item strings
+'   itemCount (INTEGER) - Number of items in array
+'   menuX (INTEGER) - X position (optional, 0 = default 67)
+'   menuY (INTEGER) - Y position (optional, 0 = default 13)
+'   menuColor (INTEGER) - Menu border color (optional, 0 = default 4)
+'   menuHilite (INTEGER) - Highlight color (optional, 0 = default 11)
+' Returns:
+'   INTEGER - Selected item index (1-based), or 0 if cancelled
+' Description:
+'   Convenience function that sets up and displays a menu in one call.
+'   Returns the selected item index (1-based) or 0 if user cancelled.
+'============================================================================
+FUNCTION ShowSimpleMenu% (title AS STRING, items$, itemCount AS INTEGER, menuX AS INTEGER, menuY AS INTEGER, menuColor AS INTEGER, menuHilite AS INTEGER)
+    CALL SetupMenu(title, items$, itemCount, menuX, menuY, menuColor, menuHilite)
+    CALL ShowMenu(0)
+    ShowSimpleMenu% = choose
+END FUNCTION
+
+'============================================================================
+' ShowMenuWithBack% - Display menu with "Back" option automatically added
+'============================================================================
+' Parameters:
+'   title (STRING) - Menu title
+'   items$ (STRING array) - Array of menu item strings (without "Back")
+'   itemCount (INTEGER) - Number of items in array (without "Back")
+'   menuX (INTEGER) - X position (optional, 0 = default 67)
+'   menuY (INTEGER) - Y position (optional, 0 = default 13)
+'   menuColor (INTEGER) - Menu border color (optional, 0 = default 4)
+'   menuHilite (INTEGER) - Highlight color (optional, 0 = default 11)
+' Returns:
+'   INTEGER - Selected item index (1-based), or 0 if "Back" selected or cancelled
+' Description:
+'   Sets up menu with items plus a "Back" option at the end.
+'   Returns selected item index (1-based) or 0 if "Back" was selected or cancelled.
+'============================================================================
+FUNCTION ShowMenuWithBack% (title AS STRING, items$, itemCount AS INTEGER, menuX AS INTEGER, menuY AS INTEGER, menuColor AS INTEGER, menuHilite AS INTEGER)
+    DIM i AS INTEGER
+    DIM menuItems$(1 TO 21) AS STRING ' Max 20 items + Back
+    
+    ' Copy items
+    FOR i = 1 TO itemCount
+        menuItems$(i) = items$(i)
+    NEXT i
+    
+    ' Add "Back" option
+    menuItems$(itemCount + 1) = "Back"
+    
+    CALL SetupMenu(title, menuItems$, itemCount + 1, menuX, menuY, menuColor, menuHilite)
+    CALL ShowMenu(0)
+    
+    ' Return 0 if "Back" selected or cancelled, otherwise return selection
+    IF choose = itemCount + 1 OR choose = 0 THEN
+        ShowMenuWithBack% = 0
+    ELSE
+        ShowMenuWithBack% = choose
+    END IF
+END FUNCTION
+
+'============================================================================
+' List Building Helper Functions
+'============================================================================
+' These functions reduce duplication in menu code by providing common
+' list building patterns for cities and armies
+'============================================================================
+
+'============================================================================
+' BuildCityList% - Build a filtered list of cities
+'============================================================================
+' Parameters:
+'   cityIndices() (INTEGER array) - Output array of city indices (1-based)
+'   cityNames$ (STRING array) - Output array of city names
+'   side (INTEGER) - Side to filter by (0 = any side, 1 = French, 2 = Allied)
+'   requirePort (INTEGER) - 1 = only port cities, 0 = any city
+'   requireOwned (INTEGER) - 1 = only owned by side, 0 = any ownership
+'   requireActive (INTEGER) - 1 = only active cities, 0 = any city
+'   nameFormatter$ (STRING) - Optional format string for names (use "%s" for city name)
+'   additionalFilter% (INTEGER) - Optional function pointer for additional filtering
+' Returns:
+'   INTEGER - Number of cities in the list
+' Description:
+'   Builds a filtered list of cities matching the specified criteria.
+'   The cityIndices and cityNames arrays are populated with matching cities.
+'   Returns the count of cities found.
+' Side Effects:
+'   Modifies cityIndices() and cityNames$ arrays
+'============================================================================
+FUNCTION BuildCityList% (cityIndices() AS INTEGER, cityNames() AS STRING, side AS INTEGER, requirePort AS INTEGER, requireOwned AS INTEGER, requireActive AS INTEGER, nameFormatter$ AS STRING)
+    DIM i AS INTEGER
+    DIM count AS INTEGER
+    DIM cityName AS STRING
+    
+    count = 0
+    FOR i = 1 TO MAX_CITIES
+        ' Check active requirement
+        IF requireActive = 1 THEN
+            IF IsCityActive%(i) = 0 THEN
+                GOTO SkipCity
+            END IF
+        END IF
+        
+        ' Check ownership requirement
+        IF requireOwned = 1 AND side > 0 THEN
+            IF IsCityOwnedBy%(i, side) = 0 THEN
+                GOTO SkipCity
+            END IF
+        END IF
+        
+        ' Check port requirement
+        IF requirePort = 1 THEN
+            IF IsPortCity%(i) = 0 THEN
+                GOTO SkipCity
+            END IF
+        END IF
+        
+        ' City passed all filters
+        count = count + 1
+        cityIndices(count) = i
+        
+        ' Format city name
+        IF LEN(nameFormatter$) > 0 THEN
+            ' Simple string replacement for %s placeholder
+            cityName = nameFormatter$
+            IF INSTR(cityName, "%s") > 0 THEN
+                cityName = LEFT$(cityName, INSTR(cityName, "%s") - 1) + cities(i).name + MID$(cityName, INSTR(cityName, "%s") + 2)
+            END IF
+            cityNames(count) = cityName
+        ELSE
+            cityNames(count) = cities(i).name
+        END IF
+        
+        SkipCity:
+    NEXT i
+    
+    BuildCityList% = count
+END FUNCTION
+
+'============================================================================
+' BuildArmyList% - Build a filtered list of armies
+'============================================================================
+' Parameters:
+'   armyIndices() (INTEGER array) - Output array of army indices (1-based)
+'   armyNames$ (STRING array) - Output array of army names
+'   side (INTEGER) - Side to filter by (1 = French, 2 = Allied)
+'   requireActive (INTEGER) - 1 = only active armies, 0 = any army
+'   requireCanMove (INTEGER) - 1 = only armies that can move, 0 = any army
+'   nameFormatter$ (STRING) - Optional format string for names (use "%s" for army name, "%l" for location)
+' Returns:
+'   INTEGER - Number of armies in the list
+' Description:
+'   Builds a filtered list of armies matching the specified criteria.
+'   The armyIndices and armyNames arrays are populated with matching armies.
+'   Returns the count of armies found.
+' Side Effects:
+'   Modifies armyIndices() and armyNames$ arrays
+'============================================================================
+FUNCTION BuildArmyList% (armyIndices() AS INTEGER, armyNames() AS STRING, side AS INTEGER, requireActive AS INTEGER, requireCanMove AS INTEGER, nameFormatter$ AS STRING)
+    DIM i AS INTEGER
+    DIM startIndex AS INTEGER
+    DIM endIndex AS INTEGER
+    DIM count AS INTEGER
+    DIM armyName AS STRING
+    DIM locationName AS STRING
+    
+    ' Determine army range for side
+    IF side = 1 THEN
+        startIndex = FRENCH_START
+        endIndex = FRENCH_START + 19
+    ELSE
+        startIndex = ALLIED_START
+        endIndex = ALLIED_START + 19
+    END IF
+    
+    count = 0
+    FOR i = startIndex TO endIndex
+        ' Check active requirement
+        IF requireActive = 1 THEN
+            IF IsArmyActive%(i) = 0 THEN
+                GOTO SkipArmy
+            END IF
+        END IF
+        
+        ' Check can move requirement
+        IF requireCanMove = 1 THEN
+            IF armies(i).move = -1 THEN
+                GOTO SkipArmy
+            END IF
+        END IF
+        
+        ' Army passed all filters
+        count = count + 1
+        armyIndices(count) = i
+        
+        ' Get location name
+        IF armies(i).loc > 0 THEN
+            IF ValidateCityIndex%(armies(i).loc, "BuildArmyList") = 1 THEN
+                locationName = cities(armies(i).loc).name
+            ELSE
+                locationName = "Unknown"
+            END IF
+        ELSE
+            locationName = "Unknown"
+        END IF
+        
+        ' Format army name
+        IF LEN(nameFormatter$) > 0 THEN
+            armyName = nameFormatter$
+            ' Replace %s with army name
+            IF INSTR(armyName, "%s") > 0 THEN
+                armyName = LEFT$(armyName, INSTR(armyName, "%s") - 1) + armies(i).name + MID$(armyName, INSTR(armyName, "%s") + 2)
+            END IF
+            ' Replace %l with location name
+            IF INSTR(armyName, "%l") > 0 THEN
+                armyName = LEFT$(armyName, INSTR(armyName, "%l") - 1) + locationName + MID$(armyName, INSTR(armyName, "%l") + 2)
+            END IF
+            armyNames(count) = armyName
+        ELSE
+            armyNames(count) = armies(i).name + " (" + locationName + ")"
+        END IF
+        
+        SkipArmy:
+    NEXT i
+    
+    BuildArmyList% = count
+END FUNCTION
+
+'============================================================================
+' ShowCitySelectionMenu% - Build city list and show selection menu
+'============================================================================
+' Parameters:
+'   title (STRING) - Menu title
+'   cityIndices() (INTEGER array) - Output array of selected city indices
+'   side (INTEGER) - Side to filter by (0 = any side, 1 = French, 2 = Allied)
+'   requirePort (INTEGER) - 1 = only port cities, 0 = any city
+'   requireOwned (INTEGER) - 1 = only owned by side, 0 = any ownership
+'   requireActive (INTEGER) - 1 = only active cities, 0 = any city
+'   nameFormatter$ (STRING) - Optional format string for names
+'   emptyMessage$ (STRING) - Message to show if no cities found
+' Returns:
+'   INTEGER - Selected city index (1-based in cityIndices array), or 0 if cancelled
+' Description:
+'   Convenience function that builds a filtered city list and displays
+'   a selection menu. Returns the selected city index (1-based in the
+'   cityIndices array) or 0 if cancelled or no cities found.
+' Side Effects:
+'   Modifies cityIndices() array
+'============================================================================
+FUNCTION ShowCitySelectionMenu% (title AS STRING, cityIndices() AS INTEGER, side AS INTEGER, requirePort AS INTEGER, requireOwned AS INTEGER, requireActive AS INTEGER, nameFormatter$ AS STRING, emptyMessage$ AS STRING)
+    DIM count AS INTEGER
+    DIM cityNames$(1 TO MAX_CITIES) AS STRING
+    DIM selected AS INTEGER
+    
+    ' Build city list
+    count = BuildCityList%(cityIndices(), cityNames$, side, requirePort, requireOwned, requireActive, nameFormatter$)
+    
+    ' Check if any cities found
+    IF count = 0 THEN
+        IF LEN(emptyMessage$) > 0 THEN
+            CALL ShowInfo(emptyMessage$)
+        END IF
+        ShowCitySelectionMenu% = 0
+        EXIT FUNCTION
+    END IF
+    
+    ' Show menu
+    selected = ShowListMenu%(title, cityNames$, count)
+    
+    ' Return selected index (0 if cancelled)
+    ShowCitySelectionMenu% = selected
+END FUNCTION
+
+'============================================================================
+' ShowArmySelectionMenu% - Build army list and show selection menu
+'============================================================================
+' Parameters:
+'   title (STRING) - Menu title
+'   armyIndices() (INTEGER array) - Output array of selected army indices
+'   side (INTEGER) - Side to filter by (1 = French, 2 = Allied)
+'   requireActive (INTEGER) - 1 = only active armies, 0 = any army
+'   requireCanMove (INTEGER) - 1 = only armies that can move, 0 = any army
+'   nameFormatter$ (STRING) - Optional format string for names
+'   emptyMessage$ (STRING) - Message to show if no armies found
+' Returns:
+'   INTEGER - Selected army index (1-based in armyIndices array), or 0 if cancelled
+' Description:
+'   Convenience function that builds a filtered army list and displays
+'   a selection menu. Returns the selected army index (1-based in the
+'   armyIndices array) or 0 if cancelled or no armies found.
+' Side Effects:
+'   Modifies armyIndices() array
+'============================================================================
+FUNCTION ShowArmySelectionMenu% (title AS STRING, armyIndices() AS INTEGER, side AS INTEGER, requireActive AS INTEGER, requireCanMove AS INTEGER, nameFormatter$ AS STRING, emptyMessage$ AS STRING)
+    DIM count AS INTEGER
+    DIM armyNames$(1 TO MAX_ARMIES) AS STRING
+    DIM selected AS INTEGER
+    
+    ' Build army list
+    count = BuildArmyList%(armyIndices(), armyNames$, side, requireActive, requireCanMove, nameFormatter$)
+    
+    ' Check if any armies found
+    IF count = 0 THEN
+        IF LEN(emptyMessage$) > 0 THEN
+            CALL ShowInfo(emptyMessage$)
+        END IF
+        ShowArmySelectionMenu% = 0
+        EXIT FUNCTION
+    END IF
+    
+    ' Show menu
+    selected = ShowListMenu%(title, armyNames$, count)
+    
+    ' Return selected index (0 if cancelled)
+    ShowArmySelectionMenu% = selected
+END FUNCTION
 

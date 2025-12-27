@@ -33,9 +33,9 @@ SUB UpdateIncome
     income2 = 0
     
     FOR i = 1 TO MAX_CITIES
-        IF cities(i).owner = CITY_FRENCH THEN
+        IF IsCityOwnedBy%(i, 1) = 1 THEN
             income1 = income1 + cities(i).value
-        ELSEIF cities(i).owner = CITY_ALLIED THEN
+        ELSEIF IsCityOwnedBy%(i, 2) = 1 THEN
             income2 = income2 + cities(i).value
         END IF
     NEXT i
@@ -49,8 +49,8 @@ SUB UpdateIncome
     CALL SetGameStateCash(2, GetGameStateCash&(2) + income2)
     
     ' Cap cash at maximum
-    IF GetGameStateCash&(1) > 19999 THEN CALL SetGameStateCash(1, 19999)
-    IF GetGameStateCash&(2) > 19999 THEN CALL SetGameStateCash(2, 19999)
+    IF GetGameStateCash&(1) > MAX_CASH THEN CALL SetGameStateCash(1, MAX_CASH)
+    IF GetGameStateCash&(2) > MAX_CASH THEN CALL SetGameStateCash(2, MAX_CASH)
 END SUB
 
 '============================================================================
@@ -79,9 +79,11 @@ SUB AutoSupply
     IF IsHarvestMonth% THEN
         ' Free supply
         FOR i = 1 TO MAX_ARMIES
-            IF armies(i).size > 0 THEN
+            IF IsArmyActive%(i) = 1 THEN
                 armies(i).supply = armies(i).supply + 1
-                IF armies(i).supply > 10 THEN armies(i).supply = 10
+                IF armies(i).supply > MAX_SUPPLY THEN armies(i).supply = MAX_SUPPLY
+                ' Supply changed - invalidate combat strength cache
+                CALL InvalidateCombatStrengthCache(i)
             END IF
         NEXT i
         EXIT SUB
@@ -91,11 +93,11 @@ SUB AutoSupply
     FOR side = 1 TO 2
         totalCost = 0
         FOR i = 1 TO MAX_ARMIES
-            IF armies(i).size > 0 THEN
+            IF IsArmyActive%(i) = 1 THEN
                 ' Determine side
                 currentArmySide = GetArmySide%(i)
                 IF currentArmySide = side THEN
-                    cost = (armies(i).size / 1000) * SUPPLY_AUTO_COST
+                    cost = (armies(i).size / SUPPLY_CALCULATION_DIVISOR) * SUPPLY_AUTO_COST
                     totalCost = totalCost + cost
                 END IF
             END IF
@@ -105,12 +107,14 @@ SUB AutoSupply
         IF GetGameStateCash&(side) >= totalCost THEN
             CALL SetGameStateCash(side, GetGameStateCash&(side) - totalCost)
         FOR i = 1 TO MAX_ARMIES
-            IF armies(i).size > 0 THEN
+            IF IsArmyActive%(i) = 1 THEN
                 ' Determine side and supply
                 currentArmySide = GetArmySide%(i)
                 IF currentArmySide = side THEN
                     armies(i).supply = armies(i).supply + 1
-                    armies(i).supply = ClampValue%(armies(i).supply, 0, 10)
+                    armies(i).supply = ClampValue%(armies(i).supply, 0, MAX_SUPPLY)
+                    ' Supply changed - invalidate combat strength cache
+                    CALL InvalidateCombatStrengthCache(i)
                 END IF
             END IF
         NEXT i
@@ -136,10 +140,15 @@ SUB ManualSupply (armyIndex AS INTEGER)
     ' Manual supply for specific army
     ' Cost: 0.001 money units per 1,000 men (cheaper than auto)
     
+    ' Validate input
+    IF ValidateArmyIndex%(armyIndex, "ManualSupply") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM side AS INTEGER
     DIM cost AS SINGLE
     
-    IF armies(armyIndex).size = 0 THEN EXIT SUB ' Not an error - empty army
+    IF IsArmyActive%(armyIndex) = 0 THEN EXIT SUB ' Not an error - empty army
     
     ' Determine side
     side = GetArmySide%(armyIndex)
@@ -148,7 +157,7 @@ SUB ManualSupply (armyIndex AS INTEGER)
         EXIT SUB
     END IF
     
-    cost = (armies(armyIndex).size / 1000) * SUPPLY_MANUAL_COST
+    cost = (armies(armyIndex).size / SUPPLY_CALCULATION_DIVISOR) * SUPPLY_MANUAL_COST
     
     IF GetGameStateCash&(side) < cost THEN
         CALL ShowStatusMessage("Insufficient funds for supply", 11)
@@ -157,7 +166,7 @@ SUB ManualSupply (armyIndex AS INTEGER)
     
     CALL SetGameStateCash(side, GetGameStateCash&(side) - cost)
     armies(armyIndex).supply = armies(armyIndex).supply + 1
-    IF armies(armyIndex).supply > 10 THEN armies(armyIndex).supply = 10
+    IF armies(armyIndex).supply > MAX_SUPPLY THEN armies(armyIndex).supply = MAX_SUPPLY
     
     CALL ShowStatusMessage(armies(armyIndex).name + " supplied manually", 11)
 END SUB
@@ -184,7 +193,7 @@ SUB ConsumeSupply
     IF IsHarvestMonth% THEN EXIT SUB
     
     FOR i = 1 TO MAX_ARMIES
-        IF armies(i).size > 0 THEN
+        IF IsArmyActive%(i) = 1 THEN
             armies(i).supply = armies(i).supply - 1
             IF armies(i).supply < 0 THEN armies(i).supply = 0
         END IF
@@ -210,7 +219,7 @@ END FUNCTION
 '============================================================================
 FUNCTION GetFortificationCost% ()
     ' Get cost per fortification level
-    GetFortificationCost% = 200
+    GetFortificationCost% = FORTIFICATION_COST
 END FUNCTION
 
 '============================================================================
@@ -237,6 +246,13 @@ END FUNCTION
 '============================================================================
 FUNCTION IsOutOfSupply% (armyIndex AS INTEGER)
     ' Check if army is out of supply
+    
+    ' Validate input
+    IF ValidateArmyIndex%(armyIndex, "IsOutOfSupply") = 0 THEN
+        IsOutOfSupply% = 0
+        EXIT FUNCTION
+    END IF
+    
     IsOutOfSupply% = 0
     IF armies(armyIndex).supply = 0 THEN
         IsOutOfSupply% = 1

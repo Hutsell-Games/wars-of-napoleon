@@ -21,6 +21,7 @@ END
 ' $INCLUDE: 'src/common/config.bas'
 ' $INCLUDE: 'src/common/utilities.bas'
 ' $INCLUDE: 'src/common/error_handling.bas'
+' $INCLUDE: 'src/common/performance_cache.bas'
 ' $INCLUDE: 'src/ui/menus.bas'
 ' $INCLUDE: 'src/ui/graphics.bas'
 ' $INCLUDE: 'src/strategic/campaign.bas'

@@ -25,6 +25,7 @@ TYPE CityType
     fort AS INTEGER           ' Fortification level (0=none, 1=FORT+, 2=FORT++)
     nationality AS INTEGER    ' Nationality (for cohesion system)
     objective AS INTEGER      ' Objective city flag (0=no, 1=yes)
+    originalOwner AS INTEGER  ' Original owner from scenario (0=neutral, 1=French, 2=Allied, 3=at peace)
 END TYPE
 
 ' Commander attributes

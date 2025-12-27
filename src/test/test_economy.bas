@@ -276,6 +276,111 @@ SUB RunEconomyTests
     CALL TestIsOutOfSupplyZeroSupply
     CALL TestIsOutOfSupplyHasSupply
     
+    ' Supply Calculation Tests
+    CALL TestAutoSupplyCalculatesCost
+    CALL TestAutoSupplyInsufficientFunds
+    CALL TestManualSupplyCalculatesCost
+    CALL TestManualSupplyInsufficientFunds
+    
     CALL PrintTestResults
+END SUB
+
+'============================================================================
+' Test Suite: Supply Calculations
+'============================================================================
+
+SUB TestAutoSupplyCalculatesCost
+    StartTest "EconomyTests", "test_auto_supply_calculates_cost"
+    
+    CALL InitializeArmies
+    CALL InitializeCampaign(1796)
+    gameState.month = 6 ' Not harvest month
+    armies(1).size = 10000 ' 10,000 men
+    armies(1).supply = 5
+    gameState.side = 1
+    CALL SetGameStateCash(1, 1000)
+    
+    ' Cost should be: (10000 / 1000) * 0.002 = 10 * 0.002 = 0.02
+    ' But since we're using integer math, verify supply increases if funds available
+    DIM cashBefore AS LONG
+    cashBefore = GetGameStateCash&(1)
+    
+    CALL AutoSupply
+    
+    ' Verify supply increased
+    AssertGreaterThan armies(1).supply, 5, "Supply should increase if funds available"
+    ' Verify cash decreased (if supply was applied)
+    IF armies(1).supply > 5 THEN
+        AssertLessThan GetGameStateCash&(1), cashBefore, "Cash should be reduced"
+    END IF
+    
+    ExecuteTest "EconomyTests", "test_auto_supply_calculates_cost"
+END SUB
+
+SUB TestAutoSupplyInsufficientFunds
+    StartTest "EconomyTests", "test_auto_supply_insufficient_funds"
+    
+    CALL InitializeArmies
+    CALL InitializeCampaign(1796)
+    gameState.month = 6 ' Not harvest month
+    armies(1).size = 100000 ' Large army - expensive supply
+    armies(1).supply = 5
+    gameState.side = 1
+    CALL SetGameStateCash(1, 0) ' No funds
+    
+    DIM supplyBefore AS INTEGER
+    supplyBefore = armies(1).supply
+    
+    CALL AutoSupply
+    
+    ' Supply should not increase if insufficient funds
+    AssertEqual armies(1).supply, supplyBefore, "Supply should not increase without funds"
+    
+    ExecuteTest "EconomyTests", "test_auto_supply_insufficient_funds"
+END SUB
+
+SUB TestManualSupplyCalculatesCost
+    StartTest "EconomyTests", "test_manual_supply_calculates_cost"
+    
+    CALL InitializeArmies
+    CALL InitializeCampaign(1796)
+    armies(1).size = 10000 ' 10,000 men
+    armies(1).supply = 5
+    gameState.side = 1
+    CALL SetGameStateCash(1, 1000)
+    
+    ' Cost should be: (10000 / 1000) * 0.001 = 10 * 0.001 = 0.01
+    DIM cashBefore AS LONG
+    cashBefore = GetGameStateCash&(1)
+    
+    CALL ManualSupply(1)
+    
+    ' Verify supply increased
+    AssertEqual armies(1).supply, 6, "Supply should increase"
+    ' Verify cash decreased
+    AssertLessThan GetGameStateCash&(1), cashBefore, "Cash should be reduced"
+    
+    ExecuteTest "EconomyTests", "test_manual_supply_calculates_cost"
+END SUB
+
+SUB TestManualSupplyInsufficientFunds
+    StartTest "EconomyTests", "test_manual_supply_insufficient_funds"
+    
+    CALL InitializeArmies
+    CALL InitializeCampaign(1796)
+    armies(1).size = 100000 ' Large army - expensive supply
+    armies(1).supply = 5
+    gameState.side = 1
+    CALL SetGameStateCash(1, 0) ' No funds
+    
+    DIM supplyBefore AS INTEGER
+    supplyBefore = armies(1).supply
+    
+    CALL ManualSupply(1)
+    
+    ' Supply should not increase if insufficient funds
+    AssertEqual armies(1).supply, supplyBefore, "Supply should not increase without funds"
+    
+    ExecuteTest "EconomyTests", "test_manual_supply_insufficient_funds"
 END SUB
 

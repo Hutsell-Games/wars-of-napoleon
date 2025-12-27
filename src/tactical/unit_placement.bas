@@ -89,14 +89,38 @@ END SUB
 ' Unit Placement Helper Functions
 '============================================================================
 
-' GOSUB xxyy converted to SUB
+'============================================================================
+' CalculateXY - Calculate unit placement coordinates
+'============================================================================
+' Parameters:
+'   xx (INTEGER) - Output X coordinate (modified by reference)
+'   yy (INTEGER) - Output Y coordinate (modified by reference)
+'   xloc (INTEGER) - Base X location (99 = random)
+'   yloc (INTEGER) - Base Y location (99 = random)
+' Description:
+'   Calculates unit placement coordinates. If xloc or yloc is 99, generates
+'   a random coordinate within map bounds (1-54 for X, 1-24 for Y). Otherwise
+'   uses the provided coordinates. Used during unit placement to determine
+'   initial positions.
+'============================================================================
 SUB CalculateXY (xx AS INTEGER, yy AS INTEGER, xloc AS INTEGER, yloc AS INTEGER)
 	xx = xloc: yy = yloc
 	IF xx = 99 THEN xx = 1 + INT(54 * RND)
 	IF yy = 99 THEN yy = 1 + INT(24 * RND)
 END SUB
 
-' GOSUB odd converted to SUB
+'============================================================================
+' CheckOddHex - Check if hex coordinates are odd (invalid for hex grid)
+'============================================================================
+' Parameters:
+'   index (INTEGER) - Unit index to check coordinates for
+'   flag (INTEGER) - Output flag: 1 if odd (invalid), 0 if even (valid)
+' Description:
+'   Checks if a unit's hex coordinates form an odd hex (invalid position).
+'   Hex grids require that (x + y) be even. Sets flag to 1 if the hex is odd
+'   (invalid), 0 if even (valid). Used during unit placement to validate
+'   and correct hex positions.
+'============================================================================
 SUB CheckOddHex (index AS INTEGER, flag AS INTEGER)
 	flag = 0
 	IF (unitx(index) + unity(index)) <> INT(.5 * (unitx(index) + unity(index))) * 2 THEN flag = 1
@@ -178,7 +202,7 @@ FUNCTION FindValidUnitPlacement% (index AS INTEGER, who AS INTEGER, xloc AS INTE
 END FUNCTION
 
 '============================================================================
-' Initialize Unit Attributes - Initialize unit type, strength, and stats
+' InitializeUnitAttributes - Initialize unit type, strength, and stats
 '============================================================================
 ' Parameters:
 '   index (INTEGER) - Unit index
@@ -193,7 +217,7 @@ END FUNCTION
 '   leadership, experience, and initial orders. Handles special cases like
 '   reserves and late arrivals.
 '============================================================================
-SUB InitializeUnitAttributes (index AS INTEGER, i AS INTEGER, allarm AS INTEGER, who AS INTEGER, s AS INTEGER, file$ AS STRING, dx AS INTEGER)
+SUB InitializeUnitAttributes (index AS INTEGER, i AS INTEGER, allarm AS INTEGER, who AS INTEGER, s AS INTEGER, fileName AS STRING, dx AS INTEGER)
 	DIM armx AS INTEGER
 	DIM a$ AS STRING
 	
@@ -222,7 +246,7 @@ SUB InitializeUnitAttributes (index AS INTEGER, i AS INTEGER, allarm AS INTEGER,
 	END SELECT
 	
 	' Get unit name
-	CALL namer(file$, dx, index - 1, a$)
+	CALL namer(fileName, dx, index - 1, a$)
 	name$(index) = a$
 	IF i = allarm THEN
 		name$(index) = "RESERVES"

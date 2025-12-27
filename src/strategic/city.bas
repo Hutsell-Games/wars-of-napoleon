@@ -32,8 +32,9 @@ SUB InitializeCities
         cities(i).fort = FORT_NONE
         cities(i).nationality = 0
         cities(i).objective = 0
+        cities(i).originalOwner = CITY_NEUTRAL
         
-        FOR j = 1 TO 7
+        FOR j = 1 TO CITY_MATRIX_COLUMNS
             cityMatrix(i, j) = 0
         NEXT j
     NEXT i
@@ -60,7 +61,7 @@ SUB LoadCityData (scenarioYear AS INTEGER)
     DIM filename AS STRING
     filename = "data/scenarios/EURO" + LTRIM$(STR$(scenarioYear)) + ".MAP"
     
-    IF FileExists%(filename) = 0 THEN
+    IF NOT _FILEEXISTS(filename) THEN
         CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
@@ -117,11 +118,14 @@ SUB LoadCityData (scenarioYear AS INTEGER)
                 cities(cityNum).owner = CITY_NEUTRAL
             END IF
             
+            ' Store original owner for realism mode tracking
+            cities(cityNum).originalOwner = cities(cityNum).owner
+            
             ' Set nationality (owner value represents nationality)
             cities(cityNum).nationality = owner
             
             ' Store connections in cityMatrix
-            FOR j = 1 TO 6
+            FOR j = 1 TO MAX_CITY_CONNECTIONS
                 IF connections(j) > 0 AND connections(j) <= MAX_CITIES THEN
                     cityMatrix(cityNum, j) = connections(j)
                 ELSE
@@ -129,19 +133,19 @@ SUB LoadCityData (scenarioYear AS INTEGER)
                 END IF
             NEXT j
             
-            ' Port indicator (>90 = port city)
-            ' Store in cityMatrix(7) as port flag
-            IF portIndicator > 90 THEN
-                cityMatrix(cityNum, 7) = 1 ' Port city
+            ' Port indicator (>PORT_INDICATOR_THRESHOLD = port city)
+            ' Store in cityMatrix(CITY_MATRIX_COLUMNS) as port flag
+            IF portIndicator > PORT_INDICATOR_THRESHOLD THEN
+                cityMatrix(cityNum, CITY_MATRIX_COLUMNS) = 1 ' Port city
             ELSE
-                cityMatrix(cityNum, 7) = 0 ' Not a port
+                cityMatrix(cityNum, CITY_MATRIX_COLUMNS) = 0 ' Not a port
             END IF
             
             ' Update game state counters
-            IF cities(cityNum).owner = CITY_FRENCH THEN
+            IF IsCityOwnedBy%(cityNum, 1) = 1 THEN
                 CALL SetGameStateControl(1, GetGameStateControl%(1) + 1)
                 CALL SetGameStateIncome(1, GetGameStateIncome&(1) + income)
-            ELSEIF cities(cityNum).owner = CITY_ALLIED THEN
+            ELSEIF IsCityOwnedBy%(cityNum, 2) = 1 THEN
                 CALL SetGameStateControl(2, GetGameStateControl%(2) + 1)
                 CALL SetGameStateIncome(2, GetGameStateIncome&(2) + income)
             END IF
@@ -177,6 +181,14 @@ SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
     ' Capture city for new owner
     ' Updates ownership, income, victory points
     
+    ' Validate inputs
+    IF ValidateCityIndex%(cityIndex, "CaptureCity") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateArmySide%(newOwner, "CaptureCity") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM oldOwner AS INTEGER
     oldOwner = cities(cityIndex).owner
     
@@ -205,6 +217,9 @@ SUB CaptureCity (cityIndex AS INTEGER, newOwner AS INTEGER)
     IF cities(cityIndex).fort > FORT_NONE THEN
         cities(cityIndex).fort = cities(cityIndex).fort - 1
     END IF
+    
+    ' City ownership changed - invalidate isolation cache
+    CALL InvalidateCityIsolationCache(0) ' Invalidate all cities (ownership change affects connections)
 END SUB
 
 '============================================================================
@@ -226,13 +241,18 @@ SUB FortifyCity (cityIndex AS INTEGER)
     ' Cost: 200 money units per level
     ' Maximum: FORT_PLUS_PLUS (level 2)
     
+    ' Validate input
+    IF ValidateCityIndex%(cityIndex, "FortifyCity") = 0 THEN
+        EXIT SUB
+    END IF
+    
     IF cities(cityIndex).fort >= FORT_PLUS_PLUS THEN
         CALL ShowStatusMessage(cities(cityIndex).name + " already at maximum fortification", 11)
         EXIT SUB ' Not an error - valid state check
     END IF
     
     DIM cost AS INTEGER
-    cost = 200
+    cost = FORTIFICATION_COST
     
     IF GetGameStateCash&(gameState.side) < cost THEN
         CALL ShowStatusMessage("Fortification costs " + LTRIM$(STR$(cost)) + " money units", 11)
@@ -258,6 +278,11 @@ END SUB
 '   - Displays destruction message
 '============================================================================
 SUB RazeFortifications (cityIndex AS INTEGER)
+    ' Validate input
+    IF ValidateCityIndex%(cityIndex, "RazeFortifications") = 0 THEN
+        EXIT SUB
+    END IF
+    
     cities(cityIndex).fort = FORT_NONE
     CALL ShowStatusMessage("Fortifications at " + cities(cityIndex).name + " destroyed", 11)
 END SUB
@@ -272,12 +297,19 @@ END SUB
 '============================================================================
 FUNCTION GetCityIncome& (side AS INTEGER)
     ' Calculate total income for side from controlled cities
+    
+    ' Validate input
+    IF ValidateArmySide%(side, "GetCityIncome") = 0 THEN
+        GetCityIncome& = 0
+        EXIT FUNCTION
+    END IF
+    
     DIM i AS INTEGER
     DIM total AS LONG
     
     total = 0
     FOR i = 1 TO MAX_CITIES
-        IF cities(i).owner = side THEN
+        IF IsCityActive%(i) = 1 AND IsCityOwnedBy%(i, side) = 1 THEN
             total = total + cities(i).value
         END IF
     NEXT i
@@ -295,15 +327,22 @@ END FUNCTION
 '============================================================================
 FUNCTION GetCityVictoryPoints& (side AS INTEGER)
     ' Calculate total victory points for side
+    
+    ' Validate input
+    IF ValidateArmySide%(side, "GetCityVictoryPoints") = 0 THEN
+        GetCityVictoryPoints& = 0
+        EXIT FUNCTION
+    END IF
+    
     DIM i AS INTEGER
     DIM total AS LONG
     
     total = 0
     FOR i = 1 TO MAX_CITIES
-        IF cities(i).owner = side THEN
+        IF IsCityActive%(i) = 1 AND IsCityOwnedBy%(i, side) = 1 THEN
             total = total + cities(i).value
             IF cities(i).objective = 1 THEN
-                total = total + 100 ' Objective city bonus
+                total = total + OBJECTIVE_BONUS ' Objective city bonus
             END IF
         END IF
     NEXT i
@@ -325,5 +364,12 @@ END FUNCTION
 FUNCTION GetCityNationality% (cityIndex AS INTEGER)
     ' Get nationality of city
     ' Returns nationality code from city data
+    
+    ' Validate input
+    IF ValidateCityIndex%(cityIndex, "GetCityNationality") = 0 THEN
+        GetCityNationality% = 0
+        EXIT FUNCTION
+    END IF
+    
     GetCityNationality% = cities(cityIndex).nationality
 END FUNCTION

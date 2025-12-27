@@ -9,6 +9,17 @@
 
 ' Note: scenarioYears is declared and initialized in declarations.bas
 
+'============================================================================
+' SelectScenario - Display scenario selection menu
+'============================================================================
+' Returns:
+'   INTEGER - Selected scenario year (1796, 1805, 1807, 1808, 1812, 1813, 1815)
+'             or 0 if selection was cancelled
+' Description:
+'   Displays a menu allowing the player to select from available scenarios.
+'   Shows scenario years as "XXXX Campaign" format. Uses the menu system
+'   for consistent UI. Returns the selected scenario year or 0 if cancelled.
+'============================================================================
 FUNCTION SelectScenario% ()
     ' Display scenario selection menu
     ' Returns selected scenario year (0 = cancelled)
@@ -29,7 +40,7 @@ FUNCTION SelectScenario% ()
     FOR i = 1 TO 7
         tempNames$(i) = scenarioNames$(i)
     NEXT i
-    selected = ShowListMenu%("Select Scenario", tempNames$(), 7)
+    selected = ShowListMenu%("Select Scenario", tempNames$, 7)
     
     ' Map menu selection to scenario year
     IF selected >= 1 AND selected <= 7 THEN
@@ -81,6 +92,26 @@ SUB LoadScenario (scenarioYear AS INTEGER)
     CALL ShowStatusMessage("Scenario loaded", 11)
 END SUB
 
+'============================================================================
+' LoadScenarioINI - Load scenario initialization file
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario (determines which file to load)
+' Description:
+'   Loads the NWS<year>.INI file containing starting conditions for the
+'   scenario. This includes starting month/year, end game conditions,
+'   battle statistics, war conditions, starting armies (French and Allied),
+'   starting cash, fleet sizes, and objective cities. Converts army
+'   sizes from hundreds to actual men. Assigns commanders to armies in order.
+' Side Effects:
+'   - Updates gameState with starting month/year and cash
+'   - Initializes armies with starting positions and attributes
+'   - Sets end game condition flags
+'   - Sets war conditions for nationalities
+'   - Initializes fleets
+'   - Marks objective cities
+'   - May exit early if file not found
+'============================================================================
 SUB LoadScenarioINI (scenarioYear AS INTEGER)
     ' Load NWSxxxx.INI file
     ' Format per WON.TXT:
@@ -102,7 +133,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
     yearStr = LTRIM$(STR$(scenarioYear))
     filename = "data/scenarios/NWS" + yearStr + ".INI"
     
-    IF FileExists%(filename) = 0 THEN
+    IF NOT _FILEEXISTS(filename) THEN
         CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
@@ -179,7 +210,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
         armyIndex = FRENCH_START + i - 1
         IF armyIndex <= FRENCH_START + 19 THEN
             ' Assign commander (in order from commander array, indices 1-25)
-            IF commanderIndex <= 25 THEN
+            IF ValidateCommanderIndex%(commanderIndex, "InitializeScenario - French commanders") = 1 THEN
                 armies(armyIndex).name = commanders(commanderIndex).name
                 armies(armyIndex).lead = commanders(commanderIndex).rating
                 armies(armyIndex).nationality = NAT_FRENCH
@@ -210,7 +241,7 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
         armyIndex = ALLIED_START + i - 1
         IF armyIndex <= ALLIED_START + 19 THEN
             ' Assign commander (in order from commander array, starting at index 26)
-            IF commanderIndex <= 50 THEN
+            IF ValidateCommanderIndex%(commanderIndex, "InitializeScenario - Allied commanders") = 1 THEN
                 armies(armyIndex).name = commanders(commanderIndex).name
                 armies(armyIndex).lead = commanders(commanderIndex).rating
                 armies(armyIndex).nationality = nationality
@@ -262,6 +293,22 @@ SUB LoadScenarioINI (scenarioYear AS INTEGER)
     END IF
 END SUB
 
+'============================================================================
+' LoadCommanderData - Load commander data from file
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario (determines which file to load)
+' Description:
+'   Loads commander data from LEAD<year>.DAT file. The file contains exactly
+'   50 commanders: first 25 are French commanders (name and rating), next 25
+'   are Allied commanders (nationality, name, and rating). All commanders
+'   are marked as available initially. Commanders are assigned to armies
+'   when loading scenario initialization data.
+' Side Effects:
+'   - Initializes commanders array with names, ratings, and nationalities
+'   - Sets all commanders as available
+'   - May exit early if file not found
+'============================================================================
 SUB LoadCommanderData (scenarioYear AS INTEGER)
     ' Load LEADxxxx.DAT file
     ' Format per WON.TXT:
@@ -274,7 +321,7 @@ SUB LoadCommanderData (scenarioYear AS INTEGER)
     yearStr = LTRIM$(STR$(scenarioYear))
     filename = "data/scenarios/LEAD" + yearStr + ".DAT"
     
-    IF FileExists%(filename) = 0 THEN
+    IF NOT _FILEEXISTS(filename) THEN
         CALL HandleFileNotFound(filename)
         EXIT SUB
     END IF
@@ -319,12 +366,40 @@ SUB LoadCommanderData (scenarioYear AS INTEGER)
     CLOSE #1
 END SUB
 
+'============================================================================
+' InitializeScenario - Initialize game for selected scenario
+'============================================================================
+' Parameters:
+'   scenarioYear (INTEGER) - Year of scenario to initialize
+' Description:
+'   Initializes the game for the selected scenario by calling
+'   InitializeCampaign to set up the campaign structure, then calling
+'   LoadScenario to load all scenario data files (commanders, cities,
+'   scenario initialization). This is the main entry point for starting
+'   a new game.
+' Side Effects:
+'   - Initializes campaign structure
+'   - Loads all scenario data files
+'============================================================================
 SUB InitializeScenario (scenarioYear AS INTEGER)
     ' Initialize game for selected scenario
     InitializeCampaign scenarioYear
     LoadScenario scenarioYear
 END SUB
 
+'============================================================================
+' GetCommanderByIndex - Get commander data by index
+'============================================================================
+' Parameters:
+'   index (INTEGER) - Commander index (1-50)
+'   result (CommanderType) - Output parameter: Commander data structure
+' Description:
+'   Retrieves commander data from the commanders array by index. Returns
+'   the commander data via the result parameter. If index is out of range,
+'   returns an empty commander structure (all fields zero/empty).
+' Side Effects:
+'   - Sets result parameter with commander data
+'============================================================================
 SUB GetCommanderByIndex (index AS INTEGER, result AS CommanderType)
     ' Get commander by index (1-50)
     ' Returns commander data structure via result parameter
@@ -339,6 +414,19 @@ SUB GetCommanderByIndex (index AS INTEGER, result AS CommanderType)
     END IF
 END SUB
 
+'============================================================================
+' GetCommanderByName - Find commander by name
+'============================================================================
+' Parameters:
+'   commanderName (STRING) - Name of commander to find
+' Returns:
+'   INTEGER - Commander index (1-50) if found, 0 if not found
+' Description:
+'   Searches the commanders array for a commander with the specified name.
+'   The search is case-insensitive. Returns the index of the matching
+'   commander, or 0 if no match is found. Used when assigning commanders
+'   to armies or checking commander availability.
+'============================================================================
 FUNCTION GetCommanderByName% (commanderName AS STRING)
     ' Find commander by nameVal
     ' Returns index (1-50) or 0 if not found
@@ -346,20 +434,36 @@ FUNCTION GetCommanderByName% (commanderName AS STRING)
     
     GetCommanderByName% = 0
     FOR i = 1 TO 50
-        IF UCASE$(commanders(i).name) = UCASE$(commanderName) THEN
-            GetCommanderByName% = i
-            EXIT FUNCTION
+        ' Validate commander index before accessing commanders array
+        IF ValidateCommanderIndex%(i, "GetCommanderByName") = 1 THEN
+            IF UCASE$(commanders(i).name) = UCASE$(commanderName) THEN
+                GetCommanderByName% = i
+                EXIT FUNCTION
+            END IF
         END IF
     NEXT i
 END FUNCTION
 
+'============================================================================
+' GetCommanderNationalityByName - Get nationality of commander by name
+'============================================================================
+' Parameters:
+'   commanderName (STRING) - Name of commander
+' Returns:
+'   INTEGER - Nationality code of commander, or 0 if not found
+' Description:
+'   Looks up a commander by name and returns their nationality code.
+'   Uses GetCommanderByName to find the commander, then returns the
+'   nationality field. Returns 0 if the commander is not found.
+'   Used for cohesion checks and nationality-based game logic.
+'============================================================================
 FUNCTION GetCommanderNationalityByName% (commanderName AS STRING)
     ' Get nationality of commander by nameVal
     ' Returns nationality code or 0 if not found
     DIM index AS INTEGER
     
     index = GetCommanderByName%(commanderName)
-    IF index > 0 THEN
+    IF ValidateCommanderIndex%(index, "GetCommanderNationalityByName") = 1 THEN
         GetCommanderNationalityByName% = commanders(index).nationality
     ELSE
         GetCommanderNationalityByName% = 0

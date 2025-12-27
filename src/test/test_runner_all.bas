@@ -4,24 +4,45 @@
 ' Runs all Priority 1 unit tests
 ' Compile and run this file to execute all tests
 '
-' Pattern: DECLARE entry SUB, CALL it, END, then include all files
+' Pattern: Include all files with CONST/type definitions FIRST,
+' then DECLARE entry SUB, then include test files, then main code
 ' This prevents "executable code between SUB/FUNCTIONs" errors
 
-DECLARE SUB RunAllTests ()
-CALL RunAllTests
-END
+' CRITICAL: Include files with CONST/type definitions FIRST
+' These must come before any SUB/FUNCTION declarations
 
-' CRITICAL: Include declarations FIRST and ONLY ONCE
-' All test files reference these declarations but don't include them
-'$INCLUDE: 'test_declarations.bas'
-'$INCLUDE: 'test_framework_simple.bas'
-
-' Include common files ONLY ONCE (all test files need these)
+' Include common files with type definitions only (no SUB/FUNCTION)
 '$INCLUDE: '../common/battle_types.bas'
+
+' Include test declarations CONSTANTS FIRST (before any SUB/FUNCTION declarations)
+'$INCLUDE: 'declarations_test.bas'
+
+' Include tactical core files (they have CONST declarations)
+' These must come before any SUB/FUNCTION declarations
+'$INCLUDE: '../tactical/core.bas'
+'$INCLUDE: '../tactical/utilities.bas'
+'$INCLUDE: '../tactical/ui.bas'
+'$INCLUDE: '../tactical/terrain.bas'
+'$INCLUDE: '../tactical/unit_placement.bas'
+'$INCLUDE: '../tactical/unit_management.bas'
+'$INCLUDE: '../tactical/ai.bas'
+'$INCLUDE: '../tactical/combat.bas'
+'$INCLUDE: '../tactical/orders.bas'
+'$INCLUDE: '../tactical/napoleon_subs.bas'
+
+' Include test declarations (DECLARE statements only, CONST already included above)
+' NOTE: battle.bas is NOT included here to avoid QB64 preprocessor issues.
+' Tests use MockLaunchTacticalBattle from test_tactical_integration.bas instead.
+'$INCLUDE: 'test_declarations.bas'
+
+' Include common files with SUB/FUNCTION definitions
+'$INCLUDE: '../common/config.bas'
 '$INCLUDE: '../common/utilities.bas'
 '$INCLUDE: '../common/error_handling.bas'
 '$INCLUDE: '../common/game_state_helpers.bas'
-'$INCLUDE: '../common/config.bas'
+
+' Include test framework (has SUB declarations)
+'$INCLUDE: 'test_framework_simple.bas'
 
 ' Include strategic files ONLY ONCE (all test files need these)
 '$INCLUDE: '../ui/graphics.bas'
@@ -34,16 +55,26 @@ END
 '$INCLUDE: '../strategic/victory.bas'
 '$INCLUDE: '../strategic/combat.bas'
 '$INCLUDE: '../strategic/tactical_integration.bas'
-'$INCLUDE: '../tactical/battle.bas'
 '$INCLUDE: '../strategic/reports.bas'
 '$INCLUDE: '../strategic/realism.bas'
 
+' Now declare the entry point SUB (after all CONST/type definitions)
+DECLARE SUB RunAllTests ()
+
+' Include test files (these contain SUB definitions)
 '$INCLUDE: 'test_init.bas'
 '$INCLUDE: 'test_campaign.bas'
 '$INCLUDE: 'test_army.bas'
 '$INCLUDE: 'test_city.bas'
 '$INCLUDE: 'test_combat.bas'
 '$INCLUDE: 'test_economy.bas'
+'$INCLUDE: 'test_tactical_integration.bas'
+'$INCLUDE: 'test_victory.bas'
+'$INCLUDE: 'test_integration.bas'
+
+' Main entry point
+CALL RunAllTests
+END
 
 '============================================================================
 ' Main Entry Point
@@ -68,6 +99,12 @@ SUB RunAllTests
     CALL RunCombatTests
     PRINT
     CALL RunEconomyTests
+    PRINT
+    CALL RunTacticalIntegrationTests
+    PRINT
+    CALL RunVictoryTests
+    PRINT
+    CALL RunIntegrationTests
     
     PRINT
     PRINT "Press any key to exit..."

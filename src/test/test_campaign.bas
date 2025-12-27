@@ -260,7 +260,7 @@ SUB TestSaveGameValidSlot
     CALL SaveGame(1)
     
     ' Verify file was created
-    AssertTrue FileExists%("saved\NWS1.SAV") <> 0, "Save file should be created"
+    AssertTrue _FILEEXISTS("saved\NWS1.SAV"), "Save file should be created"
     
     ExecuteTest "CampaignTests", "test_save_game_valid_slot"
 END SUB
@@ -273,7 +273,7 @@ SUB TestSaveGameAutosaveSlot
     CALL SaveGame(9)
     
     ' Verify autosave file was created
-    AssertTrue FileExists%("saved\NWS9.SAV") <> 0, "Autosave file should be created"
+    AssertTrue _FILEEXISTS("saved\NWS9.SAV"), "Autosave file should be created"
     
     ExecuteTest "CampaignTests", "test_save_game_autosave_slot"
 END SUB

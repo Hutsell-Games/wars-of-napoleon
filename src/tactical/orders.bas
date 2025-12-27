@@ -554,7 +554,7 @@ END SUB
 '   Processes arrow key movement commands. Handles unit movement, checks
 '   for blocking, and updates unit position.
 '============================================================================
-FUNCTION ProcessMovementCommand% (active AS INTEGER, commnd$ AS STRING, t$ AS STRING, limber AS INTEGER)
+FUNCTION ProcessMovementCommand% (active AS INTEGER, commandStr AS STRING, unitTypeStr AS STRING, limber AS INTEGER)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	
@@ -566,7 +566,7 @@ FUNCTION ProcessMovementCommand% (active AS INTEGER, commnd$ AS STRING, t$ AS ST
 	END IF
 	
 	' Check if artillery needs to be limbered
-	IF limber > 0 AND INSTR("A", t$) > 0 THEN
+	IF limber > 0 AND INSTR("A", unitTypeStr) > 0 THEN
 		IF LEFTY$(active) <> "L" THEN
 			CALL limbo(active, 2)
 			IF LEFTY$(active) = "L" THEN
@@ -581,7 +581,7 @@ FUNCTION ProcessMovementCommand% (active AS INTEGER, commnd$ AS STRING, t$ AS ST
 	
 	' Get movement target from cursor
 	xloc = unitx(active): yloc = unity(active)
-	CALL curser(commnd$, xloc, yloc)
+	CALL curser(commandStr, xloc, yloc)
 	
 	IF yloc = unity(active) AND xloc = unitx(active) THEN
 		' No movement - return to command input
@@ -620,7 +620,7 @@ END FUNCTION
 '   Processes AI-controlled enemy unit turn. Handles unit behavior including
 '   hollow squares, infantry terrain bonuses, artillery firing, and movement.
 '============================================================================
-FUNCTION ProcessEnemyUnit% (active AS INTEGER, t$ AS STRING, movesleft AS INTEGER)
+FUNCTION ProcessEnemyUnit% (active AS INTEGER, unitTypeStr AS STRING, movesleft AS INTEGER)
 	DIM a$ AS STRING
 	DIM Enemy AS INTEGER
 	DIM d AS INTEGER
@@ -747,9 +747,9 @@ END FUNCTION
 '   Updates unit display and visibility after an action. Clears blocked
 '   orders and updates time of action if turn is complete.
 '============================================================================
-FUNCTION UpdateUnitAfterAction% (active AS INTEGER, t$ AS STRING, movesleft AS INTEGER)
+FUNCTION UpdateUnitAfterAction% (active AS INTEGER, unitTypeStr AS STRING, movesleft AS INTEGER)
 	CALL SHOWUNIT(active)
-	IF INSTR("AL", t$) > 0 THEN CALL refresh
+	IF INSTR("AL", unitTypeStr) > 0 THEN CALL refresh
 	
 	' Update unit visibility and orders
 	IF strength(active) > 0 AND uorder(active) <> 99 THEN CALL see(active)
@@ -788,7 +788,7 @@ END FUNCTION
 '   Processes cursor-controlled commands. Handles cannon targeting, movement
 '   orders, intelligence gathering, and unit inspiration/rally.
 '============================================================================
-FUNCTION ProcessCursorCommand% (active AS INTEGER, dx AS INTEGER, t$ AS STRING, limber AS INTEGER, commandProcessed AS INTEGER)
+FUNCTION ProcessCursorCommand% (active AS INTEGER, dx AS INTEGER, unitTypeStr AS STRING, limber AS INTEGER, commandProcessed AS INTEGER)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x AS INTEGER
@@ -914,8 +914,7 @@ DO
 				TICK mdly!
 				CALL refresh
 				' Restart cursor loop
-			ELSE
-				IF t$ = "L" AND Enemy <> 0 THEN
+			ELSEIF t$ = "L" AND Enemy <> 0 THEN
 					CALL limbo(active, 2)
 					commandProcessed = 1
 					ProcessCursorCommand% = 1
@@ -1012,7 +1011,7 @@ END FUNCTION
 '   Draws the command interface at the bottom of the screen showing
 '   available commands for the current unit.
 '============================================================================
-SUB DrawCommandLine (active AS INTEGER, t$ AS STRING, limber AS INTEGER)
+SUB DrawCommandLine (active AS INTEGER, unitTypeStr AS STRING, limber AS INTEGER)
 	COLOR 14: CALL clrbot
 	PRINT "UNIT"; active; name$(active);
 	LINE (4, 334)-(639, 349), 8, BF
@@ -1048,11 +1047,11 @@ END SUB
 '   Waits for keypress and processes special keys like F1 (help) and
 '   arrow keys. Handles extended key codes.
 '============================================================================
-SUB WaitForKeypress (commnd$ AS STRING, dxs AS INTEGER, dys AS INTEGER)
+SUB WaitForKeypress (commandStr AS STRING, dxs AS INTEGER, dys AS INTEGER)
 	DIM a AS INTEGER
 	DO
-		commnd$ = INKEY$
-		IF commnd$ <> "" THEN
+		commandStr = INKEY$
+		IF commandStr <> "" THEN
 			dxs = ASC(UCASE$(commnd$)): dys = LEN(commnd$)
 			IF dxs = 27 OR dxs = 32 OR dxs = 76 OR dxs = 88 THEN EXIT DO
 			IF dxs = 13 THEN EXIT DO

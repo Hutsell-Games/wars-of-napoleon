@@ -15,78 +15,120 @@
 '============================================================================
 ' Randmap - Generate random battle map
 '============================================================================
+' Returns:
+'   INTEGER - 1 if map generation succeeded, 0 if failed
 ' Description:
 '   Generates a random battle map with terrain features including water,
 '   roads, trees, hills, and other terrain. Displays loading screen and
 '   places terrain features based on random selection and fortification level.
+'   Validates that map was properly initialized before returning success.
 '============================================================================
-SUB randmap
-SCREEN 9, , 1, 1
-CLS : COLOR 14
-LINE (0, 0)-(213, 460), 1, BF: LINE (214, 0)-(426, 460), 15, BF
-LINE (427, 0)-(639, 460), 4, BF
-CIRCLE (320, 165), 300, 14, , , .1
-PAINT (320, 172), 0, 14
-a$ = "Setting Up Battle of " + SCENARIO$: LOCATE 11, 40 - .5 * LEN(a$): PRINT a$
-a$ = commander$(sidex(1)) + " is attacking " + commander$(sidex(2)): LOCATE 13, 40 - .5 * LEN(a$): PRINT a$
-' QB64-compatible file existence check
-IF _FILEEXISTS("data\quotes.dat") THEN
-	OPEN "I", 1, "data\quotes.dat"
-	INPUT #1, n
-	a = 1 + INT(RND * n)
-	FOR k = 1 TO a
-	INPUT #1, a$
-	NEXT k
-	CLOSE #1
-	LOCATE 18, 40 - .5 * LEN(a$): PRINT CHR$(34); a$; CHR$(34)
-END IF
-SCREEN 9, , 0, 1
-choose = 1
-IF RND > .5 THEN
-	choose = 2: IF RND > .5 THEN choose = 3
-END IF
-r! = 0: IF choose = 2 THEN r! = .5
-IF choose = 3 THEN r! = .99
-CALL startmap
-CALL mainmap
-FOR k = 1 TO most: strength(k) = 0: NEXT k
-'============================================================================
-'                            Place Terrain Features
-'============================================================================
-	' Place water features if random check passes
-	IF RND <= r! THEN
-		IF PlaceWaterFeatures(r!) THEN
-			' Water placed, continue to roads
-			IF RND <= .6 THEN
-				IF PlaceRoads(r!) THEN
-					' Roads placed, done
-					EXIT SUB
+FUNCTION randmap% ()
+	DIM k AS INTEGER
+	DIM validationFailed AS INTEGER
+	
+	validationFailed = 0
+	
+	SCREEN 9, , 1, 1
+	CLS : COLOR 14
+	LINE (0, 0)-(213, 460), 1, BF: LINE (214, 0)-(426, 460), 15, BF
+	LINE (427, 0)-(639, 460), 4, BF
+	CIRCLE (320, 165), 300, 14, , , .1
+	PAINT (320, 172), 0, 14
+	a$ = "Setting Up Battle of " + SCENARIO$: LOCATE 11, 40 - .5 * LEN(a$): PRINT a$
+	a$ = commander$(sidex(1)) + " is attacking " + commander$(sidex(2)): LOCATE 13, 40 - .5 * LEN(a$): PRINT a$
+	' QB64-compatible file existence check
+	IF _FILEEXISTS("data\quotes.dat") THEN
+		' Use SafeOpenFile% for error handling
+		IF SafeOpenFile%("data\quotes.dat", "I", 1) = 1 THEN
+			INPUT #1, n
+			a = 1 + INT(RND * n)
+			FOR k = 1 TO a
+			INPUT #1, a$
+			NEXT k
+			CLOSE #1
+			LOCATE 18, 40 - .5 * LEN(a$): PRINT CHR$(34); a$; CHR$(34)
+		ELSE
+			' File open failed - error already displayed by SafeOpenFile%
+			' Continue without quote
+		END IF
+	END IF
+	SCREEN 9, , 0, 1
+	choose = 1
+	IF RND > .5 THEN
+		choose = 2: IF RND > .5 THEN choose = 3
+	END IF
+	r! = 0: IF choose = 2 THEN r! = .5
+	IF choose = 3 THEN r! = .99
+	CALL startmap
+	CALL mainmap
+	FOR k = 1 TO most: strength(k) = 0: NEXT k
+	
+	'============================================================================
+	'                            Place Terrain Features
+	'============================================================================
+		' Place water features if random check passes
+		IF RND <= r! THEN
+			IF PlaceWaterFeatures(r!) THEN
+				' Water placed, continue to roads
+				IF RND <= .6 THEN
+					IF PlaceRoads(r!) THEN
+						' Roads placed, done
+						GOTO ValidateMap
+					END IF
 				END IF
 			END IF
 		END IF
-	END IF
-	
-	' Place trees
-	IF RND > .4 THEN
-		IF PlaceTrees(r!) THEN
-			' Too much obstruction
-			EXIT SUB
+		
+		' Place trees
+		IF RND > .4 THEN
+			IF PlaceTrees(r!) THEN
+				' Too much obstruction
+				GOTO ValidateMap
+			END IF
 		END IF
-	END IF
-	
-	' Place hills
-	IF obstruct <= 80 AND RND <= .4 THEN
-		IF PlaceHills(r!) THEN
-			' Too much obstruction
-			EXIT SUB
+		
+		' Place hills
+		IF obstruct <= 80 AND RND <= .4 THEN
+			IF PlaceHills(r!) THEN
+				' Too much obstruction
+				GOTO ValidateMap
+			END IF
 		END IF
+		
+		' Place other terrain features
+		IF obstruct <= 80 THEN
+			PlaceOtherTerrain(r!)
+		END IF
+	
+	ValidateMap:
+	' Validate that map was properly initialized
+	' Check that sdtext$ array has valid data for rows 1-22 (map rows)
+	' Row 1 and 22 should be borders (CHR$(219) characters)
+	' Rows 2-21 should have valid terrain data
+	IF LEN(sdtext$(1)) = 0 OR LEN(sdtext$(22)) = 0 THEN
+		' Border rows missing
+		validationFailed = 1
+	ELSE
+		' Check that map rows have reasonable length (should be 55 characters: border + 53 hexes + border)
+		FOR k = 2 TO 21
+			IF LEN(sdtext$(k)) < 50 THEN
+				' Map row too short - invalid
+				validationFailed = 1
+				EXIT FOR
+			END IF
+		NEXT k
 	END IF
 	
-	' Place other terrain features
-	IF obstruct <= 80 THEN
-		PlaceOtherTerrain(r!)
+	IF validationFailed THEN
+		' Map generation failed validation
+		CALL HandleWarning("Map generation validation failed - map may be invalid")
+		randmap% = 0
+	ELSE
+		' Map generation succeeded
+		randmap% = 1
 	END IF
-END SUB
+END FUNCTION
 
 '============================================================================
 ' Terrain Placement Helper Functions
@@ -99,7 +141,7 @@ SUB RandomLocation (xloc AS INTEGER, yloc AS INTEGER)
 END SUB
 
 ' GOSUB nearhere converted to SUB
-SUB MoveNearHere (x AS INTEGER, xloc AS INTEGER, yloc AS INTEGER, r! AS SINGLE)
+SUB MoveNearHere (x AS INTEGER, xloc AS INTEGER, yloc AS INTEGER, r AS SINGLE)
 	SELECT CASE x
 		CASE 1
 		xloc = xloc - 1: yloc = yloc - 1
@@ -119,7 +161,7 @@ SUB MoveNearHere (x AS INTEGER, xloc AS INTEGER, yloc AS INTEGER, r! AS SINGLE)
 		xloc = xloc - 1: yloc = yloc + 1
 		CASE ELSE
 		xloc = 54
-		IF RND < r! THEN CALL RandomLocation(xloc, yloc)
+		IF RND < r THEN CALL RandomLocation(xloc, yloc)
 	END SELECT
 	IF xloc < 1 THEN xloc = 1
 	IF yloc > 21 THEN yloc = 21
@@ -144,7 +186,7 @@ END SUB
 
 ' Places water features on the map
 ' Returns: 1 if should exit randmap, 0 otherwise
-FUNCTION PlaceWaterFeatures% (r! AS SINGLE)
+FUNCTION PlaceWaterFeatures% (r AS SINGLE)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x1 AS INTEGER
@@ -155,13 +197,13 @@ FUNCTION PlaceWaterFeatures% (r! AS SINGLE)
 	
 	xloc = 4 + 50 * RND: yloc = 4 + 16 * RND
 	x1 = xloc: y1 = yloc
-	r! = .2 + .3 * RND: x = 8 * RND
+	r = .2 + .3 * RND: x = 8 * RND
 	
 	' Place water if fort present and not defender side
 	IF fort > 0 AND side <> sidex(2) THEN
 		DO
 			IF RND > .9 THEN x = 8 * RND
-			CALL MoveNearHere(x, xloc, yloc, r!)
+			CALL MoveNearHere(x, xloc, yloc, r)
 			CALL AdjustHexX(xloc, yloc)
 			CALL CheckLimits(xloc, yloc, flag, spin)
 			IF flag = 1 THEN EXIT DO
@@ -174,7 +216,7 @@ FUNCTION PlaceWaterFeatures% (r! AS SINGLE)
 			xloc = x1: yloc = y1: x1 = 0
 			DO
 				IF RND > .9 THEN x = 8 * RND
-				CALL MoveNearHere(x, xloc, yloc, r!)
+				CALL MoveNearHere(x, xloc, yloc, r)
 				CALL AdjustHexX(xloc, yloc)
 				CALL CheckLimits(xloc, yloc, flag, spin)
 				IF flag = 1 THEN EXIT DO
@@ -189,7 +231,7 @@ END FUNCTION
 
 ' Places roads on the map
 ' Returns: 1 if should exit randmap, 0 otherwise
-FUNCTION PlaceRoads% (r! AS SINGLE)
+FUNCTION PlaceRoads% (r AS SINGLE)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x AS INTEGER
@@ -227,7 +269,7 @@ END FUNCTION
 
 ' Places trees on the map
 ' Returns: 1 if too much obstruction (should exit), 0 otherwise
-FUNCTION PlaceTrees% (r! AS SINGLE)
+FUNCTION PlaceTrees% (r AS SINGLE)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x AS INTEGER
@@ -250,8 +292,7 @@ FUNCTION PlaceTrees% (r! AS SINGLE)
 	
 	IF obstruct <= 80 AND RND <= .4 THEN
 		PlaceTrees% = 0
-	ELSE
-		IF obstruct > 80 THEN
+	ELSEIF obstruct > 80 THEN
 			PlaceTrees% = 1
 		ELSE
 			PlaceTrees% = 0
@@ -261,7 +302,7 @@ END FUNCTION
 
 ' Places hills on the map
 ' Returns: 1 if too much obstruction (should exit), 0 otherwise
-FUNCTION PlaceHills% (r! AS SINGLE)
+FUNCTION PlaceHills% (r AS SINGLE)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x AS INTEGER
@@ -271,7 +312,7 @@ FUNCTION PlaceHills% (r! AS SINGLE)
 	DIM spin AS INTEGER
 	
 	CALL RandomLocation(xloc, yloc)
-	r! = .3 + .6 * RND
+	r = .3 + .6 * RND
 	DO
 		x = 8 * RND
 		CALL MoveNearHere(x, xloc, yloc, r!)
@@ -295,7 +336,7 @@ FUNCTION PlaceHills% (r! AS SINGLE)
 END FUNCTION
 
 ' Places other terrain features (forts, villages, swamps)
-SUB PlaceOtherTerrain (r! AS SINGLE)
+SUB PlaceOtherTerrain (r AS SINGLE)
 	DIM xloc AS INTEGER
 	DIM yloc AS INTEGER
 	DIM x AS INTEGER
@@ -304,7 +345,7 @@ SUB PlaceOtherTerrain (r! AS SINGLE)
 	DIM spin AS INTEGER
 	
 	CALL RandomLocation(xloc, yloc)
-	r! = .1
+	r = .1
 	DO
 		CALL CheckLimits(xloc, yloc, flag, spin)
 		IF flag = 1 THEN EXIT DO
@@ -322,7 +363,7 @@ SUB PlaceOtherTerrain (r! AS SINGLE)
 			
 			' Continue placing nearby features
 			IF RND > .5 - .1 * fort THEN
-				CALL MoveNearHere(x, xloc, yloc, r!)
+				CALL MoveNearHere(x, xloc, yloc, r)
 				' Continue loop to place more
 			ELSE
 				' Done with this feature group

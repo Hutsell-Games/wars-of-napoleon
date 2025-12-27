@@ -9,6 +9,16 @@
 
 ' Note: pbmEnabled is declared in declarations.bas
 
+'============================================================================
+' InitializePBM - Initialize play-by-mail system
+'============================================================================
+' Description:
+'   Initializes the play-by-mail (PBM) system by setting pbmEnabled to 0
+'   (disabled by default). PBM mode allows players to exchange game files
+'   for remote multiplayer games. Must be explicitly enabled via EnablePBM.
+' Side Effects:
+'   - Sets pbmEnabled to 0 (disabled)
+'============================================================================
 SUB InitializePBM
     ' Initialize PBM system
     pbmEnabled = 0 ' Default disabled
@@ -28,7 +38,11 @@ SUB CreatePBMFile
     
     IF pbmEnabled = 0 THEN EXIT SUB
     
-    OPEN "O", 1, "PBM"
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("PBM", "O", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     
     ' Write game state
     WRITE #1, gameState.month, gameState.year, gameState.side, gameState.turn
@@ -47,7 +61,7 @@ SUB CreatePBMFile
     ' Write city data
     FOR i = 1 TO MAX_CITIES
         WRITE #1, cities(i).name, cities(i).owner, cities(i).fort, cities(i).value
-        WRITE #1, cities(i).nationality, cities(i).objective
+        WRITE #1, cities(i).nationality, cities(i).objective, cities(i).originalOwner
     NEXT i
     
     ' Write fleet data
@@ -84,14 +98,18 @@ END SUB
 '============================================================================
 SUB LoadPBMFile
     
-    IF FileExists%("PBM") = 0 THEN
+    IF NOT _FILEEXISTS("PBM") THEN
         CALL HandleFileNotFound("PBM")
         EXIT SUB
     END IF
     
     CALL ShowStatusMessage("Loading PBM file", 11)
     
-    OPEN "I", 1, "PBM"
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("PBM", "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
     
     ' Read game state
     DIM cash1 AS LONG, cash2 AS LONG
@@ -119,7 +137,7 @@ SUB LoadPBMFile
     ' Read city data
     FOR i = 1 TO MAX_CITIES
         INPUT #1, cities(i).name, cities(i).owner, cities(i).fort, cities(i).value
-        INPUT #1, cities(i).nationality, cities(i).objective
+        INPUT #1, cities(i).nationality, cities(i).objective, cities(i).originalOwner
     NEXT i
     
     ' Read fleet data
@@ -132,12 +150,33 @@ SUB LoadPBMFile
     CALL ShowStatusMessage("PBM file loaded", 11)
 END SUB
 
+'============================================================================
+' EnablePBM - Enable play-by-mail mode
+'============================================================================
+' Description:
+'   Enables play-by-mail mode, allowing the game to create and load PBM
+'   files for remote multiplayer games. When enabled, CreatePBMFile will
+'   save game state to the PBM file for exchange with other players.
+' Side Effects:
+'   - Sets pbmEnabled to 1 (enabled)
+'   - Displays status message
+'============================================================================
 SUB EnablePBM
     ' Enable PBM mode
     pbmEnabled = 1
     CALL ShowStatusMessage("PBM mode enabled", 11)
 END SUB
 
+'============================================================================
+' DisablePBM - Disable play-by-mail mode
+'============================================================================
+' Description:
+'   Disables play-by-mail mode. When disabled, CreatePBMFile will not
+'   create PBM files. This is the default state after initialization.
+' Side Effects:
+'   - Sets pbmEnabled to 0 (disabled)
+'   - Displays status message
+'============================================================================
 SUB DisablePBM
     ' Disable PBM mode
     pbmEnabled = 0

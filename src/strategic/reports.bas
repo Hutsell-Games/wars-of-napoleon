@@ -10,6 +10,18 @@
 
 ' Note: battleWon, casualties, and historyFile are declared in declarations.bas
 
+'============================================================================
+' InitializeReports - Initialize report tracking and history file
+'============================================================================
+' Description:
+'   Initializes the reports system by resetting battle statistics (battles
+'   won and casualties) for both sides. If history tracking is enabled in
+'   configuration, creates or backs up the history file (NWS.HIS) and
+'   writes a header with the game start date.
+' Side Effects:
+'   - Resets battleWon and casualties arrays
+'   - Creates or backs up NWS.HIS file if history enabled
+'============================================================================
 SUB InitializeReports
     ' Initialize report tracking
     DIM i AS INTEGER
@@ -25,9 +37,14 @@ SUB InitializeReports
             ' Backup old history
             SHELL "copy NWS.HIS oldhist.ory"
         END IF
-        OPEN "O", 2, "NWS.HIS"
-        PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; DATE$; " ]"
-        CLOSE #2
+        ' Use SafeOpenFile% for error handling
+        IF SafeOpenFile%("NWS.HIS", "O", 2) = 1 THEN
+            PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; DATE$; " ]"
+            CLOSE #2
+        ELSE
+            ' File open failed - error already displayed by SafeOpenFile%
+            ' Continue without history file
+        END IF
     END IF
 END SUB
 
@@ -72,7 +89,7 @@ SUB ShowFriendlyArmyReport (side AS INTEGER)
     PRINT STRING$(80, "-")
     
     FOR i = startIndex TO endIndex
-        IF armies(i).size > 0 THEN
+        IF IsArmyActive%(i) = 1 THEN
             count = count + 1
             totalStrength = totalStrength + armies(i).size
             totalSupply = totalSupply + armies(i).supply
@@ -101,6 +118,17 @@ SUB ShowFriendlyArmyReport (side AS INTEGER)
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowEnemyArmyReport - Display enemy army status report
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side requesting report (1=French, 2=Allies)
+' Description:
+'   Displays summary information about enemy forces. Shows less detailed
+'   information than friendly reports, including total strength, cash,
+'   income, victory points, cities controlled, battles won, and fleet size.
+'   Pauses for user input.
+'============================================================================
 SUB ShowEnemyArmyReport (side AS INTEGER)
     ' Report 2: Enemy Army report
     ' Shows less complete information on enemy forces
@@ -126,6 +154,15 @@ SUB ShowEnemyArmyReport (side AS INTEGER)
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowCityReport - Display city status report
+'============================================================================
+' Description:
+'   Displays information about all cities, including name, value (income),
+'   owner (French/Allied/Neutral/At Peace), fortification level, and
+'   objective status. Provides an overview of territorial control and
+'   economic resources. Pauses for user input.
+'============================================================================
 SUB ShowCityReport
     ' Report 3: City report
     ' Provides information on cities, their worth, status
@@ -142,7 +179,7 @@ SUB ShowCityReport
     DIM ownerName AS STRING
     
     FOR i = 1 TO MAX_CITIES
-        IF cities(i).name <> "" THEN
+        IF IsCityActive%(i) = 1 THEN
             SELECT CASE cities(i).owner
                 CASE CITY_FRENCH: ownerName = "French"
                 CASE CITY_ALLIED: ownerName = "Allied"
@@ -161,6 +198,17 @@ SUB ShowCityReport
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowForceSummary - Display force summary on strategic map
+'============================================================================
+' Description:
+'   Displays the strategic map with army strengths shown in hundreds of men.
+'   Provides a visual overview of force distribution across the map. Army
+'   strengths are color-coded (Blue = French, Red = Allied). Accessible
+'   via hot key F4. Pauses for user input.
+' Side Effects:
+'   - Draws strategic map with army strength overlays
+'============================================================================
 SUB ShowForceSummary
     ' Report 4: Force summary
     ' Shows on map the strength of all armies (in 100's of men)
@@ -182,6 +230,17 @@ SUB ShowForceSummary
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowIntelligenceReport - Display detailed intelligence report for friendly armies
+'============================================================================
+' Parameters:
+'   side (INTEGER) - Side to show report for (1=French, 2=Allies)
+' Description:
+'   Displays detailed attributes of all friendly armies including strength,
+'   leadership rating, experience level, supply status, and current location.
+'   Provides comprehensive intelligence for strategic planning. Pauses for
+'   user input.
+'============================================================================
 SUB ShowIntelligenceReport (side AS INTEGER)
     ' Report 5: Intelligence report
     ' Provides on-map summary of attributes of all FRIENDLY armies
@@ -207,7 +266,7 @@ SUB ShowIntelligenceReport (side AS INTEGER)
     PRINT STRING$(80, "-")
     
     FOR i = startIndex TO endIndex
-        IF armies(i).size > 0 THEN
+        IF IsArmyActive%(i) = 1 THEN
             PRINT armies(i).name, armies(i).size, armies(i).lead, armies(i).exper, armies(i).supply, cities(armies(i).loc).name
         END IF
     NEXT i
@@ -217,6 +276,15 @@ SUB ShowIntelligenceReport (side AS INTEGER)
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ShowBattleSummary - Display battle summary statistics
+'============================================================================
+' Description:
+'   Displays summary statistics of battles fought, showing the number of
+'   battles won and total casualties incurred for each side (French and
+'   Allies). Provides an overview of military performance throughout
+'   the game. Pauses for user input.
+'============================================================================
 SUB ShowBattleSummary
     ' Report 6: Battle Summary report
     ' Shows number of battles won and casualties incurred for each side
@@ -255,7 +323,7 @@ SUB ShowRecapReport
         EXIT SUB ' Not an error - feature disabled
     END IF
     
-    IF FileExists%("NWS.HIS") = 0 THEN
+    IF NOT _FILEEXISTS("NWS.HIS") THEN
         CALL HandleFileNotFound("NWS.HIS")
         EXIT SUB
     END IF
@@ -267,13 +335,18 @@ SUB ShowRecapReport
     
     DIM lineText AS STRING
     
-    OPEN "I", 1, "NWS.HIS"
-    DO WHILE NOT EOF(1)
-        LINE INPUT #1, lineText
-        PRINT lineText
-        IF INKEY$ <> "" THEN EXIT DO ' Allow early exit
-    LOOP
-    CLOSE #1
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("NWS.HIS", "I", 1) = 1 THEN
+        DO WHILE NOT EOF(1)
+            LINE INPUT #1, lineText
+            PRINT lineText
+            IF INKEY$ <> "" THEN EXIT DO ' Allow early exit
+        LOOP
+        CLOSE #1
+    ELSE
+        ' File open failed - error already displayed by SafeOpenFile%
+        CALL ShowStatusMessage("Could not read history file", 12)
+    END IF
     
     PRINT
     PRINT "Press any key to continue..."
@@ -309,16 +382,41 @@ SUB RecordBattleHistory (attackerName AS STRING, attackerStrength AS LONG, attac
     entry = cityName + " *" + attackerName + " (" + LTRIM$(STR$(attackerCasualties)) + "/" + LTRIM$(STR$(attackerStrength)) + _
             ") defeats " + defenderName + " (" + LTRIM$(STR$(defenderCasualties)) + "/" + LTRIM$(STR$(defenderStrength)) + ")"
     
-    OPEN "A", 2, "NWS.HIS"
-    PRINT #2, entry
-    CLOSE #2
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("NWS.HIS", "A", 2) = 1 THEN
+        PRINT #2, entry
+        CLOSE #2
+    ELSE
+        ' File open failed - error already displayed by SafeOpenFile%
+        ' Continue without recording to history
+    END IF
     
     ' Also update BATTSUMM file
-    OPEN "A", 3, "data\BATTSUMM"
-    PRINT #3, entry
-    CLOSE #3
+    IF SafeOpenFile%("data\BATTSUMM", "A", 3) = 1 THEN
+        PRINT #3, entry
+        CLOSE #3
+    ELSE
+        ' File open failed - error already displayed by SafeOpenFile%
+        ' Continue without recording to battle summary
+    END IF
 END SUB
 
+'============================================================================
+' UpdateBattleStats - Update battle statistics after combat
+'============================================================================
+' Parameters:
+'   winnerSide (INTEGER) - Side that won the battle (1=French, 2=Allies)
+'   casualties1 (LONG) - Casualties for side 1
+'   casualties2 (LONG) - Casualties for side 2
+' Description:
+'   Updates battle statistics after a combat resolution. Increments the
+'   battle win count for the winning side and adds casualties to the
+'   cumulative totals for both sides. Used for tracking military
+'   performance throughout the game.
+' Side Effects:
+'   - Increments battleWon(winnerSide)
+'   - Adds casualties to casualties(1) and casualties(2)
+'============================================================================
 SUB UpdateBattleStats (winnerSide AS INTEGER, casualties1 AS LONG, casualties2 AS LONG)
     ' Update battle statistics
     battleWon(winnerSide) = battleWon(winnerSide) + 1

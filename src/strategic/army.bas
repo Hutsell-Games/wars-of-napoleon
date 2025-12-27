@@ -46,7 +46,7 @@ SUB MarkCommanderAvailable (armyIndex AS INTEGER)
     commanderIndex = GetCommanderByName%(commanderName)
     
     ' Mark commander as available if found
-    IF commanderIndex > 0 AND commanderIndex <= 50 THEN
+    IF ValidateCommanderIndex%(commanderIndex, "MarkCommanderAvailable") = 1 THEN
         commanders(commanderIndex).available = 1
     END IF
 END SUB
@@ -78,7 +78,7 @@ SUB InitializeArmies
     NEXT i
     
     ' Clear occupation array
-    FOR i = 1 TO 60
+    FOR i = 1 TO MAX_CITIES
         occupied(i) = 0
     NEXT i
 END SUB
@@ -106,6 +106,14 @@ SUB RecruitArmy (side AS INTEGER, cityIndex AS INTEGER, commanderName AS STRING,
     ' Cost: 100 money units
     ' New armies cannot move the turn they're created
     
+    ' Validate inputs
+    IF ValidateArmySide%(side, "RecruitArmy") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(cityIndex, "RecruitArmy") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM i AS INTEGER
     DIM startIndex AS INTEGER
     DIM endIndex AS INTEGER
@@ -113,10 +121,10 @@ SUB RecruitArmy (side AS INTEGER, cityIndex AS INTEGER, commanderName AS STRING,
     ' Find available army slot
     IF side = 1 THEN
         startIndex = FRENCH_START
-        endIndex = FRENCH_START + 19
+        endIndex = FRENCH_START + ARMY_RANGE_SIZE
     ELSE
         startIndex = ALLIED_START
-        endIndex = ALLIED_START + 19
+        endIndex = ALLIED_START + ARMY_RANGE_SIZE
     END IF
     
     FOR i = startIndex TO endIndex
@@ -137,12 +145,16 @@ SUB RecruitArmy (side AS INTEGER, cityIndex AS INTEGER, commanderName AS STRING,
             ' Mark city as occupied
             occupied(cityIndex) = i
             
+            ' Invalidate caches (new army created, location changed)
+            CALL InvalidateArmyLocationIndex
+            CALL InvalidateCombatStrengthCache(i)
+            
             EXIT SUB
         END IF
     NEXT i
     
     ' No available slot
-    CALL ShowStatusError("Maximum armies reached for this side")
+    CALL HandleValidationError("Maximum armies reached for this side")
 END SUB
 
 '============================================================================
@@ -163,9 +175,17 @@ SUB MoveArmy (armyIndex AS INTEGER, destinationCity AS INTEGER)
     ' Set move order for army
     ' Movement executed during Move & Combat phase
     
-    IF armies(armyIndex).size = 0 THEN EXIT SUB
+    ' Validate inputs
+    IF ValidateArmyIndex%(armyIndex, "MoveArmy") = 0 THEN
+        EXIT SUB
+    END IF
+    IF ValidateCityIndex%(destinationCity, "MoveArmy") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF IsArmyActive%(armyIndex) = 0 THEN EXIT SUB ' Not an error - empty army
     IF armies(armyIndex).move = -1 THEN
-        CALL ShowStatusError(armies(armyIndex).name + " cannot move this turn")
+        CALL HandleValidationError(armies(armyIndex).name + " cannot move this turn")
         EXIT SUB
     END IF
     
@@ -197,6 +217,11 @@ SUB CombineArmies (cityIndex AS INTEGER)
     ' Maximum combined size: 400,000 men
     ' Attributes averaged, best commander takes leadership
     
+    ' Validate input
+    IF ValidateCityIndex%(cityIndex, "CombineArmies") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM i AS INTEGER
     DIM side AS INTEGER
     DIM armiesInCity(1 TO MAX_ARMIES) AS INTEGER
@@ -218,7 +243,7 @@ SUB CombineArmies (cityIndex AS INTEGER)
     
     ' Find all armies in city
     FOR i = 1 TO MAX_ARMIES
-        IF armies(i).loc = cityIndex AND armies(i).size > 0 THEN
+        IF armies(i).loc = cityIndex AND IsArmyActive%(i) = 1 THEN
             count = count + 1
             armiesInCity(count) = i
             
@@ -241,13 +266,13 @@ SUB CombineArmies (cityIndex AS INTEGER)
     NEXT i
     
     IF count < 2 THEN
-        CALL ShowStatusError("Need at least 2 armies to combine")
+        CALL HandleValidationError("Need at least 2 armies to combine")
         EXIT SUB
     END IF
     
     ' Check maximum size
-    IF totalSize > 400000 THEN
-        CALL ShowStatusError("Combined army would exceed 400,000 men")
+    IF totalSize > MAX_COMBINED_ARMY_SIZE THEN
+        CALL HandleValidationError("Combined army would exceed " + LTRIM$(STR$(MAX_COMBINED_ARMY_SIZE)) + " men")
         EXIT SUB
     END IF
     
@@ -258,6 +283,9 @@ SUB CombineArmies (cityIndex AS INTEGER)
     armies(armiesInCity(1)).supply = totalSupply \ count ' Average supply
     armies(armiesInCity(1)).name = combinedName
     
+    ' Attributes changed - invalidate combat strength cache for combined army
+    CALL InvalidateCombatStrengthCache(armiesInCity(1))
+    
     ' Clear other armies
     FOR i = 2 TO count
         ' Mark commander available before destroying army
@@ -266,7 +294,12 @@ SUB CombineArmies (cityIndex AS INTEGER)
         armies(armiesInCity(i)).name = ""
         armies(armiesInCity(i)).loc = 0
         armies(armiesInCity(i)).move = 0
+        ' Invalidate caches for destroyed armies
+        CALL InvalidateCombatStrengthCache(armiesInCity(i))
     NEXT i
+    
+    ' Location changed (armies destroyed) - invalidate location index
+    CALL InvalidateArmyLocationIndex
     
     CALL ShowStatusMessage("Armies combined under " + combinedName, 11)
 END SUB
@@ -293,7 +326,12 @@ SUB RelieveCommander (armyIndex AS INTEGER, newCommanderName AS STRING, newComma
     ' Ported from CWS
     ' Applies -1 experience/leadership penalty
     
-    IF armies(armyIndex).size = 0 THEN EXIT SUB
+    ' Validate input
+    IF ValidateArmyIndex%(armyIndex, "RelieveCommander") = 0 THEN
+        EXIT SUB
+    END IF
+    
+    IF IsArmyActive%(armyIndex) = 0 THEN EXIT SUB ' Not an error - empty army
     
     ' Apply penalty
     IF armies(armyIndex).lead > 1 THEN
@@ -306,6 +344,9 @@ SUB RelieveCommander (armyIndex AS INTEGER, newCommanderName AS STRING, newComma
     ' Assign new commander
     armies(armyIndex).name = newCommanderName
     armies(armyIndex).lead = newCommanderRating
+    
+    ' Leadership changed - invalidate combat strength cache
+    CALL InvalidateCombatStrengthCache(armyIndex)
     
     CALL ShowStatusMessage(armies(armyIndex).name + " assumes command (penalty applied)", 11)
 END SUB
@@ -323,6 +364,13 @@ END SUB
 '============================================================================
 FUNCTION GetArmyStrength& (side AS INTEGER)
     ' Get total strength for side
+    
+    ' Validate input
+    IF ValidateArmySide%(side, "GetArmyStrength") = 0 THEN
+        GetArmyStrength& = 0
+        EXIT FUNCTION
+    END IF
+    
     DIM i AS INTEGER
     DIM startIndex AS INTEGER
     DIM endIndex AS INTEGER
@@ -331,10 +379,10 @@ FUNCTION GetArmyStrength& (side AS INTEGER)
     total = 0
     IF side = 1 THEN
         startIndex = FRENCH_START
-        endIndex = FRENCH_START + 19
+        endIndex = FRENCH_START + ARMY_RANGE_SIZE
     ELSE
         startIndex = ALLIED_START
-        endIndex = ALLIED_START + 19
+        endIndex = ALLIED_START + ARMY_RANGE_SIZE
     END IF
     
     FOR i = startIndex TO endIndex
@@ -361,6 +409,12 @@ END FUNCTION
 SUB PlaceArmy (armyIndex AS INTEGER)
     ' Place army in its current location
     ' Updates occupation array
+    
+    ' Validate input
+    IF ValidateArmyIndex%(armyIndex, "PlaceArmy") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM cityLoc AS INTEGER
     
     cityLoc = armies(armyIndex).loc
@@ -384,6 +438,12 @@ END SUB
 SUB OccupyCity (cityIndex AS INTEGER)
     ' Update occupation for city
     ' Finds highest strength army in city
+    
+    ' Validate input
+    IF ValidateCityIndex%(cityIndex, "OccupyCity") = 0 THEN
+        EXIT SUB
+    END IF
+    
     DIM i AS INTEGER
     DIM bestArmy AS INTEGER
     DIM bestSize AS LONG

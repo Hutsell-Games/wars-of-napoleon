@@ -57,6 +57,15 @@ CONST NAT_SPANISH = 6
 CONST SUPPLY_AUTO_COST = 0.002 ' Per 1,000 men
 CONST SUPPLY_MANUAL_COST = 0.001 ' Per 1,000 men (cheaper)
 
+'============================================================================
+' DIM SHARED statements (must come before any SUB/FUNCTION declarations)
+'============================================================================
+' Module-level variables used by tactical/ui.bas
+' Declared here early to avoid "between SUB/FUNCTION" errors
+' Note: ui.bas also declares this, but declaring it here first ensures
+' it appears before any SUB/FUNCTION declarations
+DIM SHARED a AS INTEGER
+
 ' Report type constants
 CONST REPORT_FRIENDLY_ARMY = 1
 CONST REPORT_ENEMY_ARMY = 2
@@ -147,7 +156,7 @@ CONST MENU_QUIT = 5
 
 ' Function declarations for NAPOLEON.BAS subroutines
 ' These will be included when NAPOLEON.BAS is integrated
-DECLARE SUB randmap ()
+DECLARE FUNCTION randmap% ()
 DECLARE SUB randarm (k%)
 DECLARE SUB mainmap ()
 DECLARE SUB SHOWUNIT (index%)
@@ -160,7 +169,7 @@ DECLARE SUB wipeout (index%)
 DECLARE SUB lowtime ()
 DECLARE SUB ranger (index%, range%)
 DECLARE SUB brittle (side%)
-DECLARE SUB iconload ()
+DECLARE FUNCTION iconload% ()
 DECLARE SUB scrcol (which%)
 DECLARE SUB Tara (x%, y%, flag%)
 DECLARE SUB YouorMe (index%, F%)
@@ -226,19 +235,19 @@ DECLARE SUB LoadTacticalConfig ()
 ' Note: cityMatrix is declared in declarations.bas
 ' Note: gameState is declared in declarations.bas
 ' TEST: Add actual declarations for test compilation
-DIM SHARED armies(1 TO 40) AS ArmyType
-DIM SHARED cities(1 TO 60) AS CityType
-DIM SHARED fleets(1 TO 2) AS FleetType
-DIM SHARED occupied(1 TO 60) AS INTEGER
-DIM SHARED cityMatrix(1 TO 60, 1 TO 7) AS INTEGER
-DIM SHARED gameState AS GameStateType
+' Note: armies is declared in declarations.bas
+' Note: cities is declared in declarations.bas
+' Note: fleets is declared in declarations.bas
+' Note: occupied is declared in declarations.bas
+' Note: cityMatrix is declared in declarations.bas
+' Note: gameState is declared in declarations.bas
 
 ' Commander storage (50 total: 25 French, 25 Allied)
 ' Note: commanders is declared in declarations.bas
 ' Note: commanderIndex is declared in declarations.bas
 ' TEST: Add actual declarations for test compilation
-DIM SHARED commanders(1 TO 50) AS CommanderType
-DIM SHARED commanderIndex AS INTEGER
+' Note: commanders is declared in declarations.bas
+' Note: commanderIndex is declared in declarations.bas
 
 ' Shared configuration
 ' Note: config_side is declared in declarations.bas
@@ -286,4 +295,8 @@ DECLARE FUNCTION LoadGraphicsFile% (filename AS STRING, graphicsArray() AS INTEG
 DECLARE FUNCTION InitializeGraphics% ()
 
 ' Realism function declarations
-DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER)
+DECLARE FUNCTION IsCityIsolated% (cityIndex AS INTEGER, cities() AS CityType, cityMatrix() AS INTEGER)
+DECLARE FUNCTION GetRecruitmentSize& (cityIndex AS INTEGER, cities() AS CityType, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION GetIsolatedCityRecruitment& (cityIndex AS INTEGER, cities() AS CityType, cityMatrix() AS INTEGER, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION CanRecruitInCityRealism% (cityIndex AS INTEGER, cities() AS CityType, side AS INTEGER, realismModeEnabled AS INTEGER)
+DECLARE FUNCTION GetDefenderAdvantage! (cityIndex AS INTEGER, cities() AS CityType, realismModeEnabled AS INTEGER)

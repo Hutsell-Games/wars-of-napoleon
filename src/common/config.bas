@@ -36,7 +36,7 @@
 '   - config_tactical: Tactical battles (0=off, 1=on)
 '============================================================================
 SUB LoadConfig
-    IF FileExists%("data\NWS.CFG") = 0 THEN
+    IF NOT _FILEEXISTS("data\NWS.CFG") THEN
         ' Default values if file doesn't exist
         config_side = 1
         config_sound = 2
@@ -56,7 +56,13 @@ SUB LoadConfig
         EXIT SUB
     END IF
     
-    OPEN "I", 1, "data\NWS.CFG"
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("data\NWS.CFG", "I", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        ' Use defaults (already set above)
+        EXIT SUB
+    END IF
+    
     INPUT #1, config_side, config_sound, config_balance, config_aggression
     INPUT #1, config_players, config_display, config_randevent, config_history
     INPUT #1, config_tactical
@@ -84,7 +90,12 @@ END SUB
 '   Creates or overwrites NWS.CFG file with current config_* variable values
 '============================================================================
 SUB SaveConfig
-    OPEN "O", 1, "data\NWS.CFG"
+    ' Use SafeOpenFile% for error handling
+    IF SafeOpenFile%("data\NWS.CFG", "O", 1) = 0 THEN
+        ' File open failed - error already displayed by SafeOpenFile%
+        EXIT SUB
+    END IF
+    
     WRITE #1, config_side, config_sound, config_balance, config_aggression
     WRITE #1, config_players, config_display, config_randevent, config_history
     WRITE #1, config_tactical

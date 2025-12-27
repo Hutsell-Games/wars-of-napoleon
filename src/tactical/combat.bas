@@ -13,7 +13,7 @@
 
 SUB cannon (attack, defend)
 	IF defend = 0 THEN uorder(attack) = 0: EXIT SUB
-	IF Visible(defend) = 0 OR uorder(defend) = 99 THEN EXIT SUB
+	IF Visible(defend) = 0 OR uorder(defend) = UNIT_ORDER_ROUTED THEN EXIT SUB
 	CALL los(attack, defend, F, 0)
 
 	SELECT CASE F
@@ -73,10 +73,10 @@ SUB cannon (attack, defend)
 	score&(i) = score&(i) + killed
 	
 	' Update time of action for both units
-	toa(attack) = timex + 1 + 4 * RND
-	IF morale(attack) < 3 THEN toa(attack) = toa(attack) + 1: IF morale(attack) < 2 THEN toa(attack) = toa(attack) + 3
-	IF leader(attack) < 3 THEN toa(attack) = toa(attack) + 2
-	toa(defend) = timex + 2 + 6 * RND: IF RND > .7 THEN toa(defend) = toa(defend) + 3
+	toa(attack) = timex + TOA_BASE_ATTACKER + TOA_RANDOM_ATTACKER * RND
+	IF morale(attack) < MORALE_THRESHOLD_LOW THEN toa(attack) = toa(attack) + TOA_MORALE_LOW_PENALTY: IF morale(attack) < MORALE_THRESHOLD_VERY_LOW THEN toa(attack) = toa(attack) + TOA_MORALE_VERY_LOW_PENALTY
+	IF leader(attack) < LEADER_THRESHOLD_LOW THEN toa(attack) = toa(attack) + TOA_LEADER_LOW_PENALTY
+	toa(defend) = timex + TOA_BASE_DEFENDER + TOA_RANDOM_DEFENDER * RND: IF RND > .7 THEN toa(defend) = toa(defend) + TOA_DEFENDER_RANDOM_BONUS
 	CALL scrcol(2)
 	
 	' Check if cannon should explode early (objective reached or friendly fire)
@@ -86,9 +86,9 @@ SUB cannon (attack, defend)
 	END IF
 	
 	' Handle defender fleeing if not exploding
-	IF uorder(defend) = 0 AND rely > 1 AND RND > .4 + .1 * bold AND morale(defend) > 3 THEN
+	IF uorder(defend) = 0 AND rely > 1 AND RND > .4 + .1 * bold AND morale(defend) > MORALE_THRESHOLD_HIGH THEN
 		IF LEFTY$(defend) <> "A" THEN
-			uorder(defend) = 100 * unity(attack) + unitx(attack)
+			uorder(defend) = UNIT_ORDER_ENCODING_MULTIPLIER * unity(attack) + unitx(attack)
 			CALL flee(defend)
 		END IF
 	END IF
@@ -143,9 +143,9 @@ SUB CalculateCannonDamage (attack AS INTEGER, defend AS INTEGER, d AS INTEGER, v
 	a = terrain(defend)
 	
 	' Apply terrain modifiers to defender casualties
-	IF a = 42 OR a = 254 THEN killed2 = .5 * killed2
-	IF a = 46 OR a = 61 THEN killed2 = 2 * killed2
-	IF a = 35 THEN killed2 = .3 * killed2
+	IF a = TERRAIN_FOREST OR a = TERRAIN_DEFENSIVE THEN killed2 = CANNON_DAMAGE_FOREST_REDUCTION * killed2
+	IF a = 46 OR a = TERRAIN_SWAMP THEN killed2 = CANNON_DAMAGE_SWAMP_MULTIPLIER * killed2
+	IF a = TERRAIN_RIVER THEN killed2 = CANNON_DAMAGE_RIVER_REDUCTION * killed2
 	
 	' Use minimum of attacker and defender calculations
 	IF killed2 < killed THEN killed = killed2
@@ -187,8 +187,8 @@ FUNCTION CheckCannonExplosion% (attack AS INTEGER, defend AS INTEGER, F AS INTEG
 	' Cannon exploded - handle explosion effects
 	COLOR 4: IF attack > m1 THEN COLOR 9
 	
-	x = .01 * strength(attack) + .05 * RND * strength(attack)
-	IF x > 100 THEN x = 90 + 10 * RND
+	x = CANNON_EXPLOSION_BASE_DAMAGE_MULT * strength(attack) + CANNON_EXPLOSION_RANDOM_DAMAGE_MULT * RND * strength(attack)
+	IF x > CANNON_EXPLOSION_MAX_DAMAGE THEN x = CANNON_EXPLOSION_MIN_DAMAGE + 10 * RND
 	
 	IF quiet > 0 THEN
 		FOR k = 1 TO 5
@@ -215,7 +215,7 @@ FUNCTION CheckCannonExplosion% (attack AS INTEGER, defend AS INTEGER, F AS INTEG
 END FUNCTION
 
 SUB flash (index)
-	IF strength(index) < 1 OR uorder(index) = 99 THEN EXIT SUB
+	IF strength(index) < 1 OR uorder(index) = UNIT_ORDER_ROUTED THEN EXIT SUB
 	y = 14 * unity(index): x = 8 * unitx(index)
 	LINE (x, y)-(x + 12, y + 12), 12, B
 	PUT (x, y), Explo, PSET: TICK .03
@@ -311,8 +311,7 @@ CALL ApplyFireEffects(defend, attack, killed2, 2)
 '...........................................................................
 	IF defend = 0 THEN
 		toa(attack) = timex + 1
-	ELSE
-		IF CheckDefenderRetreat%(defend, attack, prd!, pra!, flag, u$, x2, y2, rflag) THEN
+	ELSEIF CheckDefenderRetreat%(defend, attack, prd!, pra!, flag, u$, x2, y2, rflag) THEN
 			' Defender retreated or pursued
 		END IF
 	END IF
@@ -342,8 +341,7 @@ SUB CalculateFireEffectiveness (firer AS INTEGER, target AS INTEGER, z AS INTEGE
 		ELSE
 			roll! = .053 * difficult: IF difficult > 3 THEN roll! = roll! + .02 * difficult
 		END IF
-	ELSE
-		IF side = 1 THEN
+	ELSEIF side = 1 THEN
 			roll! = .15
 		ELSE
 			roll! = .16
@@ -388,8 +386,7 @@ SUB CalculateFireEffectiveness (firer AS INTEGER, target AS INTEGER, z AS INTEGE
 		IF leader(firer) > 3 THEN roll! = roll! + .05: IF leader(firer) = 5 THEN roll! = roll! + .05
 		IF morale(firer) < 2 THEN roll! = roll! - .1
 		IF leader(firer) < 2 THEN roll! = roll! - .1
-	ELSE
-		IF morale(firer) > 4 THEN roll! = roll! + .05: IF morale(firer) = 5 THEN roll! = roll! + .05
+	ELSEIF morale(firer) > 4 THEN roll! = roll! + .05: IF morale(firer) = 5 THEN roll! = roll! + .05
 		IF leader(firer) > 4 THEN roll! = roll! + .05: IF leader(firer) = 5 THEN roll! = roll! + .05
 		IF morale(firer) < 2 THEN roll! = roll! - .1
 		IF leader(firer) < 2 THEN roll! = roll! - .1
@@ -424,8 +421,7 @@ SUB CalculateFireEffectiveness (firer AS INTEGER, target AS INTEGER, z AS INTEGE
 	' Apply minimum/maximum constraints
 	IF side = 1 THEN
 		IF roll! < .01 THEN roll! = .01
-	ELSE
-		IF roll! < .02 THEN roll! = .02
+	ELSEIF roll! < .02 THEN roll! = .02
 	END IF
 	
 	' Handle cavalry charge (only for attacker)
@@ -498,37 +494,37 @@ SUB ApplyFireEffects (firer AS INTEGER, target AS INTEGER, killed AS INTEGER, si
 END SUB
 
 ' Checks if attacker should retreat after combat
-FUNCTION CheckRetreatConditions% (attack AS INTEGER, defend AS INTEGER, pra! AS SINGLE, prd! AS SINGLE, flag AS INTEGER, t$ AS STRING, xold AS INTEGER, yold AS INTEGER)
+FUNCTION CheckRetreatConditions% (attack AS INTEGER, defend AS INTEGER, pra AS SINGLE, prd AS SINGLE, flag AS INTEGER, unitTypeStr AS STRING, xold AS INTEGER, yold AS INTEGER)
 	DIM bonus AS INTEGER
 	DIM r! AS SINGLE
 	DIM pct# AS DOUBLE
 	
 	CALL proximity(attack, bonus)
 	r! = .02: IF bonus < 10 THEN r! = .01
-	IF pra! >= r! THEN uorder(attack) = 0
+	IF pra >= r! THEN uorder(attack) = 0
 	
 	pct# = .02 * difficult: IF bonus > 9 THEN pct# = pct# + .03
 	IF LEFTY$(attack) = "C" AND flag = 0 THEN pct# = pct# - .01
 	
-	IF pra! >= pct# THEN
+	IF pra >= pct# THEN
 		CALL retreat(attack, defend)
 		CheckRetreatConditions% = 1
 		EXIT FUNCTION
 	END IF
 	
-	IF prd! < pct# AND INSTR("AL", t$) = 0 THEN CALL pursue(defend, xold, yold, 0)
+	IF prd < pct# AND INSTR("AL", unitTypeStr) = 0 THEN CALL pursue(defend, xold, yold, 0)
 	CheckRetreatConditions% = 0
 END FUNCTION
 
 ' Checks if defender should retreat after combat
-FUNCTION CheckDefenderRetreat% (defend AS INTEGER, attack AS INTEGER, prd! AS SINGLE, pra! AS SINGLE, flag AS INTEGER, u$ AS STRING, x2 AS INTEGER, y2 AS INTEGER, rflag AS INTEGER)
+FUNCTION CheckDefenderRetreat% (defend AS INTEGER, attack AS INTEGER, prd AS SINGLE, pra AS SINGLE, flag AS INTEGER, unitTypeStr AS STRING, x2 AS INTEGER, y2 AS INTEGER, rflag AS INTEGER)
 	DIM bonus AS INTEGER
 	DIM r! AS SINGLE
 	DIM pct# AS DOUBLE
 	
 	CALL proximity(defend, bonus)
 	r! = .02: IF bonus < 10 THEN r! = .01
-	IF prd! >= r! AND uorder(defend) > -1 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0
+	IF prd >= r! AND uorder(defend) > -1 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0
 	
 	pct# = .05: IF bonus > 9 THEN pct# = pct# + .03
 	
@@ -536,16 +532,16 @@ FUNCTION CheckDefenderRetreat% (defend AS INTEGER, attack AS INTEGER, prd! AS SI
 	IF flag = 1 AND LEFTY$(defend) <> "R" THEN pct# = pct# - .05  'cavalry charge
 	IF LEFTY$(attack) = CHR$(219) THEN pct# = pct# - .02
 	
-	IF prd! >= .07 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0
+	IF prd >= .07 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0
 	IF terrain(defend) = 35 THEN pct# = pct# + .03
 	
-	IF prd! >= pct# THEN
+	IF prd >= pct# THEN
 		CALL retreat(defend, attack)
 		CheckDefenderRetreat% = 1
 		EXIT FUNCTION
 	END IF
 	
-	IF rflag = 0 AND pra! < pct# - .01 AND INSTR("AL", u$) = 0 THEN
+	IF rflag = 0 AND pra < pct# - .01 AND INSTR("AL", unitTypeStr) = 0 THEN
 		CALL pursue(attack, x2, y2, 0)
 		CheckDefenderRetreat% = 1
 		EXIT FUNCTION
@@ -558,7 +554,7 @@ END FUNCTION
 ' Combat Menu and AI Combat Choice
 '============================================================================
 
-FUNCTION CalculateAICombatChoice% (index AS INTEGER, Enemy AS INTEGER, a$ AS STRING)
+FUNCTION CalculateAICombatChoice% (index AS INTEGER, Enemy AS INTEGER, unitTypeStr AS STRING)
 	DIM pct# AS DOUBLE
 	DIM d AS INTEGER
 	DIM bonus AS INTEGER
@@ -640,7 +636,7 @@ END FUNCTION
 
 SUB combat (index, Enemy)
 	' Validate combat parameters
-	IF Enemy = 0 OR uorder(index) = 99 OR index = Enemy THEN EXIT SUB
+	IF Enemy = 0 OR uorder(index) = UNIT_ORDER_ROUTED OR index = Enemy THEN EXIT SUB
 	a$ = LEFTY$(index)
 	IF a$ = "R" THEN movesleft = 0: EXIT SUB
 	
@@ -739,7 +735,7 @@ EXIT SUB
 END IF
 
 IF LEFTY$(index) = "S" THEN CALL routed(index, 1)
-IF uorder(index) = 99 THEN EXIT SUB
+IF uorder(index) = UNIT_ORDER_ROUTED THEN EXIT SUB
 rflag = 0
 id = 1: IF index > m1 THEN id = 2
 IF strength(index) < 1 THEN EXIT SUB
@@ -806,7 +802,7 @@ CALL ApplyRetreatDamage(index, defend, id, rout)
 END SUB
 
 ' Calculates retreat direction string based on relative positions
-SUB CalculateRetreatDirection (index AS INTEGER, defend AS INTEGER, a$ AS STRING)
+SUB CalculateRetreatDirection (index AS INTEGER, defend AS INTEGER, unitTypeStr AS STRING)
 	DIM dxs AS INTEGER
 	DIM dys AS INTEGER
 	DIM flag AS INTEGER
@@ -838,15 +834,15 @@ SUB CalculateRetreatDirection (index AS INTEGER, defend AS INTEGER, a$ AS STRING
 END SUB
 
 ' Finds a valid retreat location by trying directions in order
-FUNCTION FindRetreatLocation% (index AS INTEGER, a$ AS STRING, id AS INTEGER, xnew AS INTEGER, ynew AS INTEGER)
+FUNCTION FindRetreatLocation% (index AS INTEGER, unitTypeStr AS STRING, id AS INTEGER, xnew AS INTEGER, ynew AS INTEGER)
 	DIM dx AS INTEGER
 	DIM k AS INTEGER
 	DIM blox AS INTEGER
 	
-	dx = LEN(a$)
+	dx = LEN(unitTypeStr)
 	FOR k = 1 TO dx
 		xnew = unitx(index): ynew = unity(index)
-		CALL curser(MID$(a$, k, 1), xnew, ynew)
+		CALL curser(MID$(unitTypeStr, k, 1), xnew, ynew)
 		CALL CheckRunLocation(xnew, ynew, id, blox)
 		IF blox = 0 THEN
 			' Valid location found
@@ -912,8 +908,7 @@ SUB ApplyRetreatDamage (index AS INTEGER, defend AS INTEGER, id AS INTEGER, rout
 	' Check for routing
 	IF rout = 0 THEN
 		IF RND > .18 * morale(index) THEN CALL routed(index, 3)
-	ELSE
-		IF quiet > 0 THEN
+	ELSEIF quiet > 0 THEN
 			IF index > m1 THEN
 				PLAY "T150O3L8C;FCFG;A4G"
 			ELSE
@@ -926,7 +921,7 @@ SUB ApplyRetreatDamage (index AS INTEGER, defend AS INTEGER, id AS INTEGER, rout
 END SUB
 
 SUB pursue (index, x, y, flag)
-	IF uorder(index) = 99 THEN EXIT SUB
+	IF uorder(index) = UNIT_ORDER_ROUTED THEN EXIT SUB
 	a$ = LEFTY$(index)
 	SELECT CASE a$
 		CASE "R", "S"
@@ -1105,7 +1100,7 @@ SUB routed (index, flag)
 		morale(index) = 1
 		CALL flee(index)
 		s = 1: IF index > m1 THEN s = 2
-		elan(s) = elan(s) - 3
+		elan(s) = elan(s) + ESPRIT_UNIT_ELIMINATED_PENALTY
 	END SELECT
 END SUB
 
@@ -1152,9 +1147,9 @@ CALL clrbot: COLOR 15: PRINT name$(index); " has taken the objective !";
 possess = 1
 IF index < m2 AND possess <> 1 THEN possess = 1: CALL PlayYanksSound: s = m2: F = bigg(2)
 IF index > m1 AND possess <> 2 THEN possess = 2: CALL PlayFranksSound: s = 1: F = bigg(1)
-elan(possess) = elan(possess) + 10: CALL brittle(possess)
+elan(possess) = elan(possess) + ESPRIT_OBJECTIVE_CAPTURED_BONUS: CALL brittle(possess)
 FOR k = s TO F
-	IF INSTR("GRA", LEFTY$(k)) = 0 AND uorder(k) <> 99 THEN uorder(k) = 100 * objy + objx
+	IF INSTR("GRA", LEFTY$(k)) = 0 AND uorder(k) <> UNIT_ORDER_ROUTED THEN uorder(k) = UNIT_ORDER_ENCODING_MULTIPLIER * objy + objx
 NEXT k
 	IF possess = 1 THEN
 		s = 1: F = bigg(1)
@@ -1162,7 +1157,7 @@ NEXT k
 		s = m2: F = bigg(2)
 	END IF
 FOR k = s TO F
-IF uorder(k) > 0 AND uorder(k) <> 99 THEN uorder(k) = 0
+IF uorder(k) > 0 AND uorder(k) <> UNIT_ORDER_ROUTED THEN uorder(k) = 0
 NEXT k
 CALL scrcol(1)
 CALL TICK(.1 * mdly!)
@@ -1172,8 +1167,8 @@ SUB wipeout (index)
 IF index < 1 OR strength(index) > 0 OR unitx(index) = 1 THEN EXIT SUB
 COLOR 9: a$ = sname$(2): x = 1
 IF index < m2 THEN COLOR 4: a$ = sname$(1): x = 2
-elan(x) = elan(x) + 5: elan(3 - x) = elan(3 - x) - 5
-IF LEFTY$(index) = "G" THEN elan(x) = elan(x) - 10
+elan(x) = elan(x) + ESPRIT_UNIT_ELIMINATED_BONUS: elan(3 - x) = elan(3 - x) - ESPRIT_UNIT_ELIMINATED_BONUS
+IF LEFTY$(index) = "G" THEN elan(x) = elan(x) + ESPRIT_GENERAL_ELIMINATED_PENALTY
 FOR k = 1 TO 2: CALL brittle(k): NEXT k
 CALL clrbot: LOCATE 23, 15: PRINT a$; " unit "; name$(index); " has been eliminated";
 CALL scrcol(2)
@@ -1195,7 +1190,7 @@ NEXT k
 
 IF dx > 0 AND dy > 0 THEN EXIT SUB
 s = 2: IF dx = 0 THEN s = 1
-COLOR 14: CALL clrbot: PRINT sname$(s); " forces ANNIHILATED : Bonus = 250"; : vp&(3 - s) = vp&(3 - s) + 250
+COLOR 14: CALL clrbot: PRINT sname$(s); " forces ANNIHILATED : Bonus = "; ANNIHILATION_BONUS; : vp&(3 - s) = vp&(3 - s) + ANNIHILATION_BONUS
 CALL TICK(99): CALL expire: CALL TICK(99): END
 
 END SUB

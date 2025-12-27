@@ -39,8 +39,7 @@ DO
 	dy = ABS(unity(Enemy) - ynew)
 	IF dx > 4 * dy THEN
 		xnew = xnew + 2 * dxs
-	ELSE
-		IF dxs = 0 THEN dxs = 1: IF xnew > 28 THEN dxs = -1
+	ELSEIF dxs = 0 THEN dxs = 1: IF xnew > 28 THEN dxs = -1
 		xnew = xnew + dxs: ynew = ynew + dys
 	END IF
 	
@@ -228,13 +227,19 @@ SUB namer (file$, s, F, a$)
 			a$ = "Unknown"
 			EXIT SUB
 		END IF
-		OPEN "I", 1, file$
+		' Use SafeOpenFile% for error handling
+		IF SafeOpenFile%(file$, "I", 1) = 1 THEN
 			INPUT #1, a
 			x = 1 + INT(a * RND)
 			FOR j = 1 TO x
 				INPUT #1, a$
 			NEXT j
-		CLOSE #1
+			CLOSE #1
+		ELSE
+			' File open failed - use default name
+			a$ = "Unknown"
+			EXIT SUB
+		END IF
 		
 		' Check for duplicate names
 		DIM nameCollision AS INTEGER
@@ -304,9 +309,14 @@ END SUB
 ' Parameters:
 '   flag - Side that won (1 or 2)
 SUB over (flag)
-	OPEN "O", 1, "data\outcome.&&&"
-	WRITE #1, 3 - sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))    'scale down unit size
-	CLOSE #1
+	' Use SafeOpenFile% for error handling
+	IF SafeOpenFile%("data\outcome.&&&", "O", 1) = 1 THEN
+		WRITE #1, 3 - sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))    'scale down unit size
+		CLOSE #1
+	ELSE
+		' File open failed - error already displayed by SafeOpenFile%
+		' Continue to END anyway
+	END IF
 	END
 END SUB
 
@@ -397,44 +407,5 @@ SUB Near2 (index, Enemy, near)
 			END IF
 		END IF
 	NEXT i
-END SUB
-
-'============================================================================
-' Unit Arrangement (for setup)
-'============================================================================
-
-SUB arrange (who, xloc, yloc)
-SELECT CASE setupx
-	CASE 1
-		IF who = 1 THEN
-			xloc = 13: yloc = 99
-		ELSE
-			xloc = 40: yloc = 99
-		END IF
-	CASE 2
-		IF who = 1 THEN
-			xloc = 99: yloc = 6
-		ELSE
-			xloc = 99: yloc = 18
-		END IF
-	CASE 3
-		IF who = 1 THEN
-			xloc = 40: yloc = 99
-		ELSE
-			xloc = 13: yloc = 99
-		END IF
-	CASE 4
-		IF who = 1 THEN
-			xloc = 27: yloc = 6
-		ELSE
-			xloc = 27: yloc = 18
-		END IF
-	CASE 5
-		IF who = 1 THEN
-			xloc = 99: yloc = 6
-		ELSE
-			xloc = 99: yloc = 18
-		END IF
-END SELECT
 END SUB
 

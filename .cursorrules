@@ -1,3 +1,27 @@
 - Check what OS you are running on, use the appropriate commands (e.g. Windows use PowerShell).
 - You don't seem to have a good grasp on QB64, make sure you review the documentation for QB64 when making changes.
 - QB64 is located in c:\code\hutsell\qb64pe, the binary is qb64pe.exe
+- Whenever doing a hard-coded date use local system functions to check the date/time rather than your own imagination.
+## testing
+- we change tests to match the codebase, not vice versa.
+
+## documentation
+- Continue to add documentation for new functions as code evolves
+- Review documentation for accuracy when code changes
+### Standard Documentation Template
+```qb64
+'============================================================================
+' FunctionName - Brief description
+'============================================================================
+' Parameters:
+'   param1 (TYPE) - Description
+'   param2 (TYPE) - Description
+' Returns:
+'   TYPE - Description
+' Description:
+'   Detailed description of what the function does.
+'   Include any important notes about behavior, side effects, etc.
+' Side Effects:
+'   - List any side effects (if applicable)
+'============================================================================
+```

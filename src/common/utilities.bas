@@ -3,6 +3,11 @@
 '============================================================================
 ' Common utility functions used throughout the game
 
+' Shared error flag for file operations (module-level)
+' Must be declared before any SUB/FUNCTION declarations
+DIM SHARED fileOpenErrorFlag AS INTEGER
+DIM SHARED fileOpenErrorMessage AS STRING
+
 DECLARE SUB TICK (duration AS SINGLE)
 DECLARE SUB clrbot ()
 DECLARE SUB clrrite ()
@@ -19,6 +24,13 @@ DECLARE SUB HandleWarning (message AS STRING)
 DECLARE FUNCTION ValidateArmyIndex% (armyIndex AS INTEGER, context AS STRING)
 DECLARE FUNCTION ValidateCityIndex% (cityIndex AS INTEGER, context AS STRING)
 DECLARE FUNCTION ValidateArmySide% (side AS INTEGER, context AS STRING)
+DECLARE FUNCTION ValidateCommanderIndex% (commanderIndex AS INTEGER, context AS STRING)
+DECLARE FUNCTION ValidateCityMatrixColumn% (cityIndex AS INTEGER, column AS INTEGER, context AS STRING)
+DECLARE FUNCTION IsArmyActive% (armyIndex AS INTEGER)
+DECLARE FUNCTION IsCityActive% (cityIndex AS INTEGER)
+DECLARE FUNCTION IsFleetActive% (side AS INTEGER)
+DECLARE FUNCTION IsPortCity% (cityIndex AS INTEGER)
+DECLARE FUNCTION IsCityOwnedBy% (cityIndex AS INTEGER, side AS INTEGER)
 
 '============================================================================
 ' TICK - Wait for specified duration
@@ -66,6 +78,20 @@ FUNCTION GetRandomNumber% (min AS INTEGER, max AS INTEGER)
     GetRandomNumber% = INT(RND * (max - min + 1)) + min
 END FUNCTION
 
+'============================================================================
+' ClampValue - Clamp integer value between minimum and maximum
+'============================================================================
+' Parameters:
+'   value (INTEGER) - Value to clamp
+'   min (INTEGER) - Minimum allowed value
+'   max (INTEGER) - Maximum allowed value
+' Returns:
+'   INTEGER - Clamped value (min if value < min, max if value > max, else value)
+' Description:
+'   Ensures a value stays within specified bounds. Returns min if value is
+'   less than min, max if value is greater than max, otherwise returns
+'   the original value unchanged.
+'============================================================================
 FUNCTION ClampValue% (value AS INTEGER, min AS INTEGER, max AS INTEGER)
     ' Clamp value between min and max
     IF value < min THEN
@@ -77,6 +103,20 @@ FUNCTION ClampValue% (value AS INTEGER, min AS INTEGER, max AS INTEGER)
     END IF
 END FUNCTION
 
+'============================================================================
+' ClampValueLong - Clamp long integer value between minimum and maximum
+'============================================================================
+' Parameters:
+'   value (LONG) - Value to clamp
+'   min (LONG) - Minimum allowed value
+'   max (LONG) - Maximum allowed value
+' Returns:
+'   LONG - Clamped value (min if value < min, max if value > max, else value)
+' Description:
+'   Ensures a long integer value stays within specified bounds. Returns min
+'   if value is less than min, max if value is greater than max, otherwise
+'   returns the original value unchanged.
+'============================================================================
 FUNCTION ClampValueLong& (value AS LONG, min AS LONG, max AS LONG)
     ' Clamp long value between min and max
     IF value < min THEN
@@ -88,6 +128,20 @@ FUNCTION ClampValueLong& (value AS LONG, min AS LONG, max AS LONG)
     END IF
 END FUNCTION
 
+'============================================================================
+' ClampValueSingle - Clamp single-precision value between minimum and maximum
+'============================================================================
+' Parameters:
+'   value (SINGLE) - Value to clamp
+'   min (SINGLE) - Minimum allowed value
+'   max (SINGLE) - Maximum allowed value
+' Returns:
+'   SINGLE - Clamped value (min if value < min, max if value > max, else value)
+' Description:
+'   Ensures a single-precision floating point value stays within specified
+'   bounds. Returns min if value is less than min, max if value is greater
+'   than max, otherwise returns the original value unchanged.
+'============================================================================
 FUNCTION ClampValueSingle! (value AS SINGLE, min AS SINGLE, max AS SINGLE)
     ' Clamp single value between min and max
     IF value < min THEN
@@ -100,12 +154,65 @@ FUNCTION ClampValueSingle! (value AS SINGLE, min AS SINGLE, max AS SINGLE)
 END FUNCTION
 
 FUNCTION FormatNumber$ (number AS LONG)
-    ' Format number with commas
-    ' Returns formatted string
-    ' TODO: Implement proper number formatting with commas (e.g., 1,234,567)
-    '   - Convert to string
-    '   - Insert commas every 3 digits from right
-    FormatNumber$ = LTRIM$(STR$(number))
+    ' Format number with commas (e.g., 1,234,567)
+    ' Returns formatted string with commas inserted every 3 digits from right
+    ' 
+    ' Algorithm:
+    '   1. Convert number to string
+    '   2. Process from right to left
+    '   3. Insert comma every 3 digits (except at the end)
+    
+    DIM numStr AS STRING
+    DIM result AS STRING
+    DIM i AS INTEGER
+    DIM digitCount AS INTEGER
+    DIM lenNum AS INTEGER
+    
+    ' Convert to string and remove leading space from STR$
+    numStr = LTRIM$(STR$(number))
+    lenNum = LEN(numStr)
+    
+    ' Handle negative numbers
+    DIM isNegative AS INTEGER
+    isNegative = 0
+    IF LEFT$(numStr, 1) = "-" THEN
+        isNegative = 1
+        numStr = MID$(numStr, 2) ' Remove minus sign temporarily
+        lenNum = lenNum - 1
+    END IF
+    
+    ' If number is small (3 digits or less), no commas needed
+    IF lenNum <= 3 THEN
+        IF isNegative THEN
+            FormatNumber$ = "-" + numStr
+        ELSE
+            FormatNumber$ = numStr
+        END IF
+        EXIT FUNCTION
+    END IF
+    
+    ' Build result string from right to left, inserting commas
+    result = ""
+    digitCount = 0
+    
+    FOR i = lenNum TO 1 STEP -1
+        ' Add digit
+        result = MID$(numStr, i, 1) + result
+        digitCount = digitCount + 1
+        
+        ' Insert comma every 3 digits (but not at the start)
+        IF digitCount = 3 AND i > 1 THEN
+            result = "," + result
+            digitCount = 0
+        END IF
+    NEXT i
+    
+    ' Add negative sign back if needed
+    IF isNegative THEN
+        result = "-" + result
+    END IF
+    
+    FormatNumber$ = result
 END FUNCTION
 
 '============================================================================
@@ -215,27 +322,6 @@ SUB DebugPrint (message AS STRING)
     END IF
 END SUB
 
-'============================================================================
-' FileExists - Check if file exists
-'============================================================================
-' Parameters:
-'   filename (STRING) - Path to file to check
-' Returns:
-'   INTEGER - 1 if file exists, 0 if not
-' Description:
-'   Wrapper for QB64-PE builtin _FILEEXISTS function
-'   Ref: https://wiki.qb64.dev/qb64wiki/index.php/FILEEXISTS
-'============================================================================
-FUNCTION FileExists% (filename AS STRING)
-    ' Check if file exists.
-    ' Use QB64-PE builtin _FILEEXISTS (returns -1 when it exists, 0 when it does not).
-    ' Wiki: https://wiki.qb64.dev/qb64wiki/index.php/FILEEXISTS
-    IF _FILEEXISTS(filename) THEN
-        FileExists% = 1
-    ELSE
-        FileExists% = 0
-    END IF
-END FUNCTION
 FUNCTION GetFileSize& (filename AS STRING)
     ' Get file size in bytes
     ' Uses QB64 file operations to determine file size
@@ -245,7 +331,7 @@ FUNCTION GetFileSize& (filename AS STRING)
     DIM fileSize AS LONG
     
     ' Check if file exists first
-    IF FileExists%(filename) = 0 THEN
+    IF NOT _FILEEXISTS(filename) THEN
         GetFileSize& = -1 ' File doesn't exist
         EXIT FUNCTION
     END IF
@@ -262,6 +348,21 @@ FUNCTION GetFileSize& (filename AS STRING)
     END IF
 END FUNCTION
 
+'============================================================================
+' CopyFile - Copy a file from source to destination
+'============================================================================
+' Parameters:
+'   sourceFile (STRING) - Path to source file
+'   destFile (STRING) - Path to destination file
+' Description:
+'   Copies a file from the source path to the destination path using the
+'   system copy command. Uses SHELL to execute the copy operation.
+'   Note: This function does not check if the source file exists or if the
+'   destination file already exists before copying.
+' Side Effects:
+'   - Creates or overwrites destination file
+'   - Executes system command via SHELL
+'============================================================================
 SUB CopyFile (sourceFile AS STRING, destFile AS STRING)
     ' Copy file
     ' Uses SHELL command for file copy
@@ -270,44 +371,128 @@ SUB CopyFile (sourceFile AS STRING, destFile AS STRING)
     SHELL cmd
 END SUB
 
+'============================================================================
+' GetCurrentDate - Get current system date as string
+'============================================================================
+' Returns:
+'   STRING - Current date in system format (typically MM-DD-YYYY or DD-MM-YYYY)
+' Description:
+'   Returns the current system date as a string using QB64's DATE$ function.
+'   The format depends on system locale settings.
+'============================================================================
 FUNCTION GetCurrentDate$ ()
     ' Get current date as string
     GetCurrentDate$ = DATE$
 END FUNCTION
 
+'============================================================================
+' GetCurrentTime - Get current system time as string
+'============================================================================
+' Returns:
+'   STRING - Current time in system format (typically HH:MM:SS)
+' Description:
+'   Returns the current system time as a string using QB64's TIME$ function.
+'   The format is typically HH:MM:SS in 24-hour format.
+'============================================================================
 FUNCTION GetCurrentTime$ ()
     ' Get current time as string
     GetCurrentTime$ = TIME$
 END FUNCTION
 
+'============================================================================
+' PlaySound - Play a sound at specified frequency and duration
+'============================================================================
+' Parameters:
+'   frequency (INTEGER) - Sound frequency in Hz (typically 37-32767)
+'   duration (SINGLE) - Duration in seconds
+' Description:
+'   Plays a sound using QB64's SOUND statement. The frequency determines
+'   the pitch (higher = higher pitch), and duration controls how long the
+'   sound plays.
+' Side Effects:
+'   - Produces audible sound output
+'============================================================================
 SUB PlaySound (frequency AS INTEGER, duration AS SINGLE)
     ' Play sound
     ' QB64 compatible
     SOUND frequency, duration
 END SUB
 
+'============================================================================
+' PlayBeep - Play a system beep sound
+'============================================================================
+' Description:
+'   Plays a system beep sound using QB64's BEEP statement. This produces
+'   a simple beep tone, typically used for alerts or notifications.
+' Side Effects:
+'   - Produces audible beep sound
+'============================================================================
 SUB PlayBeep
     ' Play beep sound
     BEEP
 END SUB
 
+'============================================================================
+' SetScreenMode - Set the screen graphics mode
+'============================================================================
+' Parameters:
+'   mode (INTEGER) - Screen mode number (e.g., 9=EGA, 12=VGA)
+' Description:
+'   Sets the screen graphics mode using QB64's SCREEN statement. Common
+'   modes include 9 (EGA 640x350), 12 (VGA 640x480), etc. The available
+'   modes depend on the graphics capabilities of the system.
+' Side Effects:
+'   - Changes screen resolution and color depth
+'   - Clears the screen
+'============================================================================
 SUB SetScreenMode (mode AS INTEGER)
     ' Set screen mode
     ' Mode: 9=EGA, 12=VGA, etc.
     SCREEN mode
 END SUB
 
+'============================================================================
+' ClearScreen - Clear the entire screen
+'============================================================================
+' Description:
+'   Clears the entire screen using QB64's CLS statement. Removes all text
+'   and graphics from the display, resetting it to a blank state.
+' Side Effects:
+'   - Clears all screen content
+'============================================================================
 SUB ClearScreen
     ' Clear entire screen
     CLS
 END SUB
 
+'============================================================================
+' GetKeyPress - Get key press (non-blocking)
+'============================================================================
+' Returns:
+'   STRING - Key pressed as string, or empty string if no key pressed
+' Description:
+'   Checks for a key press without blocking execution. Returns the key
+'   pressed as a string if one is available, or an empty string if no key
+'   has been pressed. Uses QB64's INKEY$ function for non-blocking input.
+'============================================================================
 FUNCTION GetKeyPress$ ()
     ' Get key press (non-blocking)
     ' Returns empty string if no key pressed
     GetKeyPress$ = INKEY$
 END FUNCTION
 
+'============================================================================
+' WaitForKeyPress - Wait for key press (blocking)
+'============================================================================
+' Returns:
+'   STRING - Key pressed as string
+' Description:
+'   Waits for the user to press a key, blocking execution until a key is
+'   pressed. Returns the key pressed as a string. Uses a loop with INKEY$
+'   to wait for input.
+' Side Effects:
+'   - Blocks execution until user presses a key
+'============================================================================
 FUNCTION WaitForKeyPress$
     ' Wait for key press (blocking)
     ' Returns key pressed
@@ -318,12 +503,39 @@ FUNCTION WaitForKeyPress$
     WaitForKeyPress$ = keyPress
 END FUNCTION
 
+'============================================================================
+' PauseGame - Pause game execution and wait for key press
+'============================================================================
+' Description:
+'   Pauses game execution by displaying a message and waiting for the user
+'   to press any key. Displays "Press any key to continue..." and blocks
+'   until a key is pressed. Useful for pausing game flow to allow the
+'   player to read messages or view screens.
+' Side Effects:
+'   - Displays message to screen
+'   - Blocks execution until key press
+'============================================================================
 SUB PauseGame
     ' Pause game (wait for keypress)
     PRINT "Press any key to continue..."
     DO WHILE INKEY$ = "": LOOP
 END SUB
 
+'============================================================================
+' ConfirmAction - Confirm an action with Yes/No prompt
+'============================================================================
+' Parameters:
+'   prompt (STRING) - Prompt message to display to user
+' Returns:
+'   INTEGER - 1 if user confirms (Yes), 0 if user declines (No)
+' Description:
+'   Displays a prompt message and waits for the user to respond with Y (Yes)
+'   or N (No). The response is case-insensitive. Returns 1 if the user
+'   responds with Y, 0 if the user responds with N or any other key.
+' Side Effects:
+'   - Displays prompt message to screen
+'   - Waits for user input
+'============================================================================
 FUNCTION ConfirmAction% (prompt AS STRING)
     ' Confirm action with Yes/No
     ' Returns 1=Yes, 0=No
@@ -609,10 +821,6 @@ END FUNCTION
 ' Side Effects:
 '   Opens file handle for subsequent I/O operations
 '============================================================================
-' Shared error flag for file operations (module-level)
-DIM SHARED fileOpenErrorFlag AS INTEGER
-DIM SHARED fileOpenErrorMessage AS STRING
-
 FUNCTION SafeOpenFile% (filename AS STRING, mode AS STRING, fileNumber AS INTEGER)
     ' Open file with proper error handling
     ' Validates inputs and attempts to open file
@@ -634,7 +842,7 @@ FUNCTION SafeOpenFile% (filename AS STRING, mode AS STRING, fileNumber AS INTEGE
     
     ' For input mode, check if file exists first
     IF mode = "I" THEN
-        IF FileExists%(filename) = 0 THEN
+        IF NOT _FILEEXISTS(filename) THEN
             SafeOpenFile% = 0
             EXIT FUNCTION
         END IF
