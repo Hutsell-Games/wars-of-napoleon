@@ -1,1 +1,3 @@
 *.pyc
+# What the play harness writes on each run (tools\play\play.py).
+tests/out/

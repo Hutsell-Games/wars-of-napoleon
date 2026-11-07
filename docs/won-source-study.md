@@ -548,12 +548,59 @@ modules reaches the paired procedure. Most of `WON.BAS` is Hutsell's Civil War S
 `battle`, `placearmy`, `armies`, `showcities` and parts of the module-level code were written from the
 disassembly. `docs\recovery.md` lists how `WON` differs and what BC taught on the way.
 
+**Next:** see the end of section 10.
+
+## 10. Step 2 so far (2026-11-06)
+
+**The harness works, and its runs are repeatable.** It is in `tools\play\`; its `README.md` says how to run it
+and how it works. It plays `WON.EXE` by script in a DOSBox-X that no one sees, and keeps the screenshots and
+the files the game writes.
+
+- **D5's first test passed.** DOSBox-X 2026.10.01 (the portable 64-bit build, unpacked into
+  `..\won-hutsellgames\dosbox-x\`) ran hidden, with `-silent` and SDL's dummy video driver, and saved a
+  screenshot. No window opened. Its debugger port (`mcp_server`) is off by default, and the harness also sets
+  it to 0, so nothing listens on the network.
+- **`WONSEED.EXE`** (`tools\play\wonseed.py`): `RANDOMIZE TIMER` is at offset 0BB7h of `WON`'s module-level
+  code. Twenty bytes, from `call far B$TIMR` up to `call far B$RNZP`, become four `mov ax, imm16 / push ax`
+  pairs that push the seed as a DOUBLE, then `NOP`s. The far call's relocation entry is removed (4,438 entries
+  become 4,437). The tool checks that no other byte changed.
+- **Keys and screenshots come from a resident program, `PLAYKEYS.COM`,** not from DOSBox-X's `AUTOTYPE`. DOS
+  cuts a command line at 127 characters, a dozen keys, and `AUTOTYPE`'s timing follows the host's clock.
+  `PLAYKEYS.COM` reads a key file, hooks the timer interrupt, and at fixed ticks of emulated time puts a key in
+  the BIOS keyboard buffer or asks for a screenshot through DOSBox-X's integration device (I/O ports 28h–2Ah,
+  register 00C54010h). The game reads keys with `INKEY$`, which reads that buffer.
+- **Repeatable.** With fixed cycles, each key reaches the game at the same point in every run. The game's
+  pauses read `TIMER`, which is emulated time too, and the harness sets the DOS date and time. Two runs of
+  session 1, including two computer turns, gave the same screens and files.
+- **Speed.** Turbo runs session 1's 320 seconds of play in about 170 seconds.
+
+**Session 1 is recorded** (`tests\scripts\01-1796-french.keys`, `tests\recorded\01-1796-french\`). It plays
+1796 as the French with Tactical off. It covers the intro, the start menu, the six Information pages, Recruit,
+Moves, Ships, each COMMANDS item, each UTILITY item, Files → Save, and two turn ends with the Allies' moves.
+Along the way it records the events "Germany has been invaded!" and an Allied commerce raid. It writes
+`NWS1.SAV`, `NWS9.SAV` (the monthly autosave), `NWS.HIS` and `NWS.CFG`.
+
+**Session 2 is recorded** (`tests\scripts\02-1796-allies.keys`). It plays 1796 as the Allies, the shipped
+settings with Tactical off, and only ends turns. The computer, playing France, takes Turin in the second turn
+and its objective in the third. The game then shows "END GAME VICTORY CONDITION 4 REACHED / OBJECTIVE CAPTURED"
+and offers "End Game: Yes / No-Override". The session chooses Yes. The game shows the Battle Summary, the Hall
+of Fame, "Game Over" and the start menu, and the session quits to DOS. So it also covers a defeat and
+quitting, part of session 15's purpose.
+
+**Found on the way:**
+
+- The shipped `NWS.CFG` plays the Allies, with Tactical on, sound on, aggression NORMAL and random events
+  favoring the Allies (`2,2,3,3,1,1,3,0,1`). So the French sessions first swap sides in the UTILITY menu.
+- After Army Drill is left with Esc, the screen scrolls up one text row and stays so until the map is drawn
+  again. This is the shipped program's own behavior; the recording keeps it.
+- Each recorded screenshot is about 20 KB, so session 1 is 1.2 MB of PNGs.
+
 **Next:**
 
-- Step 5, the whole program: link the three objects with LINK and the runtime library, and compare the `.EXE`
-  with the unpacked `WON.EXE` byte for byte. This also needs open question 1 (the word at +2Ch of each module
-  header).
-- Step 2, the harness with DOSBox-X, then step 6 (replay). Neither depends on step 5.
+- The other fourteen sessions of section 3.2. Each is written a few keys at a time with `play.py run`.
+- Step 6: build the recovered source, link it, and `play.py check` every session with `--exe`. That needs the
+  linked program's runtime map for `--timr` and `--rnzp`.
+- Step 5, the whole program byte for byte. It needs open question 1 (the word at +2Ch of each module header).
 - Names for the `uNNN` placeholders (open question 4 in `docs\recovery.md`), which are the user's call.
 
 ## Decisions recorded in QB64Rust

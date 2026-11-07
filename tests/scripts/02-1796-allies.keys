@@ -1,0 +1,59 @@
+# Session 2: 1796, one player, the Allies (the shipped NWS.CFG), Tactical off.
+# The computer plays France (docs\won-source-study.md, section 3.2). The Allies only end
+# their turns, and France takes its objective in the fourth turn, which ends the game.
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u t esc
+wait 1
+shot main-menu
+
+# Two turns. Spaces close the event messages; at the main menu a space matches no
+# item and does nothing.
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 6
+key space
+wait 3
+end
+shot next-turn
+end
+
+# The third turn ends the game: France has captured its objective. The game asks
+# "End Game: Yes / No-Override" (a space matches neither); Yes shows the Battle Summary,
+# then the Hall of Fame, "Game Over" and the start menu, from which the session quits.
+key e y
+wait 30
+shot turn-end
+repeat 6
+key space
+wait 3
+end
+shot french-win
+key y
+wait 3
+shot battle-summary
+key space
+wait 5
+shot hall-of-fame
+key space
+wait 3
+shot game-over
+key space
+wait 5
+shot start-menu
+key q
+wait 3
+shot dos
