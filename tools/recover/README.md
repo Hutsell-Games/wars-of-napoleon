@@ -30,6 +30,10 @@ with SDL's dummy video driver, so no window opens.
 | `lift2bas.py LIFTED.txt` | Turns the graphics statements of a lifted listing back into BASIC (`SCREEN`, `CLS`, `LINE`, `PSET`, `PAINT`, `DRAW`). Other lines become `'?` comments to write by hand. |
 | `stmtdiff.py DRAFT.bas SOURCE.BAS NAME` | Diffs a draft from `lift2bas.py` against a procedure of the source, statement by statement, with the source's line numbers. Used to edit a changed procedure in place, keeping Hutsell's layout. |
 
+`WON.LNK` is the linker response file for the recovered source: `NWS.LNK` with the module names
+`won+won2+wonmenu`. Link with it through `linkcheck.py --drop nocom`, because `WON.EXE` holds the serial-port
+code. The whole build, from `buildlib.py` to `play.py check`, is in section 11 of `docs\won-source-study.md`.
+
 `codecmp.py` holds what `compare.py` and `pairprocs.py` share: instruction shapes, BC's floating-point
 emulator calls (`INT 34h`–`3Dh`), and the exact comparison. Two details matter for `/E` modules and static
 arrays. A word that points into the module's own code (a `GOSUB` target) is an offset from the module's start
@@ -78,3 +82,6 @@ python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out/WON2.OBJ
   letter is caught in `BC_CN`.
 - **87% of `WON.EXE`'s procedure code pairs with Civil War Strategy.** The
   table and what follows from it are in `docs\recovery.md`.
+- **The recovered source plays like `WON.EXE`.** Built with `buildlib.py`'s
+  library and `WON.LNK`, it gives the same 62 screens and 6 files as the
+  shipped program in the two recorded sessions (2026-11-07).

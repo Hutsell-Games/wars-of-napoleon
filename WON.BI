@@ -77,30 +77,31 @@ DECLARE SUB victor ()
 DECLARE SUB void (a%, y%)
 DECLARE SUB war ()
 '==========================================================================
-' Recovered from WON.EXE (docs\recovery.md). uNNN: not yet identified,
-' the variable at COMMON offset NNN (hex).
+' Recovered from WON.EXE (docs\recovery.md). The names of the variables
+' that Civil War Strategy does not have were chosen in 2026; spare() is
+' never used, but keeps the COMMON offsets of the variables after it.
 '==========================================================================
 COMMON SHARED choose%, tlx%, tly%, size%, mtx$(), wtype%, colour%, hilite%
 COMMON SHARED cityx(), cityy(), cityv(), cityp(), city$(), lname$(), filel
 COMMON SHARED cash(), control(), matrix(), income(), anima(), rating()
-COMMON SHARED nflag, bold, turbo!, mtn(), u29c$, u2a0()
+COMMON SHARED nflag, bold, turbo!, mtn(), scenario$, island()
 COMMON SHARED image(), force$(), armyloc(), armyname$(), player, aggress!
 COMMON SHARED armysize(), armylead(), armyexper(), supply(), month$()
-COMMON SHARED rcity(), price(), vicflag(), batwon(), cityo(), u558()
+COMMON SHARED rcity(), price(), vicflag(), batwon(), cityo(), armynat()
 COMMON SHARED armymove(), month, year, array(), mflag, side, ATKFAC, DEFAC, TCR
 COMMON SHARED navyloc(), navysize(), navymove(), occupied(), vptotal, fort()
-COMMON SHARED victory(), noise, capcity(), difficult, usadv, u73a
+COMMON SHARED victory(), noise, capcity(), difficult, usadv, rescue
 COMMON SHARED font$(), brray(), randbal, casualty&()
-COMMON SHARED rflag, u7ca, pcode, history, thrill, commerce, raider, grudge
-COMMON SHARED mtnx(), mtny(), cities, u836$(), u864(), u892(), u8c0
+COMMON SHARED rflag, navyto, pcode, history, thrill, commerce, raider, grudge
+COMMON SHARED mtnx(), mtny(), cities, nation$(), spare(), attitude(), tactical
 cities = 67
 DIM SHARED cityx(cities), cityy(cities), cityv(cities), cityp(cities), city$(cities), lname$(50), rcity(12)
 DIM SHARED cash(2), control(2), matrix(cities, 7), income(2), anima(300), rating(50)
 DIM SHARED mtx$(29), image(300), force$(2), armyloc(50), armyname$(50), vicflag(6)
 DIM SHARED armysize(50), armylead(50), armyexper(50), supply(50), month$(12)
-DIM SHARED armymove(50), array(cities), mtn(1 TO 128), u892(12), u2a0(9)
+DIM SHARED armymove(50), array(cities), mtn(1 TO 128), attitude(12), island(9)
 DIM SHARED navyloc(2), navysize(2), navymove(2), occupied(cities), fort(cities)
-DIM SHARED victory(2), capcity(2), price(3), u558(50)
+DIM SHARED victory(2), capcity(2), price(3), armynat(50)
 DIM SHARED font$(36), brray(cities), casualty&(2), batwon(2), cityo(cities)
-DIM SHARED mtnx(19), mtny(19), u836$(12), u864(2)
-DIM SHARED u1da4(50)
+DIM SHARED mtnx(19), mtny(19), nation$(12), spare(2)
+DIM SHARED homenat(50)

@@ -162,9 +162,9 @@ SUB capture (active, c, s, flag)
 	CALL clrbot
 	COLOR 11: PRINT a$;
 	IF (s = 1 AND o <> 1) OR (s = 2 AND (o = 1 OR o > 6)) THEN
-		IF u892(o) <= 50 THEN
-			u892(o) = 75
-			CALL image2(u836$(o) + " has been invaded!", 4)
+		IF attitude(o) <= 50 THEN
+			attitude(o) = 75
+			CALL image2(nation$(o) + " has been invaded!", 4)
 		END IF
 	END IF
 	IF o > 1 AND o < 7 THEN
@@ -179,7 +179,7 @@ SUB capture (active, c, s, flag)
 		PLAY "MNMFt160o1g8.g16o2c4c4d4d4g4.e16c8."
 	END IF
 	IF side = 2 AND active > 25 AND noise > 1 THEN
-		SELECT CASE u558(active)
+		SELECT CASE armynat(active)
 			CASE 2: PLAY "MFMST220o3e4g8g2.g8g8g8o4c2"
 			CASE 3: PLAY "MLmFt180o2MNc4c4MLd4o1b4.o2c8d4MN"
 			CASE 4: PLAY "mFT170o3c4.d-8c4o2b-4a-4g4f2MN"
@@ -213,7 +213,7 @@ SUB cityicon (i)
 c = 9: IF cityp(i) > 1 THEN c = 4
 IF cityp(i) = 0 THEN c = 7
 o = cityo(i)
-IF u892(o) <= 50 AND occupied(i) = 0 THEN
+IF attitude(o) <= 50 AND occupied(i) = 0 THEN
 	IF cityo(i) > 1 AND cityo(i) < 7 THEN c = 2 ELSE c = 7
 	cityp(i) = 0
 END IF
@@ -270,12 +270,12 @@ SUB disband
 FOR i = 1 TO cities
 	IF occupied(i) > 0 THEN
 		x = occupied(i)
-		IF armysize(x) > 0 AND u892(u558(x)) <= 50 THEN
-			s = 1: IF u558(x) > 1 THEN s = 2
+		IF armysize(x) > 0 AND attitude(armynat(x)) <= 50 THEN
+			s = 1: IF armynat(x) > 1 THEN s = 2
 			cash(s) = cash(s) + .2 * armysize(x)
 			armysize(x) = 0: armyloc(x) = 0
 			lname$(x) = armyname$(x)
-			CALL image2(u836$(u558(x)) + " " + armyname$(x) + " army has disbanded", 4)
+			CALL image2(nation$(armynat(x)) + " " + armyname$(x) + " army has disbanded", 4)
 			armyname$(x) = ""
 		ELSE
 			IF armyloc(x) > 0 THEN CALL placearmy(x)
@@ -321,12 +321,12 @@ END SUB
 
 SUB enter (who)
 FOR k = 3 TO 6
-	o = u892(k)
-	u892(k) = u892(k) + who
-	IF u892(k) > 99 THEN u892(k) = 99
-	IF u892(k) < 0 THEN u892(k) = 0
-	IF o <= 50 AND u892(k) > 50 THEN
-		CALL image2(u836$(k) + " has entered the WAR!", 4)
+	o = attitude(k)
+	attitude(k) = attitude(k) + who
+	IF attitude(k) > 99 THEN attitude(k) = 99
+	IF attitude(k) < 0 THEN attitude(k) = 0
+	IF o <= 50 AND attitude(k) > 50 THEN
+		CALL image2(nation$(k) + " has entered the WAR!", 4)
 		FOR i = 1 TO cities
 			IF cityo(i) = k AND occupied(i) = 0 AND cityp(i) = 0 THEN
 				cityp(i) = k
@@ -515,7 +515,7 @@ egypt:
 			armylead(empty) = armylead(t)
 			armyexper(empty) = armyexper(t)
 			supply(empty) = supply(t)
-			u558(empty) = u558(t)
+			armynat(empty) = armynat(t)
 			armyloc(t) = 0
 			lname$(t) = ""
 			armyname$(t) = ""
@@ -598,7 +598,7 @@ f$ = DIR$("nws*.ini")
 colour = 3
 GOSUB getlist
 CALL clrbot
-LOCATE 29, 1: PRINT "Loading "; u29c$
+LOCATE 29, 1: PRINT "Loading "; scenario$
 EXIT SUB
 
 getlist:
@@ -619,8 +619,8 @@ getlist:
 	tlx = 18: tly = 14 - .5 * size
 	CALL menu(11)
 	IF choose < 0 THEN choose = -1: EXIT SUB
-	u29c$ = mtx$(choose)
-	IF LEN(u29c$) < 1 THEN choose = -1: EXIT SUB
+	scenario$ = mtx$(choose)
+	IF LEN(scenario$) < 1 THEN choose = -1: EXIT SUB
 	RETURN
 END SUB
 
@@ -738,7 +738,7 @@ IF chx > 0 THEN
 	IF navyloc(who) < 1 THEN
 		chx = 1
 	ELSE
-		IF u7ca > 0 THEN chx = 3
+		IF navyto > 0 THEN chx = 3
 		IF commerce = 3 - who AND raider > 0 THEN chx = 4
 		IF who = 2 AND navyloc(3 - who) <> 99 AND RND > .7 THEN chx = 4
 		IF grudge > 0 THEN chx = 3
@@ -769,7 +769,7 @@ mtx$(4) = "Raid": IF navysize(who) < 1 OR who = commerce THEN mtx$(4) = "-"
 tlx = 67: tly = 12: size = 4
 IF navyloc(who) <> 99 THEN
 	n = who: IF who = 2 THEN n = 3
-	IF navysize(who) > 1 AND cityp(navyloc(who)) = 0 THEN IF u892(n) > 50 OR cityo(navyloc(who)) > 6 THEN size = 5: mtx$(5) = "Invasion": CALL void(navyloc(1), defend): IF chx > 0 AND defend < 100 THEN chx = 5
+	IF navysize(who) > 1 AND cityp(navyloc(who)) = 0 THEN IF attitude(n) > 50 OR cityo(navyloc(who)) > 6 THEN size = 5: mtx$(5) = "Invasion": CALL void(navyloc(1), defend): IF chx > 0 AND defend < 100 THEN chx = 5
 END IF
 
 IF chx > 0 THEN IF nflag > 0 AND chx > 1 THEN EXIT SUB ELSE choose = chx: GOTO anchor
@@ -810,7 +810,7 @@ ships:
 
 	IF choose < 1 GOTO ahoy
 	navyloc(who) = array(choose)
-	IF u73a > 0 THEN navyloc(who) = u73a
+	IF rescue > 0 THEN navyloc(who) = rescue
 	cash(who) = cash(who) - cost: navysize(who) = 1
 	x = cityx(array(choose)) + 25: y = cityy(array(choose)) + 25: CALL ships
 	CALL clrbot: COLOR 11: PRINT force$(who); " is building NEW fleet in "; city$(array(choose));
@@ -905,7 +905,7 @@ blast:
       
 	CALL menu(0): IF choose < 1 THEN EXIT SUB
 admiral:
-	IF u73a > 0 THEN choose = 1: array(choose) = u73a
+	IF rescue > 0 THEN choose = 1: array(choose) = rescue
 	IF array(choose) = navyloc(who) THEN EXIT SUB
 	IF array(choose) < 1 THEN EXIT SUB
 	IF navysize(who) < 1 GOTO ships
@@ -1093,16 +1093,16 @@ showhit:
 clr1:
 	COLOR 11: LINE (30, 250)-(180, 280), 3, BF: RETURN
 nest:
-	IF u7ca > 0 THEN
+	IF navyto > 0 THEN
 		FOR k = 1 TO size
-		IF mtx$(k) = city$(u7ca) THEN choose = k: u7ca = 0: RETURN
+		IF mtx$(k) = city$(navyto) THEN choose = k: navyto = 0: RETURN
 		NEXT k
 	END IF
 	best = 0: x = 0
 	FOR i = 1 TO size
 	target = array(i)
 	IF cityp(target) = 0 THEN
-		IF u892(cityo(target)) < 51 GOTO neutral
+		IF attitude(cityo(target)) < 51 GOTO neutral
 		best = i: IF RND > .2 THEN choose = best: RETURN
 	END IF
 
@@ -1291,13 +1291,13 @@ cityrep:
 CLS : LOCATE 1, 1: COLOR 14: WIDTH , 60
 PRINT "City Report"; TAB(20); month$(month); ","; year: COLOR 15
 PRINT " #    City       Control   Value"; TAB(41); " #    City       Control   Value"
-FOR i = 1 TO 34: COLOR 7: a$ = u836$(cityo(i)): IF cityp(i) = 1 THEN COLOR 9: a$ = "French"
+FOR i = 1 TO 34: COLOR 7: a$ = nation$(cityo(i)): IF cityp(i) = 1 THEN COLOR 9: a$ = "French"
 IF cityp(i) = 2 THEN COLOR 4: a$ = "Allies"
 IF cityp(i) < 1 OR cityp(i) > 2 THEN IF cityo(i) > 1 AND cityo(i) < 7 THEN COLOR 2: a$ = "(peace)": n = n + 1
 LOCATE 2 + i, 1: PRINT i; TAB(6); city$(i); TAB(17); a$; TAB(33); cityv(i)
 NEXT i
 
-FOR i = 35 TO cities: COLOR 7: a$ = u836$(cityo(i)): IF cityp(i) = 1 THEN COLOR 9: a$ = "French"
+FOR i = 35 TO cities: COLOR 7: a$ = nation$(cityo(i)): IF cityp(i) = 1 THEN COLOR 9: a$ = "French"
 IF cityp(i) = 2 THEN COLOR 4: a$ = "Allies"
 IF cityp(i) < 1 OR cityp(i) > 2 THEN IF cityo(i) > 1 AND cityo(i) < 7 THEN COLOR 2: a$ = "(peace)": n = n + 1
 LOCATE -32 + i, 41: PRINT i; TAB(46); city$(i); TAB(57); a$; TAB(71); cityv(i)
@@ -1312,8 +1312,8 @@ COLOR 7: PRINT force$(0); TAB(12); cities - control(1) - control(2) - n
 LINE (1, 370)-(320, 370), 15
 LINE (320, 300)-(638, 420), 13, B
 FOR k = 1 TO 10
-	LOCATE k + 40, 50: COLOR 15: PRINT u836$(k); TAB(65);
-	SELECT CASE u892(k)
+	LOCATE k + 40, 50: COLOR 15: PRINT nation$(k); TAB(65);
+	SELECT CASE attitude(k)
 		CASE IS < 25: a$ = "PEACE": COLOR 2
 		CASE IS <= 50: a$ = "UNEASE": COLOR 14
 		CASE ELSE: a$ = "WAR!": COLOR 4
@@ -1555,7 +1555,7 @@ slush = 0: who = 3 - side
 c = 9: IF side = 1 THEN c = 15
 CALL clrbot
 COLOR c: PRINT force$(who); " Side is making decisions";
-IF who = 1 AND armyloc(1) = 16 THEN u73a = armyloc(1) ELSE u73a = 0
+IF who = 1 AND armyloc(1) = 16 THEN rescue = armyloc(1) ELSE rescue = 0
 CALL starfin(star, fin, who)
 '==========================================================================
 '                       Check Supply
@@ -1609,8 +1609,8 @@ CALL recruit(who)
 isok:
 	cash(who) = cash(who) + slush
 dock:
-	IF who = 1 AND u73a > 0 THEN
-		IF navysize(who) > 0 AND u73a = 0 THEN
+	IF who = 1 AND rescue > 0 THEN
+		IF navysize(who) > 0 AND rescue = 0 THEN
 			CALL navy(who, 1): nflag = 1
 		ELSE
 			CALL navy(who, 3): nflag = 1
@@ -1620,11 +1620,11 @@ dock:
 		IF RND < .9 THEN CALL navy(who, 3): nflag = 1
 		GOTO movearmy
 	END IF
-	IF cash(who) >= 100 AND navysize(who) <= 9 AND cityp(navyloc(who)) = who AND u73a = 0 THEN CALL navy(who, 1): nflag = 1
+	IF cash(who) >= 100 AND navysize(who) <= 9 AND cityp(navyloc(who)) = who AND rescue = 0 THEN CALL navy(who, 1): nflag = 1
 movenavy:
 	IF navysize(who) = 0 THEN navyloc(who) = 0
 	IF navyloc(who) = 0 GOTO movearmy
-	IF u7ca > 0 THEN CALL navy(who, 3): nflag = 1: GOTO movearmy
+	IF navyto > 0 THEN CALL navy(who, 3): nflag = 1: GOTO movearmy
 	IF navyloc(who) <> 99 THEN
 		IF cityp(navyloc(who)) = who THEN CALL navy(who, 3): nflag = 1: GOTO movearmy
 		IF cityp(navyloc(who)) = 0 THEN CALL navy(who, 3): nflag = 1: GOTO movearmy
@@ -1655,7 +1655,7 @@ FOR i = star TO fin
 target = armyloc(i)
 IF armyloc(i) < 1 OR armymove(i) < 0 GOTO deadman
 x = armysize(i): IF supply(i) < 1 AND RND > .1 GOTO deadman
-a = u558(i): IF u892(a) <= 50 GOTO deadman
+a = armynat(i): IF attitude(a) <= 50 GOTO deadman
 
 choose = 0
 
@@ -1682,10 +1682,10 @@ move9:
 	IF matrix(m, 7) < 90 GOTO noboat
 		IF navyloc(who) <> target OR navyloc(3 - who) = m THEN
 			z = 0
-			FOR k = 1 TO 4: IF u2a0(k) = target OR u2a0(k) = m THEN z = 1: EXIT FOR
+			FOR k = 1 TO 4: IF island(k) = target OR island(k) = m THEN z = 1: EXIT FOR
 			NEXT k
 			IF i <> 0 THEN
-				IF navyloc(3 - who) = m THEN u7ca = m ELSE u7ca = target
+				IF navyloc(3 - who) = m THEN navyto = m ELSE navyto = target
 				armymove(i) = 0
 				GOTO deadman
 			END IF

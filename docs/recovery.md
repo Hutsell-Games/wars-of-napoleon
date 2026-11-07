@@ -129,13 +129,14 @@ result.
 
 **What `WON.BI` holds so far.** The `DECLARE`s are `CWS14.BI`'s, with the new procedures added and `report`
 given two parameters. The `COMMON SHARED` and `DIM SHARED` lines come from `WONMENU`'s `B$DDIM` calls, which
-give every shared array's bounds and descriptor place. Names `uNNN` are variables not identified yet. Found on
-the way:
+give every shared array's bounds and descriptor place. The variables Civil War Strategy does not have first
+had placeholder names `uNNN`, after their `COMMON` offset; their names are under "Variable names" below. Found
+on the way:
 
 - `cities = 67`, set before the `DIM`s, is the upper bound of every city array. It is the variable at
   `COMMON`+0834h, the one used 64 times. Civil War Strategy has 40 cities, as constants.
-- `u1da4(50)` is a shared static array in the `.BI`, so each module has its own copy in its `BC_DATA`; only `WON`
-  uses it. Its lower bound is 0: `WON`'s code reads element *i* at 1DA4h + 2*i*. It holds each army's home
+- `homenat(50)` is a shared static array in the `.BI`, so each module has its own copy in its `BC_DATA`; only
+  `WON` uses it. Its lower bound is 0: `WON`'s code reads element *i* at 1DA4h + 2*i*. It holds each army's home
   nation (see "How `WON` differs" below). An earlier draft had it as `graphic(1 TO 51)`.
 - `bw` is not in `COMMON`: `menu`'s `IF bw > 0` reads a local variable, which is always 0. The `COMMON` slot at
   073Ah, after `usadv`, is another variable.
@@ -152,23 +153,56 @@ same; the rest was written from `disasm.py --lift`. In `..\won-hutsellgames\work
   Save CFG and without Graphics, Jan Campgn, Realism and Chk Links. The settings file is `nws.cfg`. There are
   no `DATA` lines.
 - `filer` reads `gamedata.ini` (`CASE -1`), starts a scenario from `nws<name>.ini`, `lead<name>.dat` and
-  `euro<name>.map`, where *name* is `u29c$`, and saves to `nws1.sav`–`nws9.sav`. `filer(9)` saves to slot 9
+  `euro<name>.map`, where *name* is `scenario$`, and saves to `nws1.sav`–`nws9.sav`. `filer(9)` saves to slot 9
   without a menu.
 - `battle` can hand the battle to the tactical game: it writes `battle.$$$`, runs `napoleon.exe` and reads
-  `outcome.&&&`. It does so when Tactical is on (`u8c0`), `rrs.exe` is absent, and neither army is more than
-  three times the other. Armies whose nation differs from their home nation (`u558()` against `u1da4()`) fight
-  at 70% ("LOW COHESION").
+  `outcome.&&&`. It does so when Tactical is on (`tactical`), `rrs.exe` is absent, and neither army is more
+  than three times the other. Armies whose nation differs from their home nation (`armynat()` against
+  `homenat()`) fight at 70% ("LOW COHESION").
 - `placearmy` puts the army's icon by nation. `armies` lists a move when `matrix(c, 7)` of either city is below
-  90, or the side's fleet holds the city; otherwise it refuses it when either city is one of the four in
-  `u2a0()`. What `matrix(c, 7)` and `u2a0()` stand for is to be checked in the data files. `tupdate` draws a
-  surrender flag, and moves Napoleon (army 1) to city 16 when he is beaten.
+  90 (an inland city), or the side's fleet holds the city. Otherwise it refuses the move when either city is one
+  of the four islands in `island()`. `tupdate` draws a surrender flag, and moves Napoleon (army 1) to city 16
+  (Corsica) when he is beaten.
 - `showcities` (new) redraws every city with `cityicon`; `recruit`, `icon`, `movefrom`, `newarmy` and
   `animate` changed in many small ways.
 
-**Placeholders explained by `WON`:** `u29c$` is the scenario's name, part of every scenario file name; `u8c0` is
-the Tactical switch; `u1da4()` each army's home nation (1 for the French, read from `lead*.dat` for the
-others); `u73a` is set to 16 when the player is the Allies and Napoleon's army stands at city 16; `u2a0()` holds
-four cities read from `gamedata.ini`.
+**Variable names (user, 2026-11-07).** These variables are not in Civil War Strategy, so they had placeholder
+names after their `COMMON` offset (`homenat` after its address in `BC_DATA`). The user chose the names below
+(D6). None of them has a counterpart in Civil War Strategy's source. `rescue` sits after `usadv`, where Civil
+War Strategy has `bw`, but it means something else. The renamed source compiles to the same three object
+files, byte for byte.
+
+| Name | Was | What it holds |
+|---|---|---|
+| `scenario$` | `u29c$` | The chosen start year, such as `"1796"`, part of every scenario file name. `init` sets it. |
+| `tactical` | `u8c0` | The Tactical switch, saved in `nws.cfg`. When on, battles go to `napoleon.exe`. |
+| `island()` | `u2a0()` | The four islands, read from the last line of `gamedata.ini`: 16, 35, 57, 58 (Corsica, London, Sardinia, Sicily). |
+| `armynat()` | `u558()` | Each army's nation now. |
+| `homenat()` | `u1da4()` | Each army's home nation: 1 for the French, read from `lead*.dat` for the others. Only `WON` uses it. |
+| `nation$()` | `u836$()` | The 12 nations' names, from `gamedata.ini`. |
+| `attitude()` | `u892()` | Each nation's attitude, 0 to 99: PEACE below 25, UNEASE to 50, WAR! above. |
+| `rescue` | `u73a` | 16 while Napoleon's army is stranded on Corsica. The French computer player then sails its fleet there and buys no ships. |
+| `navyto` | `u7ca` | A city the computer's fleet is to sail to. `smarts` sets it when an army's move needs a boat and cancels the move; `navy` sails there and clears it. |
+| `spare()` | `u864()` | Never used. It stays because removing it would shift the `COMMON` offsets after it. |
+
+`matrix(c, 7)` is 0 for an inland city and above 90 for a coastal one, as in Civil War Strategy. A fleet may
+sail to any coastal city. The two games use the values above 90 differently:
+
+- Civil War Strategy uses only 99 for its ports. It sells ships only at a city with 99.
+- Wars of Napoleon sells ships at any coastal city (`navy`, `WON2.BAS` line 800). Its maps use 96 to 99, and
+  `ships` uses the value to place the fleet's icon beside the city: 96 to the right, 97 to the left, 98 above,
+  99 below. In the 1796 map, 96 is London and Sardinia, 97 Bordeaux, Corsica, Nantes, Naples and Sicily, 98
+  Amsterdam, Brest, Cherbourg and Konigsberg, and 99 Genoa, Marseilles, Nice and Venice.
+- In Wars of Napoleon, 99 also matters to supply (`WON2.BAS` lines 645–646). An army in any other city, inland or
+  coastal, loses supply in every month outside July to October. An army in a 99 city loses supply when the enemy fleet is there ("is
+  blockaded").
+
+`cityo()` is in both games with different meanings. In Civil War Strategy it is each city's side at the start
+(`cityo(i) = cityp(i)`). In Wars of Napoleon it is each city's nation.
+
+`battle` writes the attacker's leader rating for both armies into `battle.$$$`: the `WRITE #1` at `WON.BAS`
+line 829 has `armylead(attack)` where the defender's would be. The shipped program does the same, so the source
+keeps it.
 
 **Source used, and in what order.** A procedure comes from Hutsell's own source wherever there is any:
 Civil War Strategy 1.57 first, then the tactical game (`NAPOLEON.BAS`, `NAP1A.BAS`, `NAP1C.BAS`). Every
@@ -200,12 +234,12 @@ Civil War Strategy 1.57 first, then the tactical game (`NAPOLEON.BAS`, `NAP1A.BA
 **More of what `WON.BI` holds** (from `WON2`):
 
 - Wars of Napoleon has 50 armies, 25 a side, where Civil War Strategy has 40 and 20.
-- `cityo()` holds each city's nation; `u836$()` the nations' names (12); `u558()` each army's nation;
-  `u892()` each nation's leaning, 0 to 99: above 50 it is at war. Names for these come when `WON` is read.
+- `cityo()` holds each city's nation; `nation$()` the nations' names (12); `armynat()` each army's nation;
+  `attitude()` each nation's leaning, 0 to 99: above 50 it is at war.
 - `realism` is not in `COMMON`; `resupply` always checks the supply line.
 - `COMMON`+029Ch is one string, the chosen start year (`init` sets it); +07CCh is `pcode`, as in Civil War
-  Strategy; +0266h is `nflag`, which `smarts` sets after each naval action; +073Ah (`u73a`) and +07CAh
-  (`u7ca`) are naval flags that `smarts` reads.
+  Strategy; +0266h is `nflag`, which `smarts` sets after each naval action; +073Ah (`rescue`) and +07CAh
+  (`navyto`) are naval flags that `smarts` reads.
 
 **Ways of writing found by trying.** Where BC's code depends on how a statement is written:
 
@@ -226,7 +260,7 @@ Civil War Strategy 1.57 first, then the tactical game (`NAPOLEON.BAS`, `NAP1A.BA
 - The place a `GOTO` lands shows where a label is, even inside a block: `menu`'s `CASE 1` jumps into `CASE 2`,
   `navy`'s `admiral:` stands before a new line.
 
-`u892()` holds each nation's attitude: the city page of `report` shows "PEACE" below 25, "UNEASE" to 50, "WAR!"
+The city page of `report` shows each nation's `attitude()` as "PEACE" below 25, "UNEASE" to 50, and "WAR!"
 above.
 
 **What BC does, learned on the way.** These decide how the source must be written:
@@ -247,7 +281,7 @@ Learned on `WON`:
   `mov ax, side / cmp ax, s` was written `s <> side`.
 - An `IF` whose conditions are all comparisons joined by `AND` or `OR` compiles to a chain of jumps. One term
   that is not a comparison, such as `NOT (...)` or `a > 3 XOR b > 3`, makes BC compute the whole condition as a
-  value. `battle` has three lines, `IF u8c0 <= 0 GOTO grapple`, `IF LEN(DIR$("rrs.exe")) <> 0 GOTO grapple` and
+  value. `battle` has three lines, `IF tactical <= 0 GOTO grapple`, `IF LEN(DIR$("rrs.exe")) <> 0 GOTO grapple` and
   `IF ... XOR ... GOTO grapple`; the last tests the `XOR` with `and dx, dx`.
 - A string literal passed to a SUB from module-level code is copied to a temporary that BC frees after the call
   (`B$STDL`). Where the program has no `B$STDL`, the text was first put in a variable (`obj$`, `m$`).
@@ -266,8 +300,7 @@ Learned on `WON`:
 3. **Which `DECLARE`s did Hutsell's `.BI` have?** A `DECLARE` for a procedure that is never called leaves no
    trace in the program. `WON.BI` keeps all of `CWS14.BI`'s, including ones for procedures Wars of Napoleon
    no longer has (`showcity`, `usa`, `railroad` and others). They do not change the code.
-4. **Names for the `uNNN` placeholders.** `WON` explains most of them (above). Choosing names is the user's
-   call (D6); `matrix(c, 7)` and `u2a0()` need a look at `gamedata.ini` and the `euro*.map` files first.
+4. **Names for the `uNNN` placeholders.** Settled (user, 2026-11-07): see "Variable names" above.
 
 ## The table
 

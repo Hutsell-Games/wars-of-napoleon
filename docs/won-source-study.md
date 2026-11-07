@@ -598,10 +598,55 @@ quitting, part of session 15's purpose.
 **Next:**
 
 - The other fourteen sessions of section 3.2. Each is written a few keys at a time with `play.py run`.
-- Step 6: build the recovered source, link it, and `play.py check` every session with `--exe`. That needs the
-  linked program's runtime map for `--timr` and `--rnzp`.
+- Step 6 for each new session, as section 11 shows.
 - Step 5, the whole program byte for byte. It needs open question 1 (the word at +2Ch of each module header).
-- Names for the `uNNN` placeholders (open question 4 in `docs\recovery.md`), which are the user's call.
+
+## 11. Step 6 so far (2026-11-07)
+
+**The recovered source plays like the shipped program in both recorded sessions.** It was built with PDS 7.1 and
+linked with `buildlib.py`'s far-string runtime. `play.py check` with `--exe` gave the same screens and files as the
+recordings:
+
+| Session | Screens | Files | Result |
+|---|---|---|---|
+| `01-1796-french` | 49 of 49 | 4 | same as recorded |
+| `02-1796-allies` | 13 of 13 | 2 | same as recorded |
+
+So the link and the runtime library behave like Hutsell's in what these sessions cover. Each new session of
+section 3.2 gets the same check once it is recorded.
+
+**How the build was made.** `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder,
+and the commands run from `tools\recover\`:
+
+```
+python -I buildlib.py PDS W/lib
+python -I calibrate_bc.py ../.. PDS W/obj WON=O,E,Fs WON2=O,Fs WONMENU=O,Fs
+python -I linkcheck.py --drop nocom W/lib W/link WON.LNK ../../WON.EXE W/obj/WON.OBJ W/obj/WON2.OBJ W/obj/WONMENU.OBJ
+python -I unlzexe91.py W/link/WON.EXE W/WON_built_unp.EXE
+python -I runtimemap.py W/WON_built_unp.EXE W/built_runtime.tsv W/lib/BCL71ENR.LIB
+```
+
+Then, from the repo's folder:
+
+```
+python -I tools/play/play.py check tests/scripts/*.keys --exe W/link/WON.EXE --timr 1e7d6 --rnzp 1ca1b
+```
+
+- **`WON.LNK`** is `NWS.LNK` with the recovered module names (`won+won2+wonmenu`) and output name `won`.
+  `NWS.LNK` names `nws`, `nws2` and `nwsmenu`, which are not in the repo.
+- **`--drop nocom`:** `WON.EXE` holds the serial-port code (`llcom3`, with `B$INICOM`), which `nocom` would
+  remove. Civil War Strategy's `CWS.EXE` is linked the same way (section 8).
+- **The objects were compared first.** `compare.py` on the three objects found all 69 pieces exact and the three
+  constant segments equal.
+- **The link differs from the shipped program as in section 8.** The load image is 193,088 bytes, against
+  193,056. Both have 4,438 relocations. The runtime modules lie in another order, which is step 5's problem.
+- **The build's runtime map is complete.** 151 runtime segments are found exactly. `B$TIMR` is at `1e7d6` and
+  `B$RNZP` at `1ca1b`, against `27c7c` and `24389` in the shipped program. These two addresses hold only for this
+  link. Any change to the source's code or the link order needs a new map. The renaming of the `uNNN`
+  variables later the same day changed no code: the three object files stayed byte for byte the same.
+- **Not explained:** `runtimemap.py` counts 3,684 far calls from the game's code into the runtime in the build,
+  all of them named. In the shipped program it counts 3,693. The 9 calls were not looked into. Since every screen
+  and file matches, they did not change what these sessions show.
 
 ## Decisions recorded in QB64Rust
 

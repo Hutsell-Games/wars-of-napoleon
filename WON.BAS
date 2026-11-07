@@ -79,7 +79,7 @@ RANDOMIZE TIMER
 CALL TICK(.3)
 wtype = 2: hilite = 15
 GOSUB tricolor
-FOR k = 1 TO 10: u892(k) = 0: NEXT k
+FOR k = 1 TO 10: attitude(k) = 0: NEXT k
 startmenu:
 mtx$(0) = "WARS OF NAPOLEON"
 mtx$(1) = "Resume Saved Game"
@@ -99,13 +99,13 @@ city$(0) = "NONE"
 usadv = 75 * difficult: IF player = 2 THEN usadv = 10 * difficult
 vptotal = usadv + 200
 CALL init
-IF LEN(u29c$) = 0 GOTO startmenu
+IF LEN(scenario$) = 0 GOTO startmenu
 CALL filer(1)
 FOR i = 1 TO 2: income(i) = cash(i): NEXT i
 FOR i = 1 TO cities
 	IF cityp(i) > 0 THEN
 		x = cityp(i): IF x > 1 THEN x = 2
-		IF x = 1 OR u892(cityo(i)) > 50 THEN control(x) = control(x) + 1
+		IF x = 1 OR attitude(cityo(i)) > 50 THEN control(x) = control(x) + 1
 		cash(cityp(i)) = cash(cityp(i)) + cityv(i)
 	END IF
 NEXT i
@@ -312,7 +312,7 @@ alone:
 	armylead(empty) = rating(empty)
 	armyname$(empty) = lname$(empty): lname$(empty) = ""
 	armyexper(empty) = armyexper(index)
-	u558(empty) = u558(index)
+	armynat(empty) = armynat(index)
 	COLOR 11: CALL clrbot: PRINT force$(side); " Unit #"; empty; " with "; : CALL strong(empty): PRINT " men detached under "; armyname$(empty); : CALL TICK(turbo!): IF noise > 0 THEN SOUND 2222, 1
 	CALL stax(side)
 	choose = 27
@@ -354,7 +354,7 @@ utile:
 	mtx$(1) = force$(side)
 	mtx$(2) = "1 Player": IF player = 2 THEN mtx$(2) = "2 Player"
 	mtx$(3) = "Noise": IF noise > 0 THEN mtx$(3) = mtx$(3) + STRING$(noise, "*")
-	mtx$(4) = "NO Tactical": IF u8c0 > 0 THEN mtx$(4) = "Tactical û"
+	mtx$(4) = "NO Tactical": IF tactical > 0 THEN mtx$(4) = "Tactical û"
 	mtx$(5) = "Display" + STR$(turbo!)
 	a$ = STR$(difficult): IF side = 1 THEN a$ = STR$(6 - difficult)
 	mtx$(6) = "Balance" + a$
@@ -406,8 +406,8 @@ utile:
 '                               Display Speed
 '-------------------------------------------------------------------------
 	    CASE 4
-		u8c0 = 1 - u8c0
-		IF LEN(DIR$("rrs.exe")) > 0 THEN u8c0 = 0: m$ = "Linked tactical game in Registered Game Only": CALL image2(m$, 4)
+		tactical = 1 - tactical
+		IF LEN(DIR$("rrs.exe")) > 0 THEN tactical = 0: m$ = "Linked tactical game in Registered Game Only": CALL image2(m$, 4)
 		IF noise > 0 THEN SOUND 1999, .5
 		choose = 25: GOTO utile
 '-------------------------------------------------------------------------
@@ -639,7 +639,7 @@ RETURN
 '............................................................................
 savecfg:
 OPEN "O", 1, "nws.cfg"
-WRITE #1, side, noise, difficult, bold, player, turbo!, randbal, history, u8c0
+WRITE #1, side, noise, difficult, bold, player, turbo!, randbal, history, tactical
 CLOSE #1
 CALL clrbot
 COLOR 14: PRINT "NWS.CFG updated";
@@ -694,7 +694,7 @@ addto:
 			IF matrix(x, 7) < 90 GOTO addto
 			IF navyloc(side) = target AND navyloc(3 - side) <> x GOTO addto
 			FOR k = 1 TO 4
-				IF u2a0(k) = target OR u2a0(k) = x GOTO nextone
+				IF island(k) = target OR island(k) = x GOTO nextone
 			NEXT k
 			GOTO addto
 		END IF
@@ -746,7 +746,7 @@ IF x < 1 THEN x = 1
 IF attack < 26 AND side = 2 AND difficult > 3 THEN x = x + 2 * difficult - 6
 IF attack > 25 AND side = 1 AND difficult < 3 THEN x = x + 6 - 2 * difficult
 COLOR c
-IF u558(attack) <> u1da4(attack) THEN x = .7 * x: COLOR 13
+IF armynat(attack) <> homenat(attack) THEN x = .7 * x: COLOR 13
 LOCATE 11, y: PRINT "Cohesion"; x
 LOCATE 12, y: PRINT "Difclt  "; x
 IF x > TCR THEN x = TCR
@@ -782,7 +782,7 @@ END SELECT
 LOCATE 20, y: PRINT "Outman  "; x1
 IF supply(defend) < 1 THEN x1 = .5 * x1: COLOR 13
 LOCATE 21, y: PRINT "Supply  "; x1: COLOR 13 - c
-IF u558(defend) <> u1da4(defend) THEN x1 = .7 * x1: COLOR 13
+IF armynat(defend) <> homenat(defend) THEN x1 = .7 * x1: COLOR 13
 LOCATE 22, y: PRINT "Cohesion"; x1
 IF x1 < 1 THEN x1 = 1
 '                       Adjust defend advantage
@@ -813,7 +813,7 @@ LINE (528, 410)-(637, 437), 14, B
 CALL TICK(9)
 FOR i = 1 TO 2: IF supply(i) > 0 THEN supply(i) = supply(i) - 1
 NEXT i
-IF u8c0 <= 0 GOTO grapple
+IF tactical <= 0 GOTO grapple
 IF LEN(DIR$("rrs.exe")) <> 0 GOTO grapple
 IF armysize(attack) / armysize(defend) > 3 XOR armysize(defend) / armysize(attack) > 3 GOTO grapple
 '                       Fight the battle in the tactical game
@@ -822,8 +822,8 @@ IF armysize(attack) / armysize(defend) > 3 XOR armysize(defend) / armysize(attac
 	IF supply(attack) < 1 THEN x = x \ 2: CALL image2(armyname$(attack) + t$, 4)
 	IF supply(defend) < 1 THEN x1 = x1 \ 2: CALL image2(armyname$(defend) + t$, 4)
 	t$ = " : LOW COHESION = 30% PENALTY"
-	IF u558(attack) <> u1da4(attack) THEN x = .7 * x: CALL image2(armyname$(attack) + t$, 4)
-	IF u558(defend) <> u1da4(defend) THEN x1 = .7 * x1: CALL image2(armyname$(defend) + t$, 4)
+	IF armynat(attack) <> homenat(attack) THEN x = .7 * x: CALL image2(armyname$(attack) + t$, 4)
+	IF armynat(defend) <> homenat(defend) THEN x1 = .7 * x1: CALL image2(armyname$(defend) + t$, 4)
 	OPEN "O", 1, "battle.$$$"
 	a = 1: y = 2: IF attack < 25 THEN a = 2: y = 1
 	WRITE #1, city$(armyloc(defend)), 3 - side, a, y, armyname$(attack), x, armylead(attack), armyexper(attack), armyname$(defend), x1, armylead(attack), armyexper(defend), difficult, fort(armyloc(defend)), noise
@@ -932,8 +932,8 @@ victory(s) = victory(s) + 1
 IF s = 1 THEN x = 5 ELSE x = -2
 CALL enter(x)
 IF s = 1 THEN
-	IF u558(attack) = 1 THEN x = defend ELSE x = attack
-	u892(u558(x)) = u892(u558(x)) + 10
+	IF armynat(attack) = 1 THEN x = defend ELSE x = attack
+	attitude(armynat(x)) = attitude(armynat(x)) + 10
 END IF
 CALL icon(armyloc(defend), 0, 8)
 LINE (528, 60)-(638, 435), 2, BF
@@ -1026,35 +1026,35 @@ SELECT CASE switch
 	CASE -1
 	OPEN "I", 1, "gamedata.ini"
 	FOR i = 0 TO 2: INPUT #1, force$(i): NEXT i
-	FOR i = 1 TO 12: INPUT #1, u836$(i): NEXT i
+	FOR i = 1 TO 12: INPUT #1, nation$(i): NEXT i
 	FOR i = 1 TO 12: INPUT #1, month$(i): NEXT i
 	INPUT #1, ATKFAC, DEFAC, TCR
 	FOR i = 1 TO 19: INPUT #1, mtnx(i), mtny(i): NEXT i
 	FOR k = 1 TO 36: INPUT #1, font$(k): NEXT k
-	FOR k = 1 TO 4: INPUT #1, u2a0(k): NEXT k
+	FOR k = 1 TO 4: INPUT #1, island(k): NEXT k
 	CLOSE #1
 	OPEN "I", 1, "nws.cfg"
-	INPUT #1, side, noise, difficult, bold, player, turbo!, randbal, history, u8c0
+	INPUT #1, side, noise, difficult, bold, player, turbo!, randbal, history, tactical
 	CLOSE #1
 	EXIT SUB
 
 	CASE 1
 	GOSUB lead
-	f$ = "nws" + u29c$ + ".ini"
+	f$ = "nws" + scenario$ + ".ini"
 	OPEN "I", 1, f$
 	INPUT #1, month, year
 '               set end game conditions
 	FOR i = 1 TO 6: INPUT #1, vicflag(i): NEXT i
 	vicflag(3) = .67 * vicflag(3)
 	INPUT #1, batwon(1), batwon(2), casualty&(1), casualty&(2)
-	FOR k = 1 TO 7: INPUT #1, u892(k): NEXT k
+	FOR k = 1 TO 7: INPUT #1, attitude(k): NEXT k
 	INPUT #1, a             ' number of French armies
 FOR i = 1 TO a
-	INPUT #1, u558(i), armyloc(i), armysize(i), armyexper(i), supply(i): occupied(armyloc(i)) = i: armyname$(i) = lname$(i): armylead(i) = rating(i): lname$(i) = ""
+	INPUT #1, armynat(i), armyloc(i), armysize(i), armyexper(i), supply(i): occupied(armyloc(i)) = i: armyname$(i) = lname$(i): armylead(i) = rating(i): lname$(i) = ""
 NEXT i
 	INPUT #1, a             ' number of Allied armies
 FOR i = 26 TO 25 + a
-	INPUT #1, u558(i), armyloc(i), armysize(i), armyexper(i), supply(i)
+	INPUT #1, armynat(i), armyloc(i), armysize(i), armyexper(i), supply(i)
 	occupied(armyloc(i)) = i: armyname$(i) = lname$(i): lname$(i) = "": armylead(i) = rating(i): lname$(i) = ""
 NEXT i
 FOR i = 1 TO 2: INPUT #1, cash(i): NEXT i
@@ -1080,12 +1080,12 @@ FOR i = 1 TO 2: INPUT #1, cash(i): NEXT i
 reopen:
 	OPEN "I", 1, "nws" + LTRIM$(STR$(array(choose))) + ".sav"
 	COLOR 11: CALL clrbot: PRINT "Loading";
-	INPUT #1, u29c$, month, year, usadv, a
+	INPUT #1, scenario$, month, year, usadv, a
 	IF z = 0 THEN CLOSE #1: GOSUB lead: z = 1: GOTO reopen
 	FOR i = 1 TO 6: INPUT #1, vicflag(i): NEXT i
 	INPUT #1, batwon(1), batwon(2), casualty&(1), casualty&(2)
-	FOR k = 1 TO 7: INPUT #1, u892(k): NEXT k
-	FOR i = 1 TO 50: INPUT #1, armyname$(i), u558(i), armysize(i), armylead(i), armyloc(i), armyexper(i), supply(i), armymove(i)
+	FOR k = 1 TO 7: INPUT #1, attitude(k): NEXT k
+	FOR i = 1 TO 50: INPUT #1, armyname$(i), armynat(i), armysize(i), armylead(i), armyloc(i), armyexper(i), supply(i), armymove(i)
 	IF armyloc(i) > 0 THEN
 		IF armyname$(i) = lname$(i) THEN
 			lname$(i) = ""
@@ -1104,12 +1104,12 @@ reopen:
 	NEXT i
 
 	CLOSE #1
-	u73a = 0: IF player = 1 AND side = 2 AND armyloc(1) = 16 THEN u73a = armyloc(1)
+	rescue = 0: IF player = 1 AND side = 2 AND armyloc(1) = 16 THEN rescue = armyloc(1)
 	IF switch = 9 THEN EXIT SUB
 	OPEN "I", 1, "nws.cfg"
-	INPUT #1, myside, noise, difficult, bold, player, turbo!, randbal, history, u8c0
+	INPUT #1, myside, noise, difficult, bold, player, turbo!, randbal, history, tactical
 	CLOSE #1
-	IF player = 1 AND side = 2 AND armyloc(1) = 16 THEN u73a = armyloc(1)
+	IF player = 1 AND side = 2 AND armyloc(1) = 16 THEN rescue = armyloc(1)
 	SCREEN 12: CLS
 	CLOSE #1: CALL europe: CALL clrbot
 	side = a
@@ -1127,11 +1127,11 @@ reopen:
 	COLOR 11: CALL clrbot: PRINT "Saving";
 savit:
 	OPEN "O", 1, "nws" + LTRIM$(STR$(choose)) + ".sav"
-	WRITE #1, u29c$, month, year, usadv, side
+	WRITE #1, scenario$, month, year, usadv, side
 	FOR i = 1 TO 6: WRITE #1, vicflag(i): NEXT i
 	WRITE #1, batwon(1), batwon(2), casualty&(1), casualty&(2)
-	FOR k = 1 TO 7: WRITE #1, u892(k): NEXT k
-	FOR i = 1 TO 50: WRITE #1, armyname$(i), u558(i), armysize(i), armylead(i), armyloc(i), armyexper(i), supply(i), armymove(i)
+	FOR k = 1 TO 7: WRITE #1, attitude(k): NEXT k
+	FOR i = 1 TO 50: WRITE #1, armyname$(i), armynat(i), armysize(i), armylead(i), armyloc(i), armyexper(i), supply(i), armymove(i)
 	NEXT i
 	FOR i = 1 TO cities: WRITE #1, occupied(i), cityp(i), fort(i): PRINT "."; : NEXT i
 	FOR i = 1 TO 2: WRITE #1, cash(i), control(i), income(i), victory(i), capcity(i)
@@ -1142,7 +1142,7 @@ savit:
 	myside = side
 	IF myside < 1 OR myside > 2 THEN myside = 1
 	OPEN "O", 1, "nws.cfg"
-	WRITE #1, myside, noise, difficult, bold, player, turbo!, randbal, history, u8c0, bold
+	WRITE #1, myside, noise, difficult, bold, player, turbo!, randbal, history, tactical, bold
 	CLOSE #1
 	CLS : CALL europe
 
@@ -1152,11 +1152,11 @@ END SELECT
 EXIT SUB
 
 lead:
-	OPEN "I", 1, "lead" + u29c$ + ".dat"
-	FOR i = 1 TO 25: INPUT #1, lname$(i), rating(i): u1da4(i) = 1: NEXT i
-	FOR i = 26 TO 50: INPUT #1, u1da4(i), lname$(i), rating(i): NEXT i
+	OPEN "I", 1, "lead" + scenario$ + ".dat"
+	FOR i = 1 TO 25: INPUT #1, lname$(i), rating(i): homenat(i) = 1: NEXT i
+	FOR i = 26 TO 50: INPUT #1, homenat(i), lname$(i), rating(i): NEXT i
 	CLOSE #1
-	OPEN "I", 1, "euro" + u29c$ + ".map"
+	OPEN "I", 1, "euro" + scenario$ + ".map"
 	FOR i = 1 TO cities
 		INPUT #1, a, city$(i), cityx(i), cityy(i), cityo(i), cityv(i)
 		vptotal = vptotal + cityv(i)
@@ -1334,7 +1334,7 @@ SUB newarmy (who, empty, target, nat)
 	armylead(empty) = rating(empty)
 	armyname$(empty) = lname$(empty): lname$(empty) = ""
 	COLOR 12: CALL clrbot: PRINT "Placing NEW army "; empty; armyname$(empty); " in "; city$(target);
-	IF nat = 0 THEN u558(empty) = cityo(target) ELSE u558(empty) = nat
+	IF nat = 0 THEN armynat(empty) = cityo(target) ELSE armynat(empty) = nat
 	x = 3 * cityv(target) + 25
 	CALL cutoff(who, target, a): IF a < 1 THEN x = x \ 3
 	occupied(target) = empty: armysize(empty) = x
@@ -1397,7 +1397,7 @@ SELECT CASE which
 	CASE IS < 26
 		IF which = 1 THEN PUT (x, y), nap, PSET ELSE PUT (x, y), fren, PSET
 	CASE ELSE
-		SELECT CASE u558(which)
+		SELECT CASE armynat(which)
 			CASE 2
 				PUT (x, y), nat2, PSET
 			CASE 3
@@ -1434,7 +1434,7 @@ SUB recruit (who)
 	IF size < 2 AND i > 50 THEN pct! = .5
 	array(i) = 0
 	IF occupied(i) > 0 AND cityp(i) = who THEN pct! = .6: IF armysize(occupied(i)) > 4000 THEN pct! = 0
-	IF u892(cityo(i)) <= 50 THEN pct! = 0
+	IF attitude(cityo(i)) <= 50 THEN pct! = 0
 	IF who = 1 THEN
 		IF RND < pct! AND cityp(i) = who AND (cityo(i) = who OR cityo(i) > 6) THEN GOSUB addcity: IF size > max - 1 GOTO alldone
 	ELSE
@@ -1716,7 +1716,7 @@ surr:
 		IF supply(active) > 10 THEN supply(active) = 10
 	ELSE
 		IF occupied(16) = 0 THEN
-			n = 16: IF player = 1 AND side = 2 THEN u73a = n
+			n = 16: IF player = 1 AND side = 2 THEN rescue = n
 		ELSE
 			IF n = 0 THEN CALL image2("Napoleon banished to St. Helena", 1): GOTO surr
 		END IF
