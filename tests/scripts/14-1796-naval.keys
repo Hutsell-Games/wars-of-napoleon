@@ -1,0 +1,81 @@
+# Session 14: 1796, one player, the French, Tactical off. The naval rules: building a
+# ship, sailing, naval combat, raiding commerce (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u a t esc
+wait 1
+shot main-menu
+
+# Ships: Build adds a ship to the fleet at Bordeaux; the menu stays open.
+key s
+wait 1
+shot ships
+key b
+wait 3
+shot built
+key s
+wait 2
+shot sail-to
+# Sail to London, where the English fleet is: naval combat, French 5 ships against
+# England's 6. The player chooses Attack.
+key l
+wait 8
+shot naval-combat
+key a
+wait 8
+shot round-1
+key a
+wait 8
+shot round-2
+key a
+wait 8
+shot round-3
+# Then the French fleet retreats. Ships is now "-" for the rest of the turn.
+key r
+wait 5
+shot retreated
+
+# Each turn: end it, wait for the Allies' moves, then Esc to close the messages. Esc
+# also answers a retreat menu (the game then chooses the retreat itself) and matches no
+# item of the main menu.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+
+# The second turn: Ships, Raid sends the fleet to raid Allied commerce.
+key s
+wait 1
+shot ships2
+key r
+wait 8
+shot raid
+key esc
+wait 1
+shot raiding
+
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end

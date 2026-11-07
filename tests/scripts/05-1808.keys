@@ -1,0 +1,93 @@
+# Session 5: 1808, one player, the Allies (the shipped NWS.CFG), Tactical off.
+# The scenario's start and its end (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down down down
+wait 1
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u t esc
+wait 1
+shot main-menu
+
+# The start: the end conditions and the force summary.
+key u e
+wait 1
+shot end-cond
+key esc
+wait 1
+key esc
+wait 1
+key i down down down enter
+wait 1
+shot force-summary
+key space
+wait 1
+
+# The Allies only end their turns. Each turn: end it, wait for the French moves, then
+# spaces to close the messages. At the main menu, and at the menus below that wait for a
+# choice, a space matches no item and is dropped.
+repeat 3
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+end
+
+# The fourth turn: the French win a battle, and the player chooses where the beaten
+# Allied army retreats, Innsbruck or Vienna.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot retreat
+key i
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+repeat 5
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+end
+
+# In the fifth of these turns, November 1809, time runs out and the game offers to end.
+shot time-expired
+key y
+wait 3
+shot battle-summary
+key space
+wait 8
+# The Hall of Fame, then "Game Over" below it.
+shot hall-of-fame
+key space
+wait 5
+shot start-menu
+key q
+wait 3
+shot dos

@@ -1,0 +1,207 @@
+# Session 1: 1796, one player, the French, Tactical off.
+# The whole turn cycle and every menu once (docs\won-source-study.md, section 3.2).
+# The shipped NWS.CFG plays the Allies with Tactical on; the Utility menu changes both.
+seed 1
+pace 1
+
+# The intro (ARCH2.EXE) waits for a key; then the start menu.
+wait 4
+shot intro
+key space
+wait 4
+shot start-menu
+key s
+wait 2
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+shot main-menu
+
+# Utility: swap to the French, Tactical off.
+key u
+wait 1
+shot utility
+key a
+wait 1
+shot french
+key t
+wait 1
+shot tactical-off
+key esc
+wait 1
+
+# Information: each of the six pages.
+key i
+wait 1
+shot inform-menu
+key enter
+wait 1
+shot french-armies
+key space
+key i down enter
+wait 1
+shot allied-armies
+key space
+key i down down enter
+wait 1
+shot cities
+key space
+key i down down down enter
+wait 1
+shot force-summary
+key space
+key i down down down down enter
+# Intelligence shows each army for a second; a key would skip ahead.
+wait 7
+shot intelligence
+key space
+key i down down down down down enter
+wait 1
+shot battles
+key space
+wait 1
+
+# Recruit 1,200 men at Bordeaux.
+key r
+wait 1
+shot recruit
+key enter
+wait 1
+shot recruited
+key esc
+wait 1
+
+# Move Napoleon from Paris to Lyon.
+key m p
+wait 1
+shot move-to
+key enter
+wait 3
+shot moved
+
+# Ships, then back.
+key s
+wait 1
+shot ships
+key esc
+wait 1
+
+# End the turn; the Allies move.
+key e
+wait 1
+shot end-turn
+key y
+wait 30
+shot allies-moved
+key space
+wait 5
+shot invaded
+key space
+wait 5
+shot events
+key space
+wait 5
+shot may-1796
+
+# Turn 2. Commands: fortify Paris, then look at each command's first screen.
+key c f
+wait 1
+shot fortify
+key enter
+wait 3
+shot fortified
+key c j
+wait 1
+shot join
+key esc
+wait 1
+key c s
+wait 2
+shot supply
+key c d
+wait 1
+shot detach
+key esc
+wait 1
+key c r
+wait 1
+shot relieve
+key esc
+wait 1
+key c a
+wait 1
+shot drill
+key esc
+wait 2
+shot drill-esc
+
+# Utility submenus.
+key u n
+wait 1
+shot noise
+key esc
+wait 1
+key u d
+wait 1
+shot display
+key esc
+wait 1
+key u b
+wait 1
+shot balance
+key esc
+wait 1
+key u e
+wait 1
+shot end-cond
+key esc
+wait 1
+key u r
+wait 1
+shot random-events
+key esc
+wait 1
+key u v
+wait 1
+shot vary-start
+key esc
+wait 1
+key u h
+wait 1
+shot history
+key esc
+wait 1
+key u a
+wait 1
+shot aggress
+key esc
+wait 1
+shot utility-done
+
+# Files: save the game.
+key f
+wait 1
+shot files
+key s
+wait 1
+shot save-slots
+key enter
+wait 3
+shot saved
+
+# End turn 2.
+key e y
+wait 30
+shot allies-moved2
+key space
+wait 5
+shot events2a
+key space
+wait 5
+shot events2b
+key space
+wait 5
+shot events2c

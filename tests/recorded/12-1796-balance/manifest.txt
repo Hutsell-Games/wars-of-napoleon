@@ -1,0 +1,23 @@
+# 12-1796-balance: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 6cb9b23d6b3c018d921cc8eddf0398728f66df8cc90afd860d9e0252a07deede
+b54dcb90bb48b7d30a61af458e702541b79a6c1b70b5fc2dc479190ce8f0c450  files/NWS.CFG
+ece652e16acd90f7f0d4ce0934c9add3165cfbbebc84d7d2471993e9803af765  files/NWS9.SAV
+ace031d21d856435d74f56d2563e6bcb76df3ee8f3f1ab1f9a030bee79d32492  shots/01-start-year.png
+3c1e7087f02347dce750d57883b25f35d5c7c50ba7b73151ef4ac4414aac6398  shots/02-objective.png
+198455d5809f6ebfb1c1df656863095d872abe3c6925505546c14a64bfd91013  shots/03-balance-menu.png
+33fe3c3058a9c58b84d6664844defc6618d28662a7d08444c0a5b41c3edc2a59  shots/04-french-plus-plus.png
+87ce152443bddaaaf7f1f32fb911e983dd7c95ea5fce8a7a519b3a0644fc5ecb  shots/05-recruit-funds.png
+e0a5f5b778fbc68cc077e0417fc467b7f195d573b78be108b3d12574fb099d64  shots/06-turn-end.png
+d146f53941daedefce60579142267c26c778d34ad17f3744c597eb8165bf2bf4  shots/07-next-turn.png
+a48fae298b281f0c08b3f3d7f6fcf812972ce23f88c45341d1023d787e3085a0  shots/08-turn-end.png
+b807870b460df8e210e9be8b710605f53bb957a803be075882e9a0aff6db58d5  shots/09-next-turn.png
+ac078f5e201072dcb46424dcbfb09210caa8e14b79e0818f0a9dd662cf5dbed5  shots/10-start-menu.png
+3c1e7087f02347dce750d57883b25f35d5c7c50ba7b73151ef4ac4414aac6398  shots/11-objective2.png
+4762df2ec0fa50816c6ca03580c2b84fa92da153ee005427ec83a55742091fcb  shots/12-balance-menu2.png
+98de73a731fd67da0472a2eb71860daf53a1d46e23fa808bf0b76629d1784db4  shots/13-allied-plus-plus.png
+b3c778eca6df7b464d3d858ca9975db5ff6dc76ecdc8cde850c38a5bc4fcfe7e  shots/14-recruit-funds2.png
+b303bd688c9326bbff1fe11459318c88df64a9911e3af09be091e74e9106fefe  shots/15-turn-end.png
+ee4255b3ba262f2eae1b338bed4733744526d0a164f84e9fa8cb427809ab9a12  shots/16-next-turn.png
+2f110ef4ae5e499a45f4bb351a5a3178e527dff18c057869876bc42e1b77c416  shots/17-turn-end.png
+e2983baa318ffd1f24ae1f462261382351ed3103c9bd73358c2b9364a37aa7f9  shots/18-next-turn.png

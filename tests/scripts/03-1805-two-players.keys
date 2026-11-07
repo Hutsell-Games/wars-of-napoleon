@@ -1,0 +1,114 @@
+# Session 3: 1805, two players, Tactical off.
+# Both sides' screens, with no computer moves (docs\won-source-study.md, section 3.2).
+# The shipped NWS.CFG plays the Allies; the Utility menu swaps to the French first, so that
+# the French play first in each month, then sets two players and Tactical off.
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down
+wait 1
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+shot main-menu
+
+key u a 1 t
+wait 1
+shot utility
+key esc
+wait 1
+shot french-turn
+key m
+wait 1
+shot french-moves
+key s
+wait 1
+shot french-move-to
+key enter
+wait 3
+shot french-moved
+
+# End the French turn; the game blanks the map and hands over to the Allies.
+key e y
+wait 3
+shot allies-player-turn
+key space
+wait 3
+shot allies-menu
+
+# The Allies recruit, then move.
+key r
+wait 1
+shot allies-recruit
+key enter
+wait 1
+shot allies-recruited
+key esc
+wait 1
+key m
+wait 1
+shot allies-moves
+key i
+wait 1
+shot allies-move-to
+key enter
+wait 3
+shot allies-moved
+
+# End the Allies' turn: both sides' moves are carried out, then the month's events.
+key e y
+wait 30
+shot month-end
+key space
+wait 5
+shot events-a
+key space
+wait 5
+shot retreat
+# Two players: the French player chooses where Bernadotte retreats.
+key t
+wait 5
+shot end-date
+key space
+wait 5
+shot press-a-key
+key space
+wait 5
+shot french-player-turn
+key space
+wait 5
+shot french-menu-july
+
+# July: the French end the turn at once. The Allies look at their armies and the
+# two-player Utility menu (no Aggress item), then end the turn.
+key e y
+wait 3
+shot allies-player-turn-july
+key space
+wait 3
+key i down enter
+wait 1
+shot allied-armies
+key space
+wait 1
+key u
+wait 1
+shot allies-utility
+key esc
+wait 1
+key e y
+wait 30
+shot month-end-july
+repeat 4
+key space
+wait 5
+end
+shot september

@@ -1,0 +1,54 @@
+# Session 6: 1812, one player, the Allies (the shipped NWS.CFG), Tactical off.
+# The scenario's start: its objective, end conditions and forces, then three turns
+# (docs\won-source-study.md, section 3.2). Sessions 4, 5 and 8 play their scenarios to
+# the end; this one stops after three turns.
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down down down down
+wait 1
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u t esc
+wait 1
+shot main-menu
+key u e
+wait 1
+shot end-cond
+key esc
+wait 1
+key esc
+wait 1
+key i down down down enter
+wait 1
+shot force-summary
+key space
+wait 1
+key i down enter
+wait 1
+shot allied-armies
+key space
+wait 1
+
+# Each turn: end it, wait for the computer's moves, then Esc to close the messages.
+# Esc also answers a retreat menu (the game then chooses the retreat itself) and matches
+# no item of the main menu.
+repeat 3
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end

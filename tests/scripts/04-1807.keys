@@ -1,0 +1,107 @@
+# Session 4: 1807 (the scenario starts in October 1806), one player, the Allies (the shipped
+# NWS.CFG), Tactical off. The scenario's start and its end (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down down
+wait 1
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u t esc
+wait 1
+shot main-menu
+
+# The start: the end conditions and the force summary.
+key u e
+wait 1
+shot end-cond
+key esc
+wait 1
+key esc
+wait 1
+key i down down down enter
+wait 1
+shot force-summary
+key space
+wait 1
+
+# The Allies only end their turns. Each turn: end it, wait for the French moves, then
+# spaces to close the messages. At the main menu, and at the menus below that wait for a
+# choice, a space matches no item and is dropped.
+repeat 6
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+end
+
+# September 1807. Napoleon beats Hohenlohe at Minsk, and the player chooses where
+# Hohenlohe retreats.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot retreat
+key f
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+# Friedland, the Allies' objective, falls, and the game offers to end. The player
+# overrides, to play on to the time limit.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot end-game
+key n
+wait 3
+shot override
+
+# Four more turns. In the last, July 1808, time runs out and the game offers to end
+# again. France has 620 VP, a new high score; the computer's entry is named COMPUTER.
+repeat 4
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+end
+key y
+wait 3
+shot battle-summary
+key space
+wait 8
+# The Hall of Fame, then "Game Over" below it.
+shot hall-of-fame
+key space
+wait 5
+shot start-menu
+key q
+wait 3
+shot dos

@@ -1,0 +1,161 @@
+# Session 10: 1805, one player, the Allies, Tactical off. Random events and the varied
+# start (docs\won-source-study.md, section 3.2), in two games:
+# - the first sets random events to Neutral and plays three turns;
+# - Files, New Game then starts 1805 again with Vary Start.
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down
+wait 1
+key enter
+wait 3
+shot objective
+key space
+wait 1
+
+# Utility: Tactical off, then random events Neutral. That menu waits for a key after it.
+key u t
+wait 1
+key r
+wait 1
+shot random-events
+key n
+wait 2
+shot neutral
+key space
+wait 3
+key esc
+wait 1
+shot main-menu
+
+# The Allies only end their turns. Each turn: end it, wait for the French moves, then
+# spaces to close the messages. At the main menu, and at the menus below that wait for a
+# choice, a space matches no item and is dropped.
+
+# The first turn: Bernadotte beats Alexander in Innsbruck, and the player chooses where
+# Alexander retreats.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot retreat
+key v
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+# The third turn: the French beat three Allied armies in Vienna in turn, and each
+# retreats to Austerlitz.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot retreat2
+key a
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot retreat3
+key a
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot retreat4
+key a
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+# The second game: Files, New Game (which also saves NWS.CFG), 1805 again, and Vary
+# Start, which reloads the scenario with random changes.
+key f
+wait 1
+shot files
+key n
+wait 5
+shot start-menu
+key s
+wait 2
+key down
+wait 1
+key enter
+wait 3
+shot objective2
+key space
+wait 1
+key i down down down enter
+wait 1
+shot force-summary
+key space
+wait 1
+key u v
+wait 3
+shot varied
+key esc
+wait 1
+key i down down down enter
+wait 1
+shot varied-forces
+key space
+wait 1
+key i enter
+wait 1
+shot varied-armies
+key space
+wait 1
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot next-turn
+
+# The second turn: Alexander is beaten in Innsbruck again and retreats to Vienna. The
+# session ends there.
+key e y
+wait 30
+shot turn-end
+repeat 16
+key space
+wait 2
+end
+shot retreat5
+key v
+wait 3
+repeat 16
+key space
+wait 2
+end
+shot next-turn

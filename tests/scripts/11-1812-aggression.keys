@@ -1,0 +1,69 @@
+# Session 11: 1812, one player, the French, Tactical off. The computer plays the Allies,
+# first at aggression PASSIVE, then RECKLESS (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down down down down
+wait 1
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+# Utility: swap to the French. Item 1 is now FRENCH, so "a" reaches Aggress, which steps
+# to the next level each time: from the shipped 3 (NORMAL) to 4, 5 and 0 (PASSIVE).
+key u a
+wait 1
+shot french
+key a
+wait 1
+key a
+wait 1
+key a
+wait 1
+shot passive
+key t esc
+wait 1
+shot main-menu
+
+# Each turn: end it, wait for the computer's moves, then Esc to close the messages.
+# Esc also answers a retreat menu (the game then chooses the retreat itself) and matches
+# no item of the main menu.
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end
+
+# Aggress five more times: 1 to 5 (RECKLESS).
+key u
+wait 1
+repeat 5
+key a
+wait 1
+end
+shot reckless
+key esc
+wait 1
+
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end

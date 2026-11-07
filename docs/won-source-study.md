@@ -1,0 +1,779 @@
+# 45. Recovering the source of Wars of Napoleon's strategic game: the plan
+
+> **Moved from QB64Rust on 2026-11-06.** This study was `study\45-wars-of-napoleon-strategic-source.md` in QB64Rust
+> (`davidshq/QB64Rust`), whose history holds its earlier versions. Paths such as `DECISIONS.md`,
+> `PORTING-PDS.md`, `SOMEDAY.md`, `DIVERGENCES-QB45.md`, `CLAUDE.md`, `verification\...` and
+> `tools\qb45\...` are QB64Rust's. `tools\recover\` is this repo's. Any other `tools\` path is in the
+> scratch folder `..\won-hutsellgames\`, named before section 1.
+> The decisions it led to were rows of QB64Rust's `DECISIONS.md`. They are copied in the
+> section "Decisions recorded in QB64Rust", and the study's `SOMEDAY.md` row in "Someday".
+
+> A bare `study\44`, `study\45` or `study\46` names one of the three moved studies:
+>
+> - `study\44` is Civil War Battleset's `docs\port-study.md` (`Hutsell-Games/civil-war-battleset`, branch
+>   `qb64rust`);
+> - `study\45` is Wars of Napoleon's `docs\won-source-study.md` (`Hutsell-Games/wars-of-napoleon`, branch
+>   `won-source`);
+> - `study\46` is Civil War Strategy's `docs\port-study.md` (`Hutsell-Games/civil-war-strategy`, branch
+>   `qb64rust`).
+
+Written 2026-11-06, for the user's review. Section 6 holds six decisions, each with the panel's view. The user
+asked the panel to decide them the same day. Section 7 records what it decided, which changes D2, D4 and D5
+(`DECISIONS.md` 2026-11-06). The study stays open until the source is recovered (`CLAUDE.md` working rule 7).
+
+The game is W.R. Hutsell's *Wars of Napoleon* (`Hutsell-Games/wars-of-napoleon`), cloned beside this repo as
+`..\wars-of-napoleon`. It has two programs:
+
+- the **strategic game**, `WON.EXE`: the map of Europe, armies, money, ships and turns;
+- the **tactical game**, `NAPOLEON.EXE`: one battle, started by `WON.EXE` through the files `BATTLE.$$$` and
+  `OUTCOME.&&&`.
+
+The repo has the tactical game's source (`NAPOLEON.BAS`, `NAP1A.BAS`, `NAP1C.BAS`, `NAP10.BI`). It has no source
+for `WON.EXE`. This plan is for getting that source back.
+
+The scratch work of this study is in `..\won-hutsellgames\`, outside every repo:
+
+- `won.zip`, as downloaded, and `unzipped\`;
+- `work\`, holding the unpacked `WON.EXE` and the compiled objects;
+- `tools\`, holding the scripts that made the measurements below. Copies of the five that are kept are in the
+  game's branch `won-source`, under `tools\recover\` (section 8).
+
+## 1. What we have
+
+### 1.1 The download from hutsellgames.com
+
+The game's page (`https://hutsellgames.com/wars-of-napoleon/`) offers one file,
+`wp-content/uploads/2021/07/won.zip` (522,444 bytes, 58 files, dated 1996 to 1998). Compared with the repo:
+
+- **The programs are the same.** `WON.EXE`, `NAPOLEON.EXE`, `VIC.EXE`, `ARCH2.EXE`, `NAPIC.EXE` and the `.EGA` and
+  `.VGA` pictures are byte for byte equal in both.
+- **Seven of the repo's files are damaged, and the zip has good copies of all seven.** `GO.BAT`, `REGISTER.DOC`,
+  `EURO1796.MAP`, `EURO1812.MAP` and `EURO1813.MAP` hold Windows search-suggestion JSON. `EURO1807.MAP` holds a
+  bitmap and `EURO1808.MAP` binary junk. They look like files restored from a damaged disk. Without the five maps,
+  five of the seven scenarios cannot start.
+- **Two files are only in the zip.** `FILE_ID.DIZ` is the shareware description. `NWS.LNK` is the linker's response
+  file for the strategic game (section 1.2).
+- **Most text files differ only in line ends.** The repo's `.gitattributes` has `* text=auto`, so git stores them
+  with LF. `BATTLE.$$$` and `OUTCOME.&&&` really differ; the game rewrites them for every battle.
+- **Only in the repo:** the tactical source, `TACTICAL.EXE`, `NAPOLEON.TXT`, `NAPOLEON.PAG`, `NAPOLEON.MAK`,
+  `~QBLNK.TMP`, `LICENSE` and `README.md`.
+
+A web search found no other copy of the strategic source. The repo's other branches have none either:
+`canonical-source` and `minimal-changes` hold only the tactical source. Section 1.5 covers `cursor-assisted`.
+
+### 1.2 How WON.EXE was built
+
+`NWS.LNK` names the lost modules and the libraries:
+
+```
+nws+nws2+nwsmenu+
+c:\pds71\noisam+c:\pds71\noems+c:\pds71\nocga+
+c:\pds71\nocom+c:\pds71\noherc+c:\pds71\nooga /E /NOE /PACKCODE
+nws
+nul
+c:\pds71\bcl71enr.lib c:\pds71\qbx.lib;
+```
+
+It is Civil War Strategy's `CWS.LNK` with `cws` changed to `nws`, and without `noega`. Civil War Strategy's
+`CWSMAK.BTM` shows the rest of that pipeline: `bc /o /e` for each module (`/o` alone for the menu module), `link
+@cws.lnk`, then the LZEXE packer.
+
+`WON.EXE` matches that pipeline:
+
+- **It is packed twice**, by LINK's EXEPACK (the `/E` above) and then by LZEXE 0.91 (the mark `LZ91` at offset
+  0x1C), so its text cannot be read as it is. `tools\unlzexe91.py` undoes both, from 114,795 bytes to 210,976.
+- **The unpacked program names its three modules** at the start of their code: `WON` (46,176 bytes of code),
+  `WON2` (46,656) and `WONMENU` (about 19,000). So the sources were `WON.BAS`, `WON2.BAS` and `WONMENU.BAS` when
+  it was built; `NWS.LNK` is an older name for the same build.
+- **Its text says** "Wars of Napoleon / STRATEGY GAME / (c) 1997 W. R. Hutsell / v1.16" and "This is your
+  registered copy of the game", so every scenario and the linked tactical game are enabled.
+- **It runs other programs:** `NAPOLEON.EXE` for a battle, `VIC.EXE` at the end, `ARCH2.EXE` and `rrs.exe`, and
+  `copy nws.his oldhist.ory`. It reads `gamedata.ini`, `nws*.ini`, `nws.cfg`, `mtn.vga`, `napicon.vga` and `*.sav`.
+
+The first version of the unpacker undid only LZEXE and found no relocations; section 8 has how that was fixed.
+The unpacked file has not yet been run.
+
+### 1.3 The strategic game is a fork of Civil War Strategy
+
+Hutsell's Civil War Strategy has its original source in `..\civil-war-strategy`, at commit `5d75791` ("Initial
+commit of Hutsell's source code"): `CWSTRAT.BAS`, `CWSTRAT2.BAS`, `CWSMENU.BAS`, `CWS14.BI`, version 1.57 of 1998.
+That commit also has the three `.OBJ` files Hutsell compiled. (The repo's working tree is the QB64 port, with the
+modules turned into `.BM` files. This study did not touch it; it read the commit with `git archive`.)
+
+Three measurements show how close the two games are:
+
+- **Text.** Of 395 strings of eight or more letters in `WON.EXE`, 169 are in Civil War Strategy's source word for
+  word ("No eligible armies in same city to combine", "has drilled to reach experience level"). Only 11 are in the
+  tactical source.
+- **Code.** `tools\normalign.py` turns machine code into instruction shapes: each instruction's name and
+  registers, with every number replaced by `N`. That removes the addresses the linker fills in. It then aligns
+  the shapes and counts instructions that match in runs of four or more:
+
+  | WON.EXE module | Compared with | Instructions that align |
+  |---|---|---|
+  | `WON` (16,551 instructions) | `CWSTRAT` | 71% |
+  | `WON2` (17,108) | `CWSTRAT2` | 42% |
+  | `WONMENU` (7,759) | `CWSMENU` | 56% |
+
+  So between half and two thirds of the strategic game is Civil War Strategy's code. The rest is new or
+  changed: the scenarios, nationalities and cohesion, Napoleon himself, the link to the tactical game, the
+  naval rules.
+- **Procedures.** Civil War Strategy has 76 SUBs and FUNCTIONs (28, 42 and 6 per module). The strategic game is
+  probably of the same order, 80 to 110.
+
+### 1.4 The compiler we have is the compiler that built it
+
+PDS 7.1 is installed for `tools\qb45\qb45.py` (`..\pds71\install`, with `BCL71ENR.LIB`, the library `NWS.LNK`
+names). `tools\calibrate_bc.py` compiled Civil War Strategy's three modules with BC 7.10 under DOSBox, using
+`CWSMAK.BTM`'s switches, and compared the results with Hutsell's `.OBJ` files:
+
+- **The layout is the same.** Every segment has the same size except code and string constants: `COMMON` 2,238
+  bytes and `BC_DATA` 3,136 bytes in `CWSMENU`, for example.
+- **The code nearly matches byte for byte.** After alignment, 99.5% of `CWSMENU`'s code bytes and 98.9% of
+  `CWSTRAT2`'s are equal. The rest are small runs: string offsets, and a few edits between the source at that
+  commit and the one Hutsell compiled. As instruction shapes, `CWSMENU` is 7,132 of 7,160, 100% in runs.
+
+BC 7.1 therefore turns a given source into the same code every time, and we can check a guessed source by
+compiling it.
+
+### 1.5 The earlier attempt
+
+The branch `cursor-assisted` (11 commits, last 2025-12-26, "What a freaking mess") rebuilt the strategic game as a
+new design: about 60 `.bas` files under `src\`, a single program joining the strategic and tactical games, and
+plans such as `docs\FULL_RECREATION_PLAN.md`. Its analysis listed which features to take from Civil War Strategy
+and World War 2 and which to write anew. It never compared anything with `WON.EXE`. So it had no way to tell a
+right guess from a wrong one: the computer player, the combat sums and the random events are not visible from
+outside. This plan uses `WON.EXE` itself as the check.
+
+### 1.6 Other sources of facts
+
+- **`WON.DOC`**, the manual (56 KB): sequence of play, every menu, combat, cohesion, income, and in section 7 the
+  formats of `NWSxxxx.INI` (a scenario), `LEADxxxx.DAT` (commanders) and `NWS.CFG`.
+- **The data files**, which the recovered code must read: `GAMEDATA.INI`, seven scenarios each with a map,
+  commanders and an `.INI`, `NWS9.SAV`, `HISCORE.NWS`.
+- **The tactical source**, which also shows the interface files and the menu code `NAP1C.BAS` ("CIVAR MENU 2.2").
+
+## 2. The approach: recompile until it matches
+
+Rebuild the source by editing BASIC until BC 7.1 compiles it into the code of `WON.EXE`. This is "matching
+decompilation", as done for old console games. Here it is easier than usual, for three reasons:
+
+- we have the exact compiler, and it is deterministic (section 1.4). The runtime library we have is not quite
+  Hutsell's (section 8), which matters only for the exact match below;
+- BC's code follows fixed patterns, and every runtime call goes to a named routine of `BCL71ENR.LIB`;
+- more than half the code already exists as Civil War Strategy's source (section 1.3).
+
+A procedure is done at one of two levels:
+
+- **Shape match:** its compiled instruction shapes equal those in `WON.EXE`. The logic is then the same: every
+  operator, call and jump, and every constant held in an instruction. Strings and floating-point constants are
+  not covered, because the code reaches them by address; the panel closed that gap (section 7, D2).
+- **Exact match:** the three modules, linked with `NWS.LNK`, give a program equal to the unpacked `WON.EXE`
+  byte for byte. That also fixes the order of variables, the string constants and the `COMMON` layout. It needs
+  Hutsell's runtime library, which has to be rebuilt first (section 8).
+
+The goal is the exact match for the whole program. A procedure that only reaches the shape match is listed with
+the reason.
+
+**Alternatives, and why not:**
+
+- **Rewrite from the manual and from playing.** That is what `cursor-assisted` did. Playing shows screens, not
+  the sums behind them, and nothing says when the rewrite is right.
+- **Translate the disassembly to BASIC by hand, without compiling it.** It reads the same code, but leaves the
+  result unchecked. Each mistake would show only in play, if at all.
+- **Run `WON.EXE` in an emulator inside a QB64 program.** That gives a playable game but no source, which is
+  what the user asked for.
+
+## 3. Where playing comes in
+
+Playing does not reveal formulas; the code does. Playing `WON.EXE` serves three purposes:
+
+1. **A map of the game.** Which screens, menus and messages exist, and in what order. This guides the reading of
+   the new code (section 1.3), the part with no Civil War Strategy counterpart.
+2. **Reference recordings.** For each session: the keys pressed, a screenshot after each screen, and the files
+   the game writes (`*.SAV`, `NWS.HIS`, `BATTLE.$$$`, `OUTCOME.&&&`, `HISCORE.NWS`). The recovered source, built
+   with PDS 7.1, must play these the same way. Later the QB64Rust build must too, as in the World War 2 port.
+3. **Paths that are rare.** Random events, naval invasions, commerce raids, end conditions and Napoleon's exile
+   need games set up to reach them. Recordings that reach them become the tests that cover them.
+
+### 3.1 The harness
+
+- **DOSBox 0.74-3 cannot type keys for us.** DOSBox-X and DOSBox Staging can: the `AUTOTYPE` command in the
+  `[autoexec]` section types a list of keys with set delays. Either is a new program on this machine (decision
+  D5).
+- **Hidden runs.** DOSBox runs with SDL's dummy video driver, as `qb45.py` does, so no window shows. Step 2 first
+  checks that screenshots are still captured that way. Inside DOSBox, the programs the game runs (`NAPOLEON.EXE`,
+  `VIC.EXE`, `copy`) are DOS programs, so they open no Windows console (`CLAUDE.md` working rule 6).
+- **A fresh folder for each run,** copied from the zip's files, so that one run's saves never reach the next.
+- **The same random numbers each time.** The game seeds them with `RANDOMIZE TIMER`, so two runs differ. Step 2
+  makes `WONSEED.EXE`: the unpacked `WON.EXE` with the one call to the seeding routine changed to pass a fixed
+  value. The original stays as it is. QB64's `RND` uses QuickBASIC's sequence; whether its `RANDOMIZE n` seeds it
+  the same way as PDS is measured with `qb45.py --compiler pds71` before any comparison relies on it.
+- **Claude plays by script.** Each step of a session adds keys to the script, runs it from the start, and reads
+  the last screenshot. With a fixed seed, every run of the same keys gives the same game.
+
+### 3.2 The sessions
+
+About fifteen sessions, each to the end of the game or as far as its purpose needs:
+
+| # | Scenario | Setup | What it is for |
+|---|---|---|---|
+| 1 | 1796 | 1 player, French, defaults | The whole turn cycle, every menu once |
+| 2 | 1796 | 1 player, Allies | The computer playing France |
+| 3 | 1805 | 2 players | Both sides' screens; no computer moves |
+| 4–8 | 1807, 1808, 1812, 1813, 1815 | 1 player, defaults | Each scenario's start and end conditions |
+| 9 | 1805 | tactical game on | The battle files, `NAPOLEON.EXE` and the result read back |
+| 10 | 1805 | random events on, vary start on | Events and the varied start |
+| 11 | 1812 | aggression Passive, then Reckless | The computer player's settings |
+| 12 | 1796 | balance French ++, then Allied ++ | Play balance |
+| 13 | any | save, quit, load | `*.SAV` and the autosave |
+| 14 | any | ships, invasions, raids | The naval rules |
+| 15 | any | play to defeat and to victory | `VIC.EXE`, Napoleon's exile, high scores |
+
+Each session's keys and recordings are kept, as `tests\data\` keeps them in the World War 2 port.
+
+## 4. The steps
+
+Steps 1 and 2 can run in either order. Each step ends with its result written down where decision D3 puts the
+work.
+
+1. **Tools, and a check that they work.**
+   - Fix the unpacker's relocations. Unpack `CWS.EXE` (also LZEXE 0.91) with it.
+   - Link Hutsell's three Civil War Strategy objects with `CWS.LNK` and compare the result with the unpacked
+     `CWS.EXE`. Byte for byte equal shows that the link and the unpacker are right. If not, find why before going
+     on.
+   - Compile `NAPOLEON.BAS` with `NAPOLEON.MAK`'s modules and compare it with `NAPOLEON.EXE` (also LZEXE 0.91). This
+     says whether the tactical source in the repo is the version that shipped.
+   - **A map of the runtime.** Find each routine of `BCL71ENR.LIB` and `QBX.LIB` in `WON.EXE`, so that every call
+     in the game's code gets a name, such as `B$PESD` or `B$OPEN`. Hutsell's library is not quite ours (section 8),
+     so some routines may not be found byte for byte; those are matched by shape.
+   - **A procedure splitter** that finds where each SUB and FUNCTION starts and ends in a module's code, from BC's
+     entry and exit sequences.
+   - **The compare tool:** compile a module under DOSBox, then report each procedure as exact, shape, or the first
+     instruction that differs.
+2. **The harness and the sessions** of section 3, with `WONSEED.EXE`.
+3. **Pair the procedures.** Match each procedure of `WON.EXE` with one of Civil War Strategy, by its runtime calls,
+   strings and shape. Output: a table with one row per procedure (same, changed or new) and the size of each
+   change. Work out the `COMMON SHARED` layout from the code and from `CWS14.BI`, giving the `.BI` file.
+4. **Write the source,** module by module, smallest first: `WONMENU`, then `WON2`, then `WON`.
+   - Start from the Civil War Strategy module, renamed. Edit each paired procedure until it matches.
+   - Write each new procedure from its disassembly, read with the runtime map. BC's patterns make most statements
+     plain: a call to `B$PESD` after loading a string is a `PRINT`.
+   - Compile after each procedure. The compare tool shows the first difference, so each round fixes one thing.
+5. **The exact match.** Order variables and constants until the linked program equals the unpacked `WON.EXE`.
+   Procedures that stay at the shape match are listed with the reason.
+6. **Play it.** Build the recovered source with PDS 7.1, seed it as in step 2, and replay every session. The
+   screens and files must equal the recordings. The build is not packed with LZEXE: the comparison is with the
+   unpacked program.
+7. **The port to QB64Rust** is a separate plan, in the form of `study\44` and `docs\PORTING-PDS.md`. It covers
+   both programs, the battle files between them, and `SHELL`, which needs the care of `CLAUDE.md` working rule 6.
+
+**Effort, in Claude's time.** Steps 1 and 2: about one session each. Step 3: part of a session. Steps 4 and 5 are
+the bulk: each paired procedure takes a few compile rounds, and each new one more. Roughly half the code is new
+(section 1.3), so steps 4 and 5 take several sessions. What remains costly is not Claude's time:
+
+- **Machine time:** each compile of a module under DOSBox. The three Civil War Strategy modules compiled within
+  one short DOSBox run, so this is small.
+- **The user's time:** reading this plan, the procedure table of step 3, and the result.
+- **New programs on this machine:** DOSBox-X or DOSBox Staging (D5), and the scratch `capstone` disassembler,
+  installed only in `..\won-hutsellgames\venv`.
+
+## 5. Risks
+
+- **The switches may differ.** `WON.EXE` may have been compiled with other switches than `CWSMAK.BTM`'s. Each
+  switch leaves marks in the code (`/E` keeps line tables for `RESUME`, `/D` adds checks), so step 1 reads them
+  from the binary before step 4 starts.
+- **Civil War Strategy 1.57 is a year newer than the fork.** Some of its code changed after Wars of Napoleon was
+  taken from it. Matching handles this: such a procedure is "changed", and its edits are undone.
+- **Names and comments are lost.** The binary keeps neither. Paired procedures take Civil War Strategy's names.
+  New ones get names chosen to fit that style (D6). Comments are lost for good.
+- **A procedure may never match exactly.** BC's choice of code can depend on the order of earlier statements or
+  on spare temporaries. The shape match is the fallback, and it still proves the logic.
+- **Playing and comparing depend on the fixed seed.** If patching the seed changes anything else, the recordings
+  are wrong. The patch is one call, and the patched program is compared with the original apart from that call.
+
+## 6. Decisions for the user
+
+The panel: a pragmatic engineer, a QB64 engineer, a compiler engineer, a Rust engineer, a test engineer, and a
+**reverse engineer**. The reverse engineer is added because the core of this work is reading a packed DOS binary
+and matching compiler output, which none of the other roles does day to day.
+
+**D1. The approach: recompile until it matches (section 2), or rewrite from the manual and from play?**
+Recommended: recompile until it matches.
+- *Pragmatic:* the measured overlap with Civil War Strategy is large, and every step has a yes or no answer. The
+  earlier rewrite shows the cost of guessing.
+- *Compiler:* the CWS calibration is the deciding fact. A deterministic compiler and its exact library turn
+  decompilation into a search with a test.
+- *Reverse engineer:* this is the most reliable way known for compiled BASIC and C of that era. Its risks are in
+  section 5, and none is fatal.
+- *Test:* playing alone can never show the computer player's rules are right; matching shows it for every branch.
+- No one disagreed.
+
+**D2. The target: the exact match of the whole program, or the shape match per procedure?**
+Recommended: aim for the exact match, and accept the shape match with a stated reason where the exact one is not
+reached.
+- *Compiler:* the shape match already proves the logic. The exact match adds variable order and string offsets,
+  which matter only for proving the whole.
+- *Pragmatic:* the exact match is a single clear "done". But a few procedures that refuse it should not block the
+  port.
+- *QB64 engineer:* the port needs correct logic, not byte order. The shape match is enough for the port.
+
+**D3. Where the work lives.**
+Recommended:
+- a branch `won-source` of `wars-of-napoleon`, made from `main`, holding `WON.BAS`, `WON2.BAS`, `WONMENU.BAS`, the
+  `.BI` file, the build files, and the tools under `tools\recover\`;
+- the recordings under `tests\data\`;
+- a `docs\recovery.md` with the procedure table and the status of each procedure;
+- `..\won-hutsellgames\` removed when the work moves.
+
+The QB64Rust repo keeps only this study and what the port later finds.
+- *Pragmatic:* the recovered source belongs with the game, like the other ports.
+- *Rust engineer:* nothing of this belongs in QB64Rust's crates or `tools\`. These are one-game tools in Python.
+- *Test:* the recordings go with the source they test.
+
+**D4. Repair `main` of `wars-of-napoleon`?** Its `README.md` says the branch holds the original source and
+"should not be edited". Seven of its files are damaged (section 1.1).
+Recommended: replace the seven files with the zip's copies, and add `NWS.LNK` and `FILE_ID.DIZ`, in one commit
+that says where they came from. Also mark the data files binary in `.gitattributes` (`*.MAP`, `*.DAT`, `*.INI`,
+`*.SAV`, `*.$$$`, `*.&&&`), so that git keeps their CRLF line ends as the game wrote them.
+- *Pragmatic:* the files are restored, not edited. Without the maps, five scenarios cannot start, and no test can
+  be recorded.
+- *QB64 engineer:* keeping CRLF is right for an archive. Whether the old programs would also read the LF copies
+  with `INPUT #` has not been measured, and with the files restored it need not be.
+- *Test:* the byte comparison of section 1.1 is the evidence; the commit message should name it.
+- Another choice, if `main` must stay untouched: do the repair on `won-source` only.
+
+**D5. Which DOS emulator for playing?** DOSBox 0.74-3, which is installed, cannot type keys.
+Recommended: DOSBox-X, installed beside DOSBox 0.74-3, used only by the harness, always hidden.
+- *Reverse engineer:* DOSBox-X also has a debugger with memory dumps and breakpoints. That helps check a
+  recovered procedure against the original while it runs.
+- *Pragmatic:* DOSBox Staging would also do; DOSBox-X is chosen for the debugger.
+- *Test:* the emulator's version is recorded with the recordings, so they can be made again.
+
+**D6. Names in the recovered source.** Paired procedures keep Civil War Strategy's names. For new procedures and
+variables:
+Recommended: short names in Hutsell's style (as `CWSTRAT.BAS` and `NAPOLEON.BAS` have), chosen to say what each
+thing is. Renaming for clarity is a later refactor.
+- *QB64 engineer:* the recovered source should read like Hutsell's other games, so the ports and any later
+  refactor treat all three alike.
+- *Pragmatic:* `docs\PORTING-PDS.md` section 0 says a port is not a refactor. The same holds for recovery.
+
+## 7. The panel's decision (2026-11-06)
+
+The user asked the panel to decide how to proceed. It met with the six roles of section 6. It kept D1, D3 and D6
+as recommended, and changed D2, D4 and D5.
+
+**D1, the approach: recompile until it matches.** Kept, with one checkpoint. After step 3, the procedure table
+shows how much code is new. If more than about 60% of the program has no counterpart in Civil War Strategy, or the
+compiler switches cannot be pinned down in step 1, the panel meets again before step 4. *Pragmatic:* the
+measurements are strong, but they are averages over modules; the table is the first count per procedure.
+
+**D2, the target: changed.** The test engineer found a gap in the shape match. It masks every number that is an
+address, and BC reads string literals and floating-point constants from the module's constant segment by
+address. So a wrong string, or `1.5` written for `1.25`, would still pass. The target is now, per module:
+
+- the instruction shapes equal those of `WON.EXE`, as before; and
+- the module's constant segment (`BC_CN`: strings and floating-point constants, in source order) equals the bytes
+  of that segment in `WON.EXE`.
+
+Together these prove the logic and every literal. The byte-for-byte match of the whole linked program is still
+pursued, after every module meets the target, but it does not hold up the port. *Compiler engineer:* `BC_CN` is
+laid out in order of first use, so matching it also checks the order of statements that the shapes alone might
+let slip. *Reverse engineer:* the constant segment of each module is easy to find in the unpacked program once
+the link check of step 1 gives the segment layout.
+
+**D3, where the work lives: kept.** A branch `won-source` of `wars-of-napoleon`, made from `main`. The tools go
+under `tools\recover\`, the recordings under `tests\data\`, the procedure table in `docs\recovery.md`. Claude
+creates the branch and the files; the user stages and commits them (`CLAUDE.md` human rule 1).
+
+**D4, the damaged files: changed.** `main` stays untouched. Its `README.md` says that branch "should not be
+edited". That is the user's own rule, and the panel did not take it on itself to set the rule aside. The seven good
+files from the zip, `NWS.LNK`, `FILE_ID.DIZ` and the binary marks in `.gitattributes` go into the first commit of
+`won-source` instead, with a message that names the zip and the byte comparison of section 1.1. Whether `main`
+takes them too is the user's choice when `won-source` is merged. *Pragmatic:* nothing is lost either way, and the
+branch can be played from its first commit.
+
+**D5, the emulator: changed.** DOSBox-X, but not installed. Claude downloads the portable ZIP of a release from
+the project's own GitHub releases and unpacks it into `..\won-hutsellgames\dosbox-x\`. There is no installer and
+nothing changes system-wide, and deleting the folder removes it. *Test engineer:* the harness records the
+DOSBox-X version with each recording. *Reverse engineer:* the portable build has the same debugger. The first
+thing tried with it is a hidden run that saves a screenshot. If that fails, the panel meets again.
+
+**D6, names: kept.** Paired procedures keep Civil War Strategy's names. New ones get short names in Hutsell's style.
+
+**The order of work.** Step 1 comes first, because its link check can still show that the approach does not hold.
+Within step 1:
+
+1. fix the unpacker's relocations;
+2. link Hutsell's Civil War Strategy objects and compare them with the unpacked `CWS.EXE`;
+3. compare the tactical source with `NAPOLEON.EXE`;
+4. map the runtime library;
+5. write the procedure splitter and the compare tool.
+
+Step 2 (the harness and the sessions) follows. The panel saw no reason to run the two side by side.
+
+## 8. Step 1 so far (2026-11-06)
+
+**The branch.** `won-source` exists in `..\wars-of-napoleon`, made from `main`. Its first commit (`11645c0`,
+"Restore shipped files and add recovery tools") holds:
+- the seven damaged files are restored from the zip, and `NWS.LNK` is added;
+- the user removed the files no program uses: `GO.BAT`, `PRINTDOC.BAT`, `REGISTER.DOC`, `SHAREW.TXT`,
+  `WRHGAMES.DOC`, `TACTICAL.EXE`, `NAPOLEON.MAK` and `~QBLNK.TMP` (all still on `main`). `FILE_ID.DIZ` was
+  never added;
+- 34 more files that differed from the zip only in line ends now have the zip's bytes;
+- `.gitattributes` is `* -text`.
+
+The old `.gitattributes` line `.exe binary .vga binary .obj binary` was one pattern followed by attributes, so it
+marked nothing binary. `BATTLE.$$$` and `OUTCOME.&&&` keep the repo's later game state. The five scripts are in
+`tools\recover\`, with a `README.md`.
+
+**The unpacker: fixed.** `WON.EXE` is packed twice: by LINK's EXEPACK (the `/E` of `NWS.LNK`), then by LZEXE 0.91.
+That is why the LZEXE layer had no relocations. `unlzexe91.py` now undoes both. The relocation counts are 4,438 for
+`WON.EXE`, 6,299 for `CWS.EXE` and 3,481 for `NAPOLEON.EXE`.
+
+**The link check: the game code matches, the runtime does not.** Hutsell's three Civil War Strategy objects were
+linked with `CWS.LNK` and compared with the unpacked `CWS.EXE`:
+- **The game code matches.** Each module's code segment has the same size and the same place in both. 97% of
+  `CWSMENU`'s instruction shapes align and 98% of `CWSTRAT2`'s. The remainder looks like data inside the code
+  read as instructions, which the procedure splitter will remove.
+- **The runtime does not match.** Our program is 213,600 bytes and Hutsell's 220,912. The runtime routines are in
+  a different order: both programs hold the same runtime strings, in another sequence. The data segment holds
+  1,102 more bytes before the game's strings. Leaving out `noega` changes nothing.
+
+So the `BCL71ENR.LIB` that `tools\qb45\pds71_install.py` builds is not the one Hutsell linked with. The runtime
+map (below) found why: his runtime is the far-string one.
+
+**The tactical source is not the shipped `NAPOLEON.EXE`.** The repo's `NAPOLEON.BAS`, `NAP1A.BAS` and `NAP1C.BAS`
+compile with `/O/E` and are compared with the matching segments of the unpacked `NAPOLEON.EXE` (1998-06-24):
+
+| Module | Compiled code | In the shipped program | Shapes that align |
+|---|---|---|---|
+| `NAPOLEON` | 49,261 bytes | 48,096 bytes | 92% |
+| `NAP1A` | 34,748 bytes | 33,776 bytes | 88% |
+| `NAP1C` | 2,695 bytes | (module end not yet located) | 84% |
+
+The source is a different revision, about 1 KB larger per module, probably later. `TACTICAL.EXE` on `main`
+(PKLITE-packed, not in the zip, removed on `won-source`) may be its build; unpacking PKLITE would show it. The port of section 4 step 7
+uses the source as it is (user, 2026-11-06). Matching it to the shipped program is a `SOMEDAY.md` row: the same
+method gets there from the program's bytes whenever it is wanted.
+
+**Which files the programs use.** Each file name in the repo was looked for in the unpacked `WON.EXE` and
+`NAPOLEON.EXE`, in the tactical source and in the batch files (`..\won-hutsellgames\tools\filerefs.py`).
+- **Used:**
+  - the five programs (`WON.EXE` starts `NAPOLEON.EXE`, `VIC.EXE` and `ARCH2.EXE`; `NAPOLEON.EXE` starts
+    `NAPIC.EXE`);
+  - `GAMEDATA.INI`, `NWS.CFG`, `MTN.VGA`, `NAPICON.VGA`, `HISCORE.NWS` and `BATTSUMM`;
+  - for each scenario, an `NWSxxxx.INI`, `EUROxxxx.MAP` and `LEADxxxx.DAT`, whose names `WON.EXE` builds from the
+    year;
+  - `BATTLE.$$$` and `OUTCOME.&&&`;
+  - for the tactical game, `ALLIES.DAT`, `FRENCH.DAT`, `EQUIP.DAT`, `QUOTES.DAT` and the four `.EGA` icon sets.
+- **Optional:** `NWS9.SAV`, a saved game.
+- **Not used by any program:**
+  - the documents: `WON.DOC`, `NAPOLEON.DOC`, `NAPOLEON.PAG` (differs from `NAPOLEON.DOC` from byte 51),
+    `NAPOLEON.TXT` (a tactical-only manual), `REGISTER.DOC`, `SHAREW.TXT`, `WRHGAMES.DOC` and `FILE_ID.DIZ`;
+  - the launchers `GO.BAT` and `PRINTDOC.BAT`;
+  - the build files `NAPOLEON.MAK`, `~QBLNK.TMP` and `NWS.LNK` (which the recovery needs);
+  - `TACTICAL.EXE`.
+- **Not named by `WON.EXE` or `NAPOLEON.EXE`, not yet settled:**
+  - `PREFER.CFG`, `GENERALZ` and `MAXSKORS` are Civil War Battleset's file names: its `CIVWAR25.BAS` opens all
+    three. They are probably leftovers.
+  - `SETUP.INI`, `NAP1.EGA` and `NAP2.EGA` may be read by `NAPIC.EXE`, `VIC.EXE` or `ARCH2.EXE`. Those three are
+    packed with PKLITE, so their strings cannot be read yet. Unpacking them, or a traced run in DOSBox, settles
+    it.
+
+Nothing is removed from `won-source` until these are settled. Pruning belongs to the port (`docs\PORTING-PDS.md`
+section 0).
+
+**The runtime map: done (2026-11-06).** Three scripts in `tools\recover\`. `omflib.py` reads an OMF library with
+its fixups. `runtimemap.py` finds each library module's code in an unpacked program, with the bytes LINK fills in as
+wildcards. `buildlib.py` builds the library Hutsell linked with. The map is written as a table of address and name,
+and the tool checks it against the game's far calls into the runtime.
+
+- **Hutsell's runtime is made of the far-string parts.** With our near-string library, only 97 runtime segments of
+  the shipped `CWS.EXE` were found exactly, against 141 in our own link of the same objects. Then each part
+  library of PDS 7.1 was searched for in `CWS.EXE`. The far-string parts match where the near-string ones do not:
+  `B71OBF` 27 of 41 segments against `B71OBN`'s 5 of 40, `B71ROBF` 26 against 7, `B71ROOF` 8 against 2, `B71ROEF`
+  5 against 2. His response files still name `bcl71enr.lib`.
+- **With a library of those parts, the map is complete.** In `WON.EXE`, 151 runtime segments are found exactly
+  and 8 short ones fit exactly in the gaps between them. 3 segments of 17 bytes in all stay unplaced. The runtime
+  runs from `0x1A090` to `0x28908` of the load image. All 3,693 far calls from the game's code into the runtime
+  hit a named routine, out of 95 different routines. The same holds for `CWS.EXE`: 5,511 calls, all named. The
+  other 537 far calls in `WON.EXE`'s code go to 64 addresses in the game's own code. These are the SUBs and
+  FUNCTIONs called from another module, and they are entry points for the procedure splitter.
+- **The compiler switches are pinned down: `/Fs` was used.** `BC /O /Fs` compiles `CWSMENU.BAS` to Hutsell's
+  `CWSMENU.OBJ`. `/O /E /Fs` does the same for `CWSTRAT`, and `/O /Fs` without `/E` for `CWSTRAT2`, though
+  `CWSMAK.BTM` says `/o/e` for it. Each code segment is then equal to Hutsell's except for one word at offset
+  `0x2C`: `FFFF` from our BC, `0002` in his. It is not a fixup, and what sets it is not known yet (it is
+  `/C:512`, section 12). Without `/Fs`,
+  only 20% of the bytes were equal at the same offset. The 97–98% shape alignment of the calibration came from
+  this switch. So D1's checkpoint condition on the switches is met: the switches are known, with `/E` read per
+  module.
+- **The whole program still differs.** Hutsell's objects linked with `buildlib.py`'s library and without `nocom`
+  give 220,944 bytes against 220,912, with the same 6,299 relocations. The shipped `CWS.EXE` has the serial-port
+  code (`gwcom`, `llcom3`) that `nocom` removes. The modules lie in another order. In the shipped program the
+  runtime comes in one sweep, part library after part library: `BLIBFP`, `EMR`, `B71OBJ`, `B71OEJ`, `B71OBF`,
+  `B71OOF`, `B71ROBJ`, `B71ROOJ`, `B71ROEJ`, `B71ROBF`, `B71ROOF`, `B71ROEF`. Our LINK, with the parts in that
+  order, makes three sweeps. This belongs to step 5 and does not hold up the panel's target. (Section 12: the
+  programs were linked without the stubs, `/NOE` or `/PACKCODE`.)
+- **For QB64Rust:** `tools\qb45\pds71_install.py` builds the near-string library, which matches how `qb45.py`
+  compiles (without `/Fs`). Nothing there changes.
+
+**The procedure splitter and the compare tool: done (2026-11-06).** `procsplit.py` finds each SUB and FUNCTION
+from BC's entry and exit code. `compare.py` compares a compiled module with the program, procedure by procedure,
+and then the constant segment. On Civil War Strategy it reports all 76 procedures, the 3 module-level bodies and
+the 3 constant segments as exact. The module header gives the place of each module's data segments, and a word
+in it shows `/E`: `WON` was compiled with `/E`, and `WON2` and `WONMENU` without it. Step 1 is complete.
+
+## 9. Step 3 so far (2026-11-06)
+
+Step 3 was done before step 2: it needs no new software, and its count is the checkpoint of section 7.
+The procedure table, the `COMMON` layout and the open questions are in `docs\recovery.md`.
+
+- **The checkpoint is passed.** 87% of the procedure code pairs with Civil War Strategy: 11 procedures are the
+  same and 37 changed. 18 procedures (13% of the bytes) are new. The module-level code aligns 70–83%.
+- **Each module's procedures are in alphabetical order**, as the QBX editor saves them. This pairs procedures
+  that moved between modules, and limits the names of new ones (D6).
+- **The `COMMON SHARED` layout** is the same as `CWS14.BI` up to `rating()`. After that it differs, and eight
+  offsets are Wars of Napoleon's own.
+
+**Step 4 has begun (2026-11-06).** `WONMENU.BAS` and `WON.BI` compile to a `WONMENU` module equal to the one in
+`WON.EXE`: every procedure, the module-level code and the constant segment. `docs\recovery.md` says how it
+differs from `CWSMENU`, what `WON.BI` holds so far, and what was learned about BC on the way.
+
+`WON2.BAS` followed the same day: all 44 procedures, the module-level code and the constant segment equal
+`WON.EXE`, and the calls between `WON2` and `WONMENU` hit the right procedures.
+
+**Step 4 is done for the code (2026-11-06).** `WON.BAS` compiles to a `WON` module equal to the one in
+`WON.EXE`: all 17 procedures, the module-level code and the constant segment. Compiled together from the repo,
+the three modules give 69 exact pieces out of 69, every constant segment is equal, and every call between
+modules reaches the paired procedure. Most of `WON.BAS` is Hutsell's Civil War Strategy text; `filer`,
+`battle`, `placearmy`, `armies`, `showcities` and parts of the module-level code were written from the
+disassembly. `docs\recovery.md` lists how `WON` differs and what BC taught on the way.
+
+**Next:** see the end of section 10.
+
+## 10. Step 2 so far (2026-11-06)
+
+**The harness works, and its runs are repeatable.** It is in `tools\play\`; its `README.md` says how to run it
+and how it works. It plays `WON.EXE` by script in a DOSBox-X that no one sees, and keeps the screenshots and
+the files the game writes.
+
+- **D5's first test passed.** DOSBox-X 2026.10.01 (the portable 64-bit build, unpacked into
+  `..\won-hutsellgames\dosbox-x\`) ran hidden, with `-silent` and SDL's dummy video driver, and saved a
+  screenshot. No window opened. Its debugger port (`mcp_server`) is off by default, and the harness also sets
+  it to 0, so nothing listens on the network.
+- **`WONSEED.EXE`** (`tools\play\wonseed.py`): `RANDOMIZE TIMER` is at offset 0BB7h of `WON`'s module-level
+  code. Twenty bytes, from `call far B$TIMR` up to `call far B$RNZP`, become four `mov ax, imm16 / push ax`
+  pairs that push the seed as a DOUBLE, then `NOP`s. The far call's relocation entry is removed (4,438 entries
+  become 4,437). The tool checks that no other byte changed.
+- **Keys and screenshots come from a resident program, `PLAYKEYS.COM`,** not from DOSBox-X's `AUTOTYPE`. DOS
+  cuts a command line at 127 characters, a dozen keys, and `AUTOTYPE`'s timing follows the host's clock.
+  `PLAYKEYS.COM` reads a key file, hooks the timer interrupt, and at fixed ticks of emulated time puts a key in
+  the BIOS keyboard buffer or asks for a screenshot through DOSBox-X's integration device (I/O ports 28h–2Ah,
+  register 00C54010h). The game reads keys with `INKEY$`, which reads that buffer.
+- **Repeatable.** With fixed cycles, each key reaches the game at the same point in every run. The game's
+  pauses read `TIMER`, which is emulated time too, and the harness sets the DOS date and time. Two runs of
+  session 1, including two computer turns, gave the same screens and files.
+- **Speed.** Turbo runs session 1's 320 seconds of play in about 170 seconds.
+
+**Session 1 is recorded** (`tests\scripts\01-1796-french.keys`, `tests\recorded\01-1796-french\`). It plays
+1796 as the French with Tactical off. It covers the intro, the start menu, the six Information pages, Recruit,
+Moves, Ships, each COMMANDS item, each UTILITY item, Files → Save, and two turn ends with the Allies' moves.
+Along the way it records the events "Germany has been invaded!" and an Allied commerce raid. It writes
+`NWS1.SAV`, `NWS9.SAV` (the monthly autosave), `NWS.HIS` and `NWS.CFG`.
+
+**Session 2 is recorded** (`tests\scripts\02-1796-allies.keys`). It plays 1796 as the Allies, the shipped
+settings with Tactical off, and only ends turns. The computer, playing France, takes Turin in the second turn
+and its objective in the third. The game then shows "END GAME VICTORY CONDITION 4 REACHED / OBJECTIVE CAPTURED"
+and offers "End Game: Yes / No-Override". The session chooses Yes. The game shows the Battle Summary, the Hall
+of Fame, "Game Over" and the start menu, and the session quits to DOS. So it also covers a defeat and
+quitting, part of session 15's purpose.
+
+**Found on the way:**
+
+- The shipped `NWS.CFG` plays the Allies, with Tactical on, sound on, aggression NORMAL and random events
+  favoring the Allies (`2,2,3,3,1,1,3,0,1`). So the French sessions first swap sides in the UTILITY menu.
+- After Army Drill is left with Esc, the screen scrolls up one text row and stays so until the map is drawn
+  again. This is the shipped program's own behavior; the recording keeps it.
+- Each recorded screenshot is about 20 KB, so session 1 is 1.2 MB of PNGs.
+
+**Sessions 3 to 15 are recorded (2026-11-07).** `tests\README.md` lists what each one covers and what was
+found on the way. In short:
+
+- **3:** two players.
+- **4–8:** the other six scenarios' starts. Sessions 4, 5 and 8 play their scenarios to the end; 6 and 7 stop
+  after three turns.
+- **9:** the tactical game. It covers `BATTLE.$$$`, `NAPOLEON.EXE` with an F9 retreat, and `OUTCOME.&&&` read
+  back.
+- **10:** random events and Vary Start.
+- **11:** aggression PASSIVE, then RECKLESS.
+- **12:** balance French ++, then Allied ++.
+- **13:** save, resume, load, and quit.
+- **14:** ships: build, sail, naval combat, and a raid.
+- **15:** a new human high score, with `VIC.EXE` and the name prompt.
+
+Two things are not reached: a naval invasion, and Napoleon's exile.
+
+How the later sessions were written:
+
+- **The game asks the human where a beaten army retreats,** when it has two or more friendly cities next to it.
+  Spaces do not answer that menu, so the first scripts stalled there. Each run then took a whole replay to find
+  the next one.
+- **Sessions 6, 7 and 11 to 15 close messages with Esc.** Esc answers a retreat menu by letting the game choose,
+  and matches no main-menu item. At the End Game prompt Esc means No-Override, so a session that ends a game
+  answers that prompt with a letter.
+- **Two runs stalled when Windows went into standby,** as `tools\play\README.md` warns. They were run again.
+
+Step 6 for these sessions is done: section 12 has the results.
+
+## 11. Step 6 so far (2026-11-07)
+
+**The recovered source plays like the shipped program in both recorded sessions.** It was built with PDS 7.1 and
+linked with `buildlib.py`'s far-string runtime. `play.py check` with `--exe` gave the same screens and files as the
+recordings:
+
+| Session | Screens | Files | Result |
+|---|---|---|---|
+| `01-1796-french` | 49 of 49 | 4 | same as recorded |
+| `02-1796-allies` | 13 of 13 | 2 | same as recorded |
+
+So the link and the runtime library behave like Hutsell's in what these sessions cover. Each new session of
+section 3.2 gets the same check once it is recorded.
+
+**How the build was made.** This was the build of step 6; section 12 gives the present one, which differs in
+`/C:512` and in `WON.LNK`. `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder,
+and the commands run from `tools\recover\`:
+
+```
+python -I buildlib.py PDS W/lib
+python -I calibrate_bc.py ../.. PDS W/obj WON=O,E,Fs WON2=O,Fs WONMENU=O,Fs
+python -I linkcheck.py --drop nocom W/lib W/link WON.LNK ../../WON.EXE W/obj/WON.OBJ W/obj/WON2.OBJ W/obj/WONMENU.OBJ
+python -I unlzexe91.py W/link/WON.EXE W/WON_built_unp.EXE
+python -I runtimemap.py W/WON_built_unp.EXE W/built_runtime.tsv W/lib/BCL71ENR.LIB
+```
+
+Then, from the repo's folder:
+
+```
+python -I tools/play/play.py check tests/scripts/*.keys --exe W/link/WON.EXE --timr 1e7d6 --rnzp 1ca1b
+```
+
+- **`WON.LNK`** is `NWS.LNK` with the recovered module names (`won+won2+wonmenu`) and output name `won`.
+  `NWS.LNK` names `nws`, `nws2` and `nwsmenu`, which are not in the repo.
+- **`--drop nocom`:** `WON.EXE` holds the serial-port code (`llcom3`, with `B$INICOM`), which `nocom` would
+  remove. Civil War Strategy's `CWS.EXE` is linked the same way (section 8).
+- **The objects were compared first.** `compare.py` on the three objects found all 69 pieces exact and the three
+  constant segments equal.
+- **The link differs from the shipped program as in section 8.** The load image is 193,088 bytes, against
+  193,056. Both have 4,438 relocations. The runtime modules lie in another order, which is step 5's problem.
+- **The build's runtime map is complete.** 151 runtime segments are found exactly. `B$TIMR` is at `1e7d6` and
+  `B$RNZP` at `1ca1b`, against `27c7c` and `24389` in the shipped program. These two addresses hold only for this
+  link. Any change to the source's code or the link order needs a new map. The renaming of the `uNNN`
+  variables later the same day changed no code: the three object files stayed byte for byte the same.
+- **Not explained:** `runtimemap.py` counts 3,684 far calls from the game's code into the runtime in the build,
+  all of them named. In the shipped program it counts 3,693. The 9 calls were not looked into. Since every screen
+  and file matches, they did not change what these sessions show.
+
+## 12. Step 5: the whole program byte for byte (2026-11-07)
+
+**The recovered source builds `WON.EXE` exactly.** Compiled and linked as below, the program's unpacked load
+image equals the unpacked `WON.EXE` byte for byte: 193,056 bytes, the same 4,438 relocations, the same entry
+point (1a08:1136) and the same stack. One layer down it is equal too. LINK's output, still packed by EXEPACK,
+equals `WON.EXE` with only its LZEXE layer undone: 191,662 bytes. The only part not reproduced is LZEXE's own
+packing of that file.
+
+Two things were missing.
+
+**1. The word at +2Ch of each module header is BC's `/C:n`.** That switch sets the size of the COM port
+buffer. `WONMENU.BAS` was compiled with `/O /Fs` and each other switch of BC 7.10 in turn. Only `/C:512`
+changed the word: from FFFF to 0200h. Read as bytes, that is `00 02`, which is what Hutsell's objects hold. The
+earlier notes read it as "0002". `/C:2` and `/C:1` write 0002 and 0001, so the word is the number given. 512 is BC's default size, so the switch changes no other byte. Hutsell's `CWSMENU.OBJ` and ours, compiled
+with `/O /Fs /C:512`, have every segment equal. `compare.py` now checks the word.
+
+**2. The programs were not linked with their `.LNK` files.** `NWS.LNK` and `CWS.LNK` link the `NO*.OBJ` stubs
+with `/NOE /PACKCODE`. The shipped programs show none of that:
+
+- **No stubs.** Our build had them right after the game's code, at the start of `RTCODE`: 16 bytes of `jmp`s
+  and a `ret`. The shipped program has no such bytes anywhere, and it was 32 bytes smaller. Since the stubs come
+  first, `RTCODE` was also the first runtime segment in our build. In `WON.EXE`, `_TEXT` is first.
+- **No `/NOE`.** Without the stubs but with `/NOE`, LINK still took the runtime modules in another order. In
+  `WON.EXE` the modules of each segment lie in the order of the library, with no exception; ours went back 8
+  times. Without `/NOE` the order matched. Probably LINK then searches the library through its extended
+  dictionary, which `/NOE` turns off; that was not checked further.
+- **No `/PACKCODE`.** With it, all the runtime's code segments share one frame, 1a08h. In `WON.EXE` each has its
+  own: `_TEXT` 1a08h, `EMULATOR_TEXT` 1b4dh, `RTCODE` 1da5h, `LMEM` 27e1h and `LOADRTM` 2887h. Each game
+  module has its own frame too. The two layouts had the same addresses, so only the segment words of the far
+  calls differed.
+
+So `tools\recover\WON.LNK` is now the three modules with `/E` and nothing else. As a check, Hutsell's own three
+Civil War Strategy objects were linked the same way. The result equals the unpacked `CWS.EXE` byte for byte:
+220,912 bytes and 6,299 relocations. So this is how Hutsell built both programs, not only a link that happens
+to fit one. The switches match a build made from inside the QBX editor rather than by `CWSMAK.BTM` and the
+`.LNK` files: QBX uses far strings and its own compile switches. That is a guess; it was not checked against
+QBX.
+
+QB 4.5's LINK 3.69 was also tried, without the stubs. It gives a program of 203,504 bytes and 4,504
+relocations, so it is not the linker Hutsell used. PDS 7.1's own LINK 5.10 gives both programs exactly.
+
+**How to build it.** `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder, and
+the commands run from `tools\recover\`:
+
+```
+python -I buildlib.py PDS W/lib
+python -I calibrate_bc.py ../.. PDS W/obj WON=O,E,Fs,C:512 WON2=O,Fs,C:512 WONMENU=O,Fs,C:512
+python -I linkcheck.py W/lib W/link WON.LNK ../../WON.EXE W/obj/WON.OBJ W/obj/WON2.OBJ W/obj/WONMENU.OBJ
+```
+
+`linkcheck.py` should end with `load modules: 0 bytes differ` and `relocations equal: True`. This was run from
+an empty scratch folder on 2026-11-07.
+
+**What follows for step 6.** The build's runtime now lies where the shipped program's does. So `play.py check`
+takes the shipped addresses for the seed patch: `--timr 27c7c --rnzp 24389`. It still needs them given,
+because the unpacked file's header is not the shipped one. Its memory fields come from LINK in the build and
+from LZEXE in `WON.EXE`, and `play.py` knows the shipped program by the hash of the whole file. Section 11's
+open point, 3,684 far calls into the runtime in the build against 3,693 in `WON.EXE`, came from the other
+layout. The program is now the same, so it is closed.
+
+With those addresses, `play.py check` on this build gave the same screens and files as both recordings:
+`01-1796-french` 49 of 49 screens and 4 files, `02-1796-allies` 13 of 13 screens and 2 files (2026-11-07).
+
+**Sessions 3 to 15 (2026-11-07).** The build was made again from an empty scratch folder with the commands
+above. `linkcheck.py` reported 0 bytes different and equal relocations. `play.py check` with
+`--timr 27c7c --rnzp 24389` then gave the same screens and files as every new recording:
+
+| Session | Screens | Files |
+|---|---|---|
+| `03-1805-two-players` | 27 of 27 | 2 |
+| `04-1807` | 35 of 35 | 3 |
+| `05-1808` | 24 of 24 | 2 |
+| `06-1812` | 12 of 12 | 2 |
+| `07-1813` | 12 of 12 | 2 |
+| `08-1815` | 16 of 16 | 2 |
+| `09-1805-tactical` | 12 of 12 | 3 |
+| `10-1805-events-vary` | 26 of 26 | 2 |
+| `11-1812-aggression` | 14 of 14 | 2 |
+| `12-1796-balance` | 18 of 18 | 2 |
+| `13-1796-save-load` | 20 of 20 | 3 |
+| `14-1796-naval` | 19 of 19 | 2 |
+| `15-1815-high-score` | 20 of 20 | 3 |
+
+So step 6 is done for all fifteen sessions. Session 9 runs the shipped `NAPOLEON.EXE` from the build, so it
+checks the battle files between the two programs, not the tactical source.
+
+## Decisions recorded in QB64Rust
+
+Copied from QB64Rust's `docs\DECISIONS.md` when the study moved here (2026-11-06). The rows are no longer
+kept there.
+
+| Date | Decision | Where the details are |
+|---|---|---|
+| 2026-11-06 | **The source of Wars of Napoleon's strategic game (`WON.EXE`) is recovered by recompiling with PDS 7.1 until the code matches** (user: "have a panel decide how to proceed"). The panel took the six decisions of `study\45`. The start is Civil War Strategy 1.57's source, and the check is `WON.EXE` itself. Each module must equal `WON.EXE` in instruction shapes and in its constant segment (strings and floating-point constants); the byte match of the whole program is pursued after that, but does not hold up the port. The work goes on a branch `won-source` of `wars-of-napoleon`. `main` stays untouched; the seven damaged files are restored on the branch from the hutsellgames.com zip. Playing uses a portable DOSBox-X kept outside the repos. Step 1 (the tools and the link check) comes first | `study\45`, sections 6 and 7 |
+| 2026-11-06 | **Wars of Napoleon's tactical game is ported from the source in its repo, not matched to the shipped `NAPOLEON.EXE` first** (user: "I'd lean towards using source, if we want to someday we can always do it down the line from bytes"). The repo's `NAPOLEON.BAS`, `NAP1A.BAS` and `NAP1C.BAS` are a revision of the tactical game a little different from the program shipped in 1998: the same messages, about 1 KB more code per module. Matching them to the shipped program is a `SOMEDAY.md` row | `study\45` section 8; `SOMEDAY.md`, "Other ideas" |
+
+## Someday
+
+Copied from QB64Rust's `docs\SOMEDAY.md` (2026-11-06). The row is no longer kept there.
+
+| Idea | Source |
+|---|---|
+| **Make Wars of Napoleon's tactical source match the shipped `NAPOLEON.EXE`.** The repo's `NAPOLEON.BAS`, `NAP1A.BAS` and `NAP1C.BAS` are a different revision from the `NAPOLEON.EXE` of 1998-06-24. They have the same messages, but compile to about 1 KB more per module, and 84–92% of the instruction shapes align. The port uses the source as it is. If the 1998 release's exact behavior is ever wanted, the same compile-and-compare method used to recover `WON.EXE` gets there from the shipped program's bytes (`study\45` section 8) | User, 2026-11-06 |
