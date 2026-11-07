@@ -1,0 +1,113 @@
+# Session 15: 1815, two players, Tactical off. The end of a game with a new high score:
+# VIC.EXE and the Hall of Fame entry (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down down down down down down
+wait 1
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u a 1 t
+wait 1
+shot utility
+key esc
+wait 1
+
+# Each month: the French end their turn, the hand-over screen, the Allies end theirs,
+# then the month's events and the next hand-over. Esc closes each message and screen;
+# at the main menu it matches no item.
+repeat 2
+key e y
+wait 3
+key esc
+wait 2
+key e y
+wait 10
+shot month-end
+repeat 10
+key esc
+wait 2
+end
+shot next-month
+end
+
+# The third month: time runs out (September 1815). The players override, which gives
+# the other side, the Allies, 300 VP.
+key e y
+wait 3
+key esc
+wait 2
+key e y
+wait 10
+shot month-end
+repeat 4
+key esc
+wait 2
+end
+shot end-game
+key n
+wait 3
+repeat 6
+key esc
+wait 2
+end
+shot overridden
+
+# The override turned the time condition off. In November 1815 the French player turns
+# it on again in Utility, End Cond: Enter toggles the highlighted condition, Time.
+key u e
+wait 1
+shot end-cond
+key enter
+wait 1
+shot time-on
+key esc
+wait 1
+key esc
+wait 1
+
+# Time runs out again, and this time the game ends. The Allies' 300 VP are a new high
+# score.
+key e y
+wait 3
+key esc
+wait 2
+key e y
+wait 10
+shot month-end
+repeat 4
+key esc
+wait 2
+end
+shot end-game2
+key y
+wait 3
+shot battle-summary
+# The Hall of Fame with "A NEW HIGH SCORE !", then VIC.EXE's picture, which waits for a
+# key; then the game asks for the Allied commander's name.
+key space
+wait 6
+shot new-high-score
+wait 6
+shot vic
+key space
+wait 4
+shot name-prompt
+type Wellington
+key enter
+wait 3
+# The Hall of Fame with the new entry, then "Game Over" below it.
+shot hall-of-fame
+wait 12
+shot start-menu
+key q
+wait 3
+shot dos

@@ -1,0 +1,17 @@
+# 07-1813: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 53227cc8d6a3d4e9c760cb60afe7af8677b1c230ee874375c433b731ff666e51
+30fb062bade1b62c8e0afe4831dbefacab3c674f6374ffd63cc26a8302704121  files/NWS.CFG
+5e70210a3f9b53c690ca9f3d9cb01c62b967132c5732442fea6487ee280a2b5b  files/NWS9.SAV
+afa8fe2a241813cec928c6d618047baae599e228425c730a7ddfecbaf3dfda14  shots/01-start-year.png
+814c2d4db11e8f45f134fc301e7d242c6047e1acff4634c1d5fd004e116bf729  shots/02-objective.png
+f2d7576d9435c192c188fd5862642cec67ccc362291e8fcb130060c275497b6b  shots/03-main-menu.png
+b5a7efd639e54f5cf0f3da4965aded8faa4ebf5db22b6e6ecdc59f4d898bb7fd  shots/04-end-cond.png
+bb27953b932d1ecc6bafb7d29ac6441d3e336db7b8c8c16cedb2c61341b4f5ea  shots/05-force-summary.png
+e755181cc6aa930152acad0cd117f5a3d5bf6ccdb21c75d5897a6b2d2e9d4ea8  shots/06-allied-armies.png
+87a10c7285695931edb300774525e0d35526524edd4d3f0eaa87e77b5ad47b58  shots/07-turn-end.png
+87a10c7285695931edb300774525e0d35526524edd4d3f0eaa87e77b5ad47b58  shots/08-next-turn.png
+630b77d3a2230793a89f1f6fccfd7721152296270ca634e5d30ff2ab77ad567d  shots/09-turn-end.png
+f8dba2c225380f7338a9e457fe48079cd778a05e604054f4d50e088a658a98be  shots/10-next-turn.png
+1c3630a6814a99af52c1657cd30138bcdb55cced82ccc831906bda9c7bca65fa  shots/11-turn-end.png
+1c3630a6814a99af52c1657cd30138bcdb55cced82ccc831906bda9c7bca65fa  shots/12-next-turn.png

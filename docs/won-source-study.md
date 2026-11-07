@@ -597,11 +597,34 @@ quitting, part of session 15's purpose.
   again. This is the shipped program's own behavior; the recording keeps it.
 - Each recorded screenshot is about 20 KB, so session 1 is 1.2 MB of PNGs.
 
-**Next:**
+**Sessions 3 to 15 are recorded (2026-11-07).** `tests\README.md` lists what each one covers and what was
+found on the way. In short:
 
-- The other fourteen sessions of section 3.2. Each is written a few keys at a time with `play.py run`.
-- Step 6 for each new session, as section 11 shows.
-- Step 5, the whole program byte for byte. Done, section 12.
+- **3:** two players.
+- **4–8:** the other six scenarios' starts. Sessions 4, 5 and 8 play their scenarios to the end; 6 and 7 stop
+  after three turns.
+- **9:** the tactical game. It covers `BATTLE.$$$`, `NAPOLEON.EXE` with an F9 retreat, and `OUTCOME.&&&` read
+  back.
+- **10:** random events and Vary Start.
+- **11:** aggression PASSIVE, then RECKLESS.
+- **12:** balance French ++, then Allied ++.
+- **13:** save, resume, load, and quit.
+- **14:** ships: build, sail, naval combat, and a raid.
+- **15:** a new human high score, with `VIC.EXE` and the name prompt.
+
+Two things are not reached: a naval invasion, and Napoleon's exile.
+
+How the later sessions were written:
+
+- **The game asks the human where a beaten army retreats,** when it has two or more friendly cities next to it.
+  Spaces do not answer that menu, so the first scripts stalled there. Each run then took a whole replay to find
+  the next one.
+- **Sessions 6, 7 and 11 to 15 close messages with Esc.** Esc answers a retreat menu by letting the game choose,
+  and matches no main-menu item. At the End Game prompt Esc means No-Override, so a session that ends a game
+  answers that prompt with a letter.
+- **Two runs stalled when Windows went into standby,** as `tools\play\README.md` warns. They were run again.
+
+Step 6 for these sessions is done: section 12 has the results.
 
 ## 11. Step 6 so far (2026-11-07)
 
@@ -713,6 +736,29 @@ layout. The program is now the same, so it is closed.
 
 With those addresses, `play.py check` on this build gave the same screens and files as both recordings:
 `01-1796-french` 49 of 49 screens and 4 files, `02-1796-allies` 13 of 13 screens and 2 files (2026-11-07).
+
+**Sessions 3 to 15 (2026-11-07).** The build was made again from an empty scratch folder with the commands
+above. `linkcheck.py` reported 0 bytes different and equal relocations. `play.py check` with
+`--timr 27c7c --rnzp 24389` then gave the same screens and files as every new recording:
+
+| Session | Screens | Files |
+|---|---|---|
+| `03-1805-two-players` | 27 of 27 | 2 |
+| `04-1807` | 35 of 35 | 3 |
+| `05-1808` | 24 of 24 | 2 |
+| `06-1812` | 12 of 12 | 2 |
+| `07-1813` | 12 of 12 | 2 |
+| `08-1815` | 16 of 16 | 2 |
+| `09-1805-tactical` | 12 of 12 | 3 |
+| `10-1805-events-vary` | 26 of 26 | 2 |
+| `11-1812-aggression` | 14 of 14 | 2 |
+| `12-1796-balance` | 18 of 18 | 2 |
+| `13-1796-save-load` | 20 of 20 | 3 |
+| `14-1796-naval` | 19 of 19 | 2 |
+| `15-1815-high-score` | 20 of 20 | 3 |
+
+So step 6 is done for all fifteen sessions. Session 9 runs the shipped `NAPOLEON.EXE` from the build, so it
+checks the battle files between the two programs, not the tactical source.
 
 ## Decisions recorded in QB64Rust
 

@@ -1,0 +1,26 @@
+# 15-1815-high-score: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 39ce0a6fb6f397898af48a41ecbd57feb5e5087382459a2eedc35d640d952aae
+5c045aebce4a19b6d9a87103f777a4b6b3e306071c38b3774e4bdff1b36f741f  files/HISCORE.NWS
+9616f4797354488c86da6038047f16d122ca86de746bf865be14c54d654f289b  files/NWS.CFG
+7ab6a884cc2179273d8b3785cc954cf9dd5afe6dde061bd4e16ea9a76e7be49f  files/NWS9.SAV
+97273bce7855a218acc1ff2130d340bfe19c84e0b1bbf45855ec2daa8bbaa132  shots/01-objective.png
+cc9633581f97cfa0b76cbfcbd3b002716d18a1e29029b621844f77b5a1ff37db  shots/02-utility.png
+a0cd72dce7a3ba78ecddeea427278a43414f8ea3ca3b6d1b9be5d98fd3541606  shots/03-month-end.png
+f6e9c671107c5c3fce2985faaecbec6d411fb7b969c3b71702f293ca3af8fbc0  shots/04-next-month.png
+5bb416e1e99815dcd854200b15bca6d7c30e7b4445f3b6800e05e3657d9b4841  shots/05-month-end.png
+c2168ceda0d5f9ca3e9fe4bd9980bf99a6e7006c8ab7d731da8f5e73dfea449a  shots/06-next-month.png
+5194bde6776962ebf31d67892c22fc824275f0cfd48bd4e21838d7296d7be75b  shots/07-month-end.png
+8a7eaa6c8616a788a14e7f8ee8cdfe057ee01bd7fa0a7b9fce22270cc193ad47  shots/08-end-game.png
+405db424436a3d3d9b9d10850cb9703b3bd438bd9da948ed95bce58adf778558  shots/09-overridden.png
+09f9a6a2f5c796dd6aaed8d30d0e36134c81c9600c4606e8c0c56430954922cd  shots/10-end-cond.png
+b1d346abef61f645f47f05e2203ff097ed9c08ea676c2080c929555aa20b7b9b  shots/11-time-on.png
+e67c9dcb9f54d57a5c1bdb6b30ff1d60a987c06f9bb2167c3f6fe7b91ebbda51  shots/12-month-end.png
+8a7eaa6c8616a788a14e7f8ee8cdfe057ee01bd7fa0a7b9fce22270cc193ad47  shots/13-end-game2.png
+6c5801ce8d9b0f4ea20ba12e5a85c01c3e94b6d6c98134c61b045acb47e29f23  shots/14-battle-summary.png
+fb60437ca2896ccb92eab995dd5a5d260b54813e2ce7d1e131dd65d1f17d7392  shots/15-new-high-score.png
+66deca87f37bf08cf50b904bf8ccfe4dc71943f242e35882f5d387de388e25d1  shots/16-vic.png
+d90665774c7fd0345259bbe4139bc4044d63e4232f206dc774f8810a8233cc97  shots/17-name-prompt.png
+0b1a97d85d0ca0a2cf06b5354442a4d435822348c5109be620426b8616998d5b  shots/18-hall-of-fame.png
+ac078f5e201072dcb46424dcbfb09210caa8e14b79e0818f0a9dd662cf5dbed5  shots/19-start-menu.png
+254029b417bb471800f6c94abadef0392bfee293b3b0b943fe8a2eccd53b2026  shots/20-dos.png

@@ -1,0 +1,85 @@
+# Session 12: 1796, one player, the Allies, Tactical off. Play balance French ++, then,
+# in a new game, Allied ++ (docs\won-source-study.md, section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+# Utility: Tactical off, then Balance. Its menu opens on Balanced; two downs reach
+# French ++.
+key u t
+wait 1
+key b
+wait 1
+shot balance-menu
+key down down enter
+wait 1
+shot french-plus-plus
+key esc
+wait 1
+key r
+wait 1
+shot recruit-funds
+key esc
+wait 1
+
+# Each turn: end it, wait for the computer's moves, then Esc to close the messages.
+# Esc also answers a retreat menu (the game then chooses the retreat itself) and matches
+# no item of the main menu.
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end
+
+# Files, New Game (which saves NWS.CFG with the balance), 1796 again, and Allied ++.
+key f
+wait 1
+key n
+wait 5
+shot start-menu
+key s
+wait 2
+key enter
+wait 3
+shot objective2
+key space
+wait 1
+key u b
+wait 1
+shot balance-menu2
+key up up up up enter
+wait 1
+shot allied-plus-plus
+key esc
+wait 1
+key r
+wait 1
+shot recruit-funds2
+key esc
+wait 1
+
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end

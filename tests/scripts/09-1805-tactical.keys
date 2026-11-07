@@ -1,0 +1,56 @@
+# Session 9: 1805, one player, the Allies, with the shipped NWS.CFG's Tactical on.
+# The battle files, NAPOLEON.EXE and the result read back (docs\won-source-study.md,
+# section 3.2).
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+key down
+wait 1
+key enter
+wait 3
+shot objective
+key space
+wait 1
+shot main-menu
+
+# End the first turn. Bernadotte attacks Alexander in Innsbruck; the odds are within
+# 3:1, so WON.EXE writes BATTLE.$$$ and runs NAPOLEON.EXE, which shows NAPIC.EXE's
+# title picture first. No keys are typed until the battle map is up.
+key e y
+wait 30
+shot attack
+wait 15
+shot tactical-title
+key space
+wait 5
+shot battle-map
+
+# The Allies command. Unit 1 (Alexander) rests; the next unit's turn comes up.
+key space
+wait 3
+shot rested
+# F9: strategic retreat, with a 20% penalty. The game asks "RETREAT?"; Yes ends the
+# battle, writes OUTCOME.&&& and returns to WON.EXE.
+key f9
+wait 5
+shot retreat-ask
+key y
+wait 6
+shot victorious
+wait 6
+shot losses
+wait 10
+shot retreat
+key v
+wait 3
+shot retreated
+repeat 16
+key space
+wait 2
+end
+shot next-turn

@@ -113,6 +113,21 @@ Learned while writing session 1:
   player is the Allies, and changes Aggress when the player is the French.
 - The end of each month autosaves to `NWS9.SAV` and rewrites `NWS.CFG`.
 
+Learned while writing sessions 3 to 15:
+
+- **A beaten army of the human's side may ask where to retreat.** The menu comes up when the army has two
+  or more friendly cities next to it, also in the middle of the computer's turn. It ignores spaces, so a
+  script that closes messages with spaces stalls there, and its later keys land in the wrong place.
+- **Esc is the safe key for closing a turn's messages.** It closes a message box and matches no item of the
+  main menu. At a retreat menu it lets the game choose the retreat, as it does for the computer.
+- **At the End Game prompt Esc means No-Override.** An override gives the other side 300 VP and turns that end
+  condition off until End Cond turns it on again. A script that wants the game to end answers `y` there.
+- **A turn's number of messages varies.** A script that ends a turn and then types a fixed handful of keys can
+  run past the main menu into the next turn. Sessions 4 to 8 and 10 to 14 end each turn with `e y`, wait 30 seconds, then type
+  16 Esc (or space) keys 2 seconds apart.
+- **In the tactical game (`NAPOLEON.EXE`) a space orders the current unit to rest.** No key is typed until
+  its battle map is up. F9 is the strategic retreat; the game then asks "RETREAT?", and `y` ends the battle.
+
 ## Files
 
 | File | What it is |

@@ -1,0 +1,18 @@
+# 09-1805-tactical: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 135be2d798621d08e837f5087b36bf596e7758bb25f6ab88e2463fe1ed6d625c
+15509ef48c3aa14120c840e7d75e2a788e612675b2aa0fa53c9f6b4212d26adf  files/BATTLE.$$$
+ffcdb0df50bb83f26f62d38cbb9562bc66cb13c911772f625a25f5ba2a5e4288  files/NWS9.SAV
+de091b252502843502871b225157ac97e5ee57fc01141fd8b07b66273f62446f  files/OUTCOME.&&&
+12dd0cc20c48475f79142bf4a50c1b5d07d5e9fdfe552884e7405a81f120914b  shots/01-objective.png
+356ca80069eab8723d75756caa3d92eb9076c0a48b67cb51aaa82ad93159adcc  shots/02-main-menu.png
+a4c07ea5975511506f26cdafe0c234424110c1eadb1ce5b889f60fde18c2f1c6  shots/03-attack.png
+a969a3d11b51cb6240c4e9255133a4c23240d12db6005199489c92c689c658c9  shots/04-tactical-title.png
+ebcfafb26c597a312f719dca876c1190bf3fc5ced08266b81ddf0a1e66231692  shots/05-battle-map.png
+3b505c3f79607dbabf8b4e1934b852d24e52ea2bb787b47e5a3a9a2bb3e04e93  shots/06-rested.png
+bcd5bb91f09962d6880abcbe21bbc2a404aea07f258a41026388dc4d2dac6d7b  shots/07-retreat-ask.png
+9cff7c3af8569525d85a2a6c5658f727de738ac5d8d22183119c2794ef4e8d7d  shots/08-victorious.png
+e4a2a45df67fef47cc88b65b1626c6e192747823d9c0d33316ed5f0966b0cbd2  shots/09-losses.png
+b34d3bcefcf70d72abba71991774e430e77f982813aeb8a22ddeabc0fe73d069  shots/10-retreat.png
+555d930858e71143c22895648a273dac55980512128bf68aa8fe49252eeaafd0  shots/11-retreated.png
+e19cddc408b2edd8d0655530864f093a5464ea0a6e7c20d9ddbb733337dede1b  shots/12-next-turn.png

@@ -1,0 +1,95 @@
+# Session 13: 1796, one player, the Allies, Tactical off. Save, start a new game, resume
+# the save, load the monthly autosave, and quit (docs\won-source-study.md, section 3.2).
+# The game folder starts with the shipped NWS9.SAV.
+seed 1
+pace 1
+
+wait 4
+key space
+wait 4
+key s
+wait 2
+shot start-year
+key enter
+wait 3
+shot objective
+key space
+wait 1
+key u t esc
+wait 1
+shot main-menu
+
+# Recruit at the first city, so that the saved game differs from the scenario's start.
+key r
+wait 1
+key enter
+wait 1
+key esc
+wait 1
+shot recruited
+
+# Files, Save: the slot menu; Enter takes slot 1, NWS1.SAV.
+key f s
+wait 1
+shot save-slots
+key enter
+wait 3
+shot saved
+
+# Each turn: end it, wait for the computer's moves, then Esc to close the messages.
+# Esc also answers a retreat menu (the game then chooses the retreat itself) and matches
+# no item of the main menu.
+repeat 2
+key e y
+wait 30
+shot turn-end
+repeat 16
+key esc
+wait 2
+end
+shot next-turn
+end
+
+# Files, New Game, then Resume Saved Game from the start menu. The Load menu lists
+# NWS1.SAV and NWS9.SAV, the autosave written at the start of the last turn's update,
+# which holds May 1796.
+key f
+wait 1
+key n
+wait 5
+shot start-menu
+key r
+wait 2
+shot load-list
+key enter
+wait 5
+shot resumed
+key space
+wait 1
+shot resumed-menu
+key i down down down enter
+wait 1
+shot resumed-forces
+key space
+wait 1
+
+# Files, Load: the autosave, NWS9.SAV.
+key f l
+wait 1
+shot load-list2
+key down enter
+wait 5
+shot loaded
+key i down down down enter
+wait 1
+shot loaded-forces
+key space
+wait 1
+
+# Files, Quit to DOS, Yes.
+key f q
+wait 1
+shot quit
+key y
+wait 3
+shot dos
