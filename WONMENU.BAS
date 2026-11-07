@@ -1,0 +1,472 @@
+DEFINT A-Z
+DECLARE SUB choices (b1%, wide%)
+DECLARE SUB mxw (wide%)
+DECLARE SUB stax (who%)
+' $INCLUDE: 'won.bi'
+'============================================================================
+'                GENmenu 3.05 : Generic Menu Main Module Level  12/91
+'                Updated to Use Graphic Screens 8, 9, 12
+'============================================================================
+'       tlx  = top left x  (if zero, automatically centered)
+'       tly = top left y   (if zero, automatically centered)
+'       size = # rows (current maximum=20)
+'       mtx$() = text for menu
+'                mtx$(0) = heading (blank defaults to M E N U)
+'                mtx$(1-size) are options
+'       choose = option selected (row #)
+'            -1 indicates ESC key pressed
+'            entering with choose+21 causes choose to be default entry
+'       wtype = window type (0 = no line; 1=single line;
+'                            2=double line
+'               if >10 then 10's digit=box color  1's digit= window type
+
+y = 68: COLOR 11: LOCATE 1, y: PRINT "Attacker"
+c = 9: IF attack > 25 THEN c = 7
+COLOR c: LOCATE 3, y: PRINT armyname$(attack)
+LOCATE 4, y: CALL strong(attack)
+
+SUB choices (b1, wide)
+IF 8 * (tlx + wide + 1) + 7 > 639 THEN tlx = 78 - wide
+boxc = colour: IF wtype > 10 THEN boxc = INT(wtype / 10): wtype = wtype - 10 * boxc
+COLOR boxc
+LINE (8 * tlx - 6, 16 * tly - 11)-(8 * (tlx + wide + 1) + 7, 16 * (tly + size + 2) + 7), 0, BF
+LINE (8 * tlx, 16 * tly - 5)-(8 * (tlx + wide + 1) + 13, 16 * (tly + size + 2) + 13), 0, BF
+LINE (8 * tlx - 6, 16 * tly - 11)-(8 * (tlx + wide + 1) + 7, 16 * (tly + size + 2) + 8), colour, B
+LINE (8 * tlx - 2, 16 * (tly + 1) + 3)-(8 * (tlx + wide + 1) + 3, 16 * (tly + 1) + 6), colour, B
+IF ABS(wtype) = 2 THEN
+LINE (8 * tlx - 2, 16 * tly - 8)-(8 * (tlx + wide + 1) + 3, 16 * (tly + size + 2) + 4), colour, B
+END IF
+COLOR colour
+
+LOCATE tly + 1, tlx + b1: PRINT mtx$(0)
+FOR i = 1 TO size
+LOCATE tly + 2 + i, tlx + 2: PRINT mtx$(i);
+NEXT i
+END SUB
+
+SUB europe
+SCREEN 12
+CLS
+LINE (0, 0)-(639, 438), 10, B
+SELECT CASE look
+	CASE 2: a = 63: x = 40: y = 0
+	CASE 3: a = 10: x = 10: y = 30
+	CASE 4: a = 30: x = 10: y = 10
+	CASE ELSE: a = 0: x = 34: y = 0
+END SELECT
+PAINT (200, 200), 2, 10
+c& = 65536 * a + 256 * x + y
+PALETTE 2, c&
+PSET (1, 240), 10
+DRAW "C10R2F1R4F1R11E1R4F1E6U2E2U3E1U3E1U1E1U2E1U1E1U4E1U6E1U4E1U3E2U2E2U2E1H1"
+DRAW "U7E2F3D2F1D4F2D1F1E2U2H1U1H1U2H1U7H6U4H2U6E2H4U3H1U4H1U8H7"
+DRAW "H8L2H3L3H1L2H3L4H3U2R1E1U1H1U3"
+DRAW "E3R2F1R3F2R19F1R6F4R12F1R6E5H2U3H4U3H1U2R7F7R2F4R5F1R4F2R6E2U2H4U3R3F1R6"
+DRAW "E4R4U6R12F1R7E4R1E4R2E7R1E2U1E1U3E5R3F1G2D3R1E2R2E1R1F3R1E1U2H2U1H1E2"
+DRAW "R2U1E3R1E3R5F1R3F3U4H2U2E4R2F5E3R7F2R3U7R3U5E3H1U1H1U1E3H3E2U4H2U2H4U1"
+DRAW "R37D2G8L5D7"
+PSET (1, 411), 10
+DRAW "C10R5E5R35E5R5E5U5E10U10E5U10E5R5U5H5U5H5U5E5R5E5R5E5U5E5R5E5R10E5R5E10"
+DRAW "U10E5R5E5R10F10R5F10R5"
+PSET (246, 371), 10
+DRAW "C10D10F5R5U5E5U5E5U15H5U5H5L5G5D5G5D5F5D10"
+PSET (267, 300), 1
+DRAW "C10D5F1D3G1D3G6D2G5H2L1H1U3H1U7R1E2"
+DRAW "U3E2R4E2R1E1U2E1R1"
+PSET (110, 372), 10
+DRAW "C10F1D1F1R1F3R2E3U1H1U2H1L1U2L4G1L2G2"
+PSET (100, 369), 10
+DRAW "C10L1G2D1F1R3E2H1U1L2"
+PSET (128, 357), 10
+DRAW "C10F2R1E3H2L1G1L1D1"
+PSET (319, 413), 10
+DRAW "C10L3H1L3H2L10H2L7G2L1G2D6F4R3F1R2F3R2F5"
+DRAW "R4F2R19U2E1U1E5U1E4U1E1U2E1H1L1G1L4G1L4G1L8H2L2"
+PSET (345, 416), 10
+DRAW "C10R1E2R2E2R2E2R1E1R1E1R1E2U1E1U4E1U1E2R1E1R1E4U5H4U1H1E1U1E1U1E4U1E4R3"
+DRAW "F5D1F3R1F3D1F1D2F1D1F1E7H4U3H2U3H14U2H4U3H5U1H1R4E2H9U1H3L1H3U1H2U2H4L1"
+DRAW "H7U2H3U10H1U2H1U4H3U2H4U1H5U7E2U5E6U1E3R1E3R1E3"
+PSET (346, 416), 10
+DRAW "C10U10R5E5U15E5U15H5U5H10L5H15U5H15U5H15U10H5U5H5U5H5L10G5L5G5L15G15L5G5"
+DRAW "L10H5"
+PSET (353, 235), 10
+DRAW "C10R10F10D3F3E3R3F2D5F5D10F5D10F5D5F10D5F10R5F5D10G5D5F5D10G5D10G5D5"
+DRAW "F15R15D5F5G5H10L5G10F10"
+DRAW "G3D1G1D8"
+PSET (247, 17), 10
+DRAW "C10R1G1D1G2F5D1R1D2G2F1E1R2F2R4F2R3F1R2D1"
+DRAW "G2L3G2D2R5F1R3F1E4R8E1R11E1R3E2R8F1R1F1R1F1R2F2R4F2R3F4R7E8R3E2R9E1R10E2"
+DRAW "R10E2R7E2R4E1R1E3R7E1R9E1R3E2R5E1F2D1F3R1F1R8E8R2H2L2H2U1E1R1F1R3F1R1E1"
+DRAW "R4E4U3E2U6BG15BL194BH2BL1G2F2R3E2R2E3H2L4G2L1BR7BL2BE5BR7BL3E1R1F2R2E4R1"
+DRAW "F2D2G3D4G2L3H2U2H5E1R1BF5BD10L2H2L2G2F1R5E1BR14BE23D4G1F5R3F1R10E1U2E2R2"
+DRAW "E1R4E5BG5BD8BL2F3R4E2H1L2H2L2G2"
+PSET (100, 1), 10
+DRAW "R2F2D5F1D5F1D4F3D6G3L1D2R6E2R10F2R4F2R2F2D2G7D1F2R1F6R3F1G3L1G1L6H1L4H1L4H1L7H1L15"
+DRAW "H1L7H2L9G3L2G1L32G4L6G3L7H1E1R2E1R2E4R2E2U1E1U2E5R3E1R5F1R5F1R6F1E5R1E2"
+DRAW "L1G1L1G1L3G1L3H2L3H3U1H3L5H3L1H2L6G2H3U5E3R2F1R2F1R4E7U5H2L2G1L7G2H1E3R2"
+DRAW "E1R4E2R1F1R4F1R5F3R1E5U1H3"
+PSET (443, 438), 10
+DRAW "C10U8E3F4R1E1U8H1U5E4"
+DRAW "E3R2F5E1"
+DRAW "R1E2H4U5H2U3E4R2E5U1E3U2R5F1D4F8E2H2U3R3"
+DRAW "F3R2U3H4E2R10F5G1D1F4E4U1E1R3F3"
+DRAW "D47"
+LINE (472, 408)-(474, 412), 10, BF
+LINE (468, 396)-(470, 404), 10, BF
+LINE (520, 410)-(522, 412), 10, BF
+PAINT (100, 100), 1, 10
+PAINT (400, 20), 1, 10
+PAINT (200, 350), 1, 10
+PAINT (505, 415), 1, 10
+IF look = 2 THEN
+	LINE (46, 158)-(200, 195), 10
+	LINE -(300, 195), 10
+	LINE -(525, 250), 10
+	PAINT (100, 300), 3, 10
+	PAINT (100, 430), 3, 10
+	PAINT (300, 420), 3, 10
+	PAINT (260, 310), 3, 10
+	PAINT (250, 350), 3, 10
+END IF
+DEF SEG = VARSEG(mtn(1))
+BLOAD "mtn.vga", VARPTR(mtn(1))
+DEF SEG
+FOR k = 1 TO 19
+	PUT (mtnx(k), mtny(k)), mtn, PSET
+	PUT (mtnx(k) + 10, mtny(k) + 20), mtn, PSET
+NEXT k
+labels
+showcities
+disband
+FOR i = 1 TO 2: CALL stax(i): NEXT i
+IF commerce > 0 THEN
+	COLOR 14
+	x = 140: y = 405
+	CIRCLE (x, y), 70, 13, , , .25
+	PAINT (x, y), 3, 13
+	stencil x - 32, y - 8, "RAID COMMERCE", 0
+END IF
+ships
+END SUB
+
+SUB menu (switch%)
+DIM box(1 TO 13000)
+remenu:
+	IF colour = 0 THEN colour = 7
+	LOCATE 1, 1, 0
+	IF mtx$(0) = "" THEN mtx$(0) = "M E N U"
+
+	IF wide = 0 THEN CALL mxw(wide)
+edge: IF 8 * (tlx + wide + 1) + 13 > 639 THEN tlx = tlx - 1: GOTO edge
+	IF tlx = 0 THEN GOSUB noadjust
+	IF choose < 21 THEN choose = 1
+	IF choose > 21 THEN choose = choose - 21
+	IF choose > 21 THEN choose = 1
+	row = choose: IF row < 1 THEN row = 1
+	IF row > size THEN row = 1
+	choose = row
+	row1 = row
+       
+	IF tly = 0 THEN tly = INT(11.5 - .5 * size)
+	IF tly + size > 26 THEN tly = 26 - size
+       
+	brx = tlx + wide + 1
+	bry = tly + size + 3
+       
+	boxc = colour: IF wtype > 10 THEN boxc = INT(wtype / 10): wtype = wtype - 10 * boxc
+
+	b1 = INT(.5 * (wide - LEN(mtx$(0))) + .5) + 1
+	GET (8 * tlx - 6, 16 * tly - 11)-(8 * (tlx + wide + 1) + 13, 16 * (tly + size + 2) + 14), box
+
+	CALL choices(b1, wide)
+sel1:
+	SELECT CASE switch
+		CASE 1: CALL icon(array(row), 0, 7): GOTO occ
+		CASE 2: CALL icon(array(row), 0, 9)
+occ:
+			target = occupied(array(row))
+			IF target > 0 THEN
+			flag = 1
+			IF LEN(t$) > wide THEN t$ = LEFT$(t$, wide)
+			COLOR 12
+			COLOR hilite
+			LOCATE tly + 2 + row, tlx + 2: PRINT mtx$(row);
+showsize:
+			LOCATE tly + 4 + size, tlx + 1: PRINT SPACE$(12);
+			LOCATE tly + 4 + size, tlx + 1: PRINT "Size"; armysize(target);
+			x = POS(0): y = CSRLIN: LOCATE y, x - 1: PRINT "00";
+			ELSE
+			flag = 0
+			LINE (8 * tlx, 16 * (tly + size + 3))-(8 * (tlx + 12), 16 * (tly + size + 4)), 2, BF
+			END IF
+		CASE 4: CALL clrbot
+			target = array(row)
+			LOCATE tly + 4 + size, tlx + 1: PRINT SPACE$(12);
+			a$ = armyname$(target): IF LEN(a$) > 11 THEN a$ = LEFT$(a$, 11)
+			COLOR 15
+			LOCATE tly + 5 + size, tlx + 1: PRINT SPACE$(12);
+			LOCATE tly + 5 + size, tlx + 1: PRINT a$;
+			GOTO showsize
+		CASE 5: COLOR 11: CALL clrbot: PRINT armyname$(index); "  Exp="; armyexper(index); " Cash="; cash(side);
+		CASE 6: CALL icon(armyloc(array(row)), 0, 9)
+		CASE 9: CALL icon(array(row), 0, 9)
+	END SELECT
+	IF flag = 0 THEN
+		COLOR hilite
+		LOCATE tly + 2 + row, tlx + 2
+		PRINT mtx$(row)
+		IF bw > 0 THEN LINE (8 * (tlx + 1), 16 * (tly + row + 1))-(8 * (tlx + LEN(mtx$(row)) + 1) - 1, 16 * (tly + row + 2) - 1), hilite, B
+	END IF
+	GOSUB crsr
+	IF switch <> 3 GOTO reglr
+	IF a$ = "H" THEN choose = 1: GOTO called
+	IF ASC(a$) = 13 THEN choose = 2: GOTO called
+	IF a$ = "P" THEN choose = 3: GOTO called
+reglr:
+	IF ASC(a$) = 13 GOTO called
+	IF switch = 2 THEN LOCATE tly + 2 + row1, tlx + 2: PRINT SPACE$(wide);
+	COLOR colour
+	LOCATE tly + 2 + row1, tlx + 2: PRINT mtx$(row1)
+
+	SELECT CASE switch
+		CASE 1, 2, 9
+			IF mtx$(row1) <> "EXIT" THEN CALL icon(array(row1), 0, 8)
+			IF occupied(array(row1)) > 0 THEN CALL placearmy(occupied(array(row1)))
+		CASE 6
+			IF mtx$(row1) <> "EXIT" THEN CALL icon(armyloc(array(row1)), 0, 8)
+	END SELECT
+
+	choose = row
+	GOTO sel1
+crsr:   a$ = INKEY$: IF a$ = "" GOTO crsr
+	IF ASC(a$) = 13 THEN RETURN
+	IF LEN(a$) = 2 GOTO arrows
+	IF switch = 3 THEN choose = -ASC(UCASE$(a$)): GOTO called
+	IF ASC(a$) = 27 THEN choose = -1: GOTO called
+		row1 = row
+		FOR k = 1 TO size
+		c1$ = UCASE$(LEFT$(LTRIM$(mtx$(k)), 1))
+		IF c1$ = UCASE$(a$) THEN choose = k: GOSUB limits: GOTO called
+		NEXT k
+	GOTO crsr
+arrows:
+	a$ = RIGHT$(a$, 1)
+	IF a$ = ">" THEN
+		CALL report(side, 4)
+		choose = -1
+		GOTO called
+	END IF
+	IF a$ = ";" THEN
+		PUT (8 * tlx - 6, 16 * tly - 11), box, PSET
+		LINE (8 * tlx - 6, 16 * tly - 11)-(8 * (tlx + wide + 1) + 13, 16 * (tly + size - 3) + 14), 0, BF
+		LINE (8 * tlx - 6, 16 * tly - 11)-(8 * (tlx + wide + 1) + 13, 16 * (tly + size - 3) + 14), 15, B
+		COLOR 14: LOCATE tly + 1, tlx + 1: PRINT "Hot Keys"
+		COLOR 15
+		LOCATE tly + 2, tlx + 1: PRINT "F1:Help"
+		LOCATE tly + 3, tlx + 1: PRINT "F3:Redraw"
+		LOCATE tly + 4, tlx + 1: PRINT "F4:Forces"
+		LOCATE tly + 5, tlx + 1: PRINT "F7:EndTurn"
+		CALL tick(99)
+		choose = -1
+		GOTO called
+	END IF
+	row1 = row
+	 IF a$ = "H" THEN row = row - 1: GOSUB limits: RETURN
+	 IF a$ = "I" THEN row = 1: GOSUB limits: RETURN
+	 IF a$ = "P" THEN row = row + 1: GOSUB limits: RETURN
+	 IF a$ = "Q" THEN row = size: GOSUB limits: RETURN
+	 IF a$ = "=" AND switch = 0 THEN
+		CLS
+		CALL europe
+		CALL calendar
+		CALL choices(b1, wide)
+		RETURN
+	 END IF
+	 IF a$ = "A" AND switch = 0 THEN
+		choose = 99
+		GOTO called
+	 END IF
+	 RETURN
+
+limits:
+	IF row > size THEN row = 1
+	IF row < 1 THEN row = size
+	RETURN
+noadjust:
+	IF tlx = 0 THEN tlx = INT(40.5 - .5 * wide)
+	RETURN
+called:
+	IF noise > 0 THEN SOUND 700, .5
+	COLOR colour
+	PUT (8 * tlx - 6, 16 * tly - 11), box, PSET
+	tlx = 0: tly = 0
+	SELECT CASE switch
+	CASE 1, 2, 9
+		CALL icon(array(row), 0, 8)
+	CASE 6
+		CALL icon(armyloc(array(row)), 0, 8)
+	END SELECT
+END SUB
+
+SUB mxw (wide)
+	wide = LEN(mtx$(0)) + 1
+	FOR i = 1 TO size
+	x = LEN(mtx$(i))
+	IF x > wide THEN wide = x
+	NEXT i
+END SUB
+
+SUB schooner
+SCREEN 12
+LINE (1, 240)-(639, 309), 3, BF
+LINE (639, 309)-(1, 479), 1, BF
+COLOR 6
+LINE (243, 241)-(247, 395), , BF
+LINE (369, 395)-(373, 241), , BF
+LINE (183, 395)-(435, 400), , BF
+LINE (188, 395)-(107, 356): LINE -(106, 360): LINE -(173, 392)
+LINE -(182, 409): LINE -(191, 419): LINE -(230, 416): LINE -(275, 422)
+LINE -(314, 408): LINE -(354, 421): LINE -(390, 411): LINE -(390, 412)
+LINE -(413, 417): LINE -(437, 409): LINE -(447, 391): LINE -(447, 387)
+LINE -(401, 387): LINE -(399, 396)
+PAINT (300, 405), 6
+
+LINE (378, 290)-(434, 262): LINE -(432, 258): LINE -(377, 286)
+LINE -(378, 290)
+PAINT (380, 286), 6
+
+LINE (378, 346)-(456, 336): LINE -(457, 340): LINE -(376, 350)
+LINE -(378, 346)
+PAINT (382, 347), 6
+
+
+COLOR 15
+LINE (109, 355)-(131, 361)
+LINE -(239, 259): LINE -(239, 256): LINE -(109, 355)
+PAINT (140, 340)
+
+LINE (238, 268)-(256, 273)
+LINE -(241, 295): LINE -(240, 309): LINE -(250, 322)
+LINE -(226, 321): LINE -(220, 299): LINE -(227, 284)
+LINE -(239, 269)
+PAINT (245, 275), 15
+
+LINE (202, 327)-(195, 350): LINE -(203, 385): LINE -(251, 387)
+LINE -(242, 352): LINE -(243, 345): LINE -(249, 333)
+LINE -(202, 327)
+PAINT (235, 335), 15
+
+LINE (381, 268)-(368, 286)
+LINE -(366, 303): LINE -(374, 317): LINE -(350, 315)
+LINE -(347, 297): LINE -(361, 264): LINE -(381, 268)
+PAINT (365, 275), 15
+
+LINE (379, 335)-(320, 328)
+LINE -(311, 347): LINE -(315, 367)
+LINE -(317, 382): LINE -(378, 386): LINE -(368, 373)
+LINE -(369, 345): LINE -(379, 334)
+PAINT (360, 345), 15
+
+LINE (379, 290)-(406, 342): LINE -(456, 336): LINE -(435, 289)
+LINE -(433, 264): LINE -(378, 291)
+PAINT (410, 325), 15
+
+LINE (140, 370)-(240, 270): LINE -(160, 380): LINE -(140, 370)
+PAINT (150, 370), 15
+
+FOR k = 260 TO 400 STEP 25
+CIRCLE (k, 405), 3, 0
+PAINT (k, 405), 0
+NEXT k
+
+COLOR 11
+LINE (247, 437)-(290, 422): LINE -(314, 416): LINE -(334, 423)
+LINE -(305, 432): LINE -(287, 430): LINE -(286, 430)
+LINE -(267, 441): LINE -(225, 439): LINE -(225, 438)
+LINE -(246, 437)
+PAINT (300, 425), 3, 11
+
+LINE (362, 428)-(385, 419)
+LINE -(394, 421): LINE -(375, 437): LINE -(354, 432)
+LINE -(345, 429): LINE -(362, 428)
+PAINT (370, 430), 3, 11
+
+LINE (16, 383)-(43, 379)
+LINE -(44, 379): LINE -(78, 385): LINE -(16, 384)
+PAINT (40, 383), 9, 11
+
+LINE (173, 440)-(204, 431): LINE -(227, 431): LINE -(210, 439)
+LINE -(175, 441): LINE -(173, 440)
+PAINT (200, 435), 11
+
+LINE (445, 417)-(552, 409)
+LINE -(599, 416): LINE -(539, 415): LINE -(468, 415)
+PAINT (550, 411), 9, 11
+
+LINE (509, 349)-(540, 351)
+LINE -(541, 351)
+LINE -(517, 343): LINE -(509, 349)
+PAINT (520, 347), 3, 11
+
+LINE (577, 342)-(598, 343)
+LINE (275, 340)-(287, 342), 9
+
+LINE (109, 396)-(148, 395), 9
+LINE (24, 337)-(72, 338), 3
+
+COLOR 7
+LINE (207, 354)-(216, 383): LINE -(246, 386): LINE -(239, 356)
+LINE -(233, 347): LINE -(207, 354)
+PAINT (238, 365), 7
+
+LINE (223, 301)-(231, 321): LINE -(244, 321): LINE -(237, 308): LINE -(240, 303)
+LINE -(223, 301)
+PAINT (236, 312), 7
+
+LINE (349, 299)-(353, 313): LINE -(370, 316)
+LINE -(363, 302): LINE -(364, 303): LINE -(350, 300)
+PAINT (360, 310), 7
+
+LINE (316, 359)-(319, 380): LINE -(375, 385): LINE -(366, 372): LINE -(368, 364)
+LINE -(316, 360)
+PAINT (360, 370), 7
+
+LINE (393, 302)-(394, 302): LINE -(409, 323)
+LINE -(417, 309): LINE -(434, 325): LINE -(429, 304): LINE -(428, 291)
+LINE -(410, 296): LINE -(400, 290): LINE -(394, 302)
+PAINT (420, 300), 7
+
+COLOR 0
+LINE (247, 256)-(291, 394)
+LINE (247, 256)-(284, 394)
+LINE (244, 256)-(191, 394)
+LINE (244, 256)-(184, 394)
+
+LINE (371, 257)-(321, 394)
+LINE (371, 257)-(314, 394)
+LINE (375, 257)-(431, 388)
+LINE (375, 257)-(438, 388)
+
+LINE (375, 258)-(434, 259)
+
+COLOR 8
+LINE (180, 400)-(186, 415): LINE -(198, 420): LINE -(212, 418)
+LINE -(202, 421): LINE -(210, 414): LINE -(191, 408): LINE -(201, 402)
+LINE -(180, 400)
+PAINT (185, 410), 8
+
+LINE (445, 391)-(438, 410): LINE -(435, 413)
+LINE -(413, 420): LINE -(422, 413): LINE -(418, 404): LINE -(434, 401)
+LINE -(427, 393): LINE -(435, 391): LINE -(437, 388): LINE -(445, 391)
+PAINT (440, 390), 8
+
+LINE (186, 425)-(155, 429), 11: LINE -(146, 433), 11
+LINE (150, 417)-(116, 425), 11
+LINE (123, 452)-(153, 460), 11
+LINE (297, 463)-(319, 468), 11
+
+FOR k = 1 TO 4
+x = 185 + 200 * RND
+LINE (x, 390)-(x + 2, 392), 12, BF: LINE (x - 2, 392)-(x + 4, 394), 8, BF
+NEXT k
+END SUB

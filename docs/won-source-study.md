@@ -516,8 +516,45 @@ and the tool checks it against the game's far calls into the runtime.
 - **For QB64Rust:** `tools\qb45\pds71_install.py` builds the near-string library, which matches how `qb45.py`
   compiles (without `/Fs`). Nothing there changes.
 
-**Next in step 1:** the procedure splitter and the compare tool. The compare tool compiles with `/Fs`, and reads
-`/E` from each module.
+**The procedure splitter and the compare tool: done (2026-11-06).** `procsplit.py` finds each SUB and FUNCTION
+from BC's entry and exit code. `compare.py` compares a compiled module with the program, procedure by procedure,
+and then the constant segment. On Civil War Strategy it reports all 76 procedures, the 3 module-level bodies and
+the 3 constant segments as exact. The module header gives the place of each module's data segments, and a word
+in it shows `/E`: `WON` was compiled with `/E`, and `WON2` and `WONMENU` without it. Step 1 is complete.
+
+## 9. Step 3 so far (2026-11-06)
+
+Step 3 was done before step 2: it needs no new software, and its count is the checkpoint of section 7.
+The procedure table, the `COMMON` layout and the open questions are in `docs\recovery.md`.
+
+- **The checkpoint is passed.** 87% of the procedure code pairs with Civil War Strategy: 11 procedures are the
+  same and 37 changed. 18 procedures (13% of the bytes) are new. The module-level code aligns 70–83%.
+- **Each module's procedures are in alphabetical order**, as the QBX editor saves them. This pairs procedures
+  that moved between modules, and limits the names of new ones (D6).
+- **The `COMMON SHARED` layout** is the same as `CWS14.BI` up to `rating()`. After that it differs, and eight
+  offsets are Wars of Napoleon's own.
+
+**Step 4 has begun (2026-11-06).** `WONMENU.BAS` and `WON.BI` compile to a `WONMENU` module equal to the one in
+`WON.EXE`: every procedure, the module-level code and the constant segment. `docs\recovery.md` says how it
+differs from `CWSMENU`, what `WON.BI` holds so far, and what was learned about BC on the way.
+
+`WON2.BAS` followed the same day: all 44 procedures, the module-level code and the constant segment equal
+`WON.EXE`, and the calls between `WON2` and `WONMENU` hit the right procedures.
+
+**Step 4 is done for the code (2026-11-06).** `WON.BAS` compiles to a `WON` module equal to the one in
+`WON.EXE`: all 17 procedures, the module-level code and the constant segment. Compiled together from the repo,
+the three modules give 69 exact pieces out of 69, every constant segment is equal, and every call between
+modules reaches the paired procedure. Most of `WON.BAS` is Hutsell's Civil War Strategy text; `filer`,
+`battle`, `placearmy`, `armies`, `showcities` and parts of the module-level code were written from the
+disassembly. `docs\recovery.md` lists how `WON` differs and what BC taught on the way.
+
+**Next:**
+
+- Step 5, the whole program: link the three objects with LINK and the runtime library, and compare the `.EXE`
+  with the unpacked `WON.EXE` byte for byte. This also needs open question 1 (the word at +2Ch of each module
+  header).
+- Step 2, the harness with DOSBox-X, then step 6 (replay). Neither depends on step 5.
+- Names for the `uNNN` placeholders (open question 4 in `docs\recovery.md`), which are the user's call.
 
 ## Decisions recorded in QB64Rust
 

@@ -23,6 +23,7 @@ class Segment:
     size: int
     data: bytearray = field(default_factory=bytearray)
     fixed: bytearray = field(default_factory=bytearray)  # 1 where a fixup writes
+    targets: dict = field(default_factory=dict)  # offset -> what the fixup there points at
 
     def is_code(self):
         return self.cls.upper().endswith("CODE")
@@ -34,6 +35,18 @@ class Module:
     segments: list  # index 0 unused, as in OMF
     publics: list  # (name, segment index, offset); segment index 0 = absolute
     externs: list  # index 0 unused
+    groups: list = field(default_factory=lambda: [None])  # group names; index 0 unused
+
+    def target_name(self, target):
+        """A readable name for a fixup target from Segment.targets."""
+        _, kind, idx, _, _ = target
+        if kind == "ext":
+            return self.externs[idx]
+        if kind == "seg":
+            return self.segments[idx].name
+        if kind == "grp":
+            return self.groups[idx]
+        return "?"
 
 
 def _index(b, p):
@@ -42,22 +55,38 @@ def _index(b, p):
     return b[p], p + 1
 
 
-def _parse_fixupp(body, wide, last):
-    """Mark the bytes of the last LEDATA/LIDATA that this FIXUPP record patches."""
+TARGET_KINDS = ("seg", "grp", "ext", "frame")
+
+
+def _parse_fixupp(body, wide, last, threads):
+    """Mark the bytes of the last LEDATA/LIDATA that this FIXUPP record patches,
+    and record in the segment's `targets` what each fixup points at:
+    (location type, kind, index, displacement or None, self-relative). The kind
+    is "seg", "grp" or "ext"; the index is into the module's segments, groups
+    or externs. `threads` holds the target threads between records."""
     p = 0
     while p < len(body):
         b0 = body[p]
         if not b0 & 0x80:  # THREAD subrecord
             method = (b0 >> 2) & 7
+            number = b0 & 3
             p += 1
-            if b0 & 0x40:  # target thread: methods 0..3 carry an index
+            if b0 & 0x40:  # frame thread: F0..F2 carry an index, F3 a frame number
+                if method < 3:
+                    _, p = _index(body, p)
+                elif method == 3:
+                    p += 2
+            else:  # target thread: T0..T2 carry an index
                 method &= 3
-            if method < 3:
-                _, p = _index(body, p)
-            elif method == 3:
-                p += 2
+                idx = None
+                if method < 3:
+                    idx, p = _index(body, p)
+                else:
+                    p += 2
+                threads[number] = (method, idx)
             continue
         locat = (b0 << 8) | body[p + 1]
+        self_rel = not (locat >> 14) & 1
         loc = (locat >> 10) & 0x0F
         offset = locat & 0x3FF
         p += 2
@@ -70,12 +99,17 @@ def _parse_fixupp(body, wide, last):
             elif frame == 3:
                 p += 2
         if not fixdat & 0x08:  # explicit target
-            target = fixdat & 3
-            if target < 3:
-                _, p = _index(body, p)
+            method = fixdat & 3
+            idx = None
+            if method < 3:
+                idx, p = _index(body, p)
             else:
                 p += 2
+        else:
+            method, idx = threads.get(fixdat & 3, (3, None))
+        disp = None
         if not fixdat & 0x04:  # displacement present
+            disp = struct.unpack_from("<I" if wide else "<H", body, p)[0]
             p += 4 if wide else 2
         if last is not None:
             seg, start = last
@@ -83,6 +117,7 @@ def _parse_fixupp(body, wide, last):
             for i in range(start + offset, start + offset + n):
                 if i < len(seg.fixed):
                     seg.fixed[i] = 1
+            seg.targets[start + offset] = (loc, TARGET_KINDS[method], idx, disp, self_rel)
 
 
 def _expand_lidata(body, q, wide):
@@ -114,6 +149,8 @@ def parse_module(b, p):
     segs = [None]
     publics = []
     externs = [None]
+    groups = [None]
+    threads = {}
     module = ""
     last = None
     while p < len(b):
@@ -146,6 +183,9 @@ def parse_module(b, p):
             ni, q = _index(body, q)
             ci, q = _index(body, q)
             segs.append(Segment(names[ni], names[ci], size, bytearray(size), bytearray(size)))
+        elif typ == 0x9A:  # GRPDEF
+            ni, _ = _index(body, 0)
+            groups.append(names[ni])
         elif typ in (0x8C, 0xB4):  # EXTDEF, LEXTDEF
             q = 0
             while q < len(body):
@@ -210,10 +250,10 @@ def parse_module(b, p):
             seg.data[off : off + len(out)] = out
             last = None  # fixups of iterated data are not tracked
         elif typ in (0x9C, 0x9D):
-            _parse_fixupp(body, wide, last)
+            _parse_fixupp(body, wide, last, threads)
         elif typ in (0x8A, 0x8B):
-            return Module(module, segs, publics, externs), p
-    return Module(module, segs, publics, externs), p
+            return Module(module, segs, publics, externs, groups), p
+    return Module(module, segs, publics, externs, groups), p
 
 
 def read_library(path):

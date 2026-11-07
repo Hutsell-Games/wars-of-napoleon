@@ -7,7 +7,8 @@ from the QB64Rust project).
 
 They need Python 3, DOSBox 0.74-3 at its default install path, and PDS 7.1
 (`BC.EXE`, `LINK.EXE`, `BCL71ENR.LIB`, `QBX.LIB` and the `NO*.OBJ` stubs) in
-one folder. `normalign.py` also needs the `capstone` package. DOSBox runs
+one folder. `normalign.py`, `compare.py`, `pairprocs.py` and `commonmap.py` also need the
+`capstone` package. DOSBox runs
 with SDL's dummy video driver, so no window opens.
 
 | Script | What it does |
@@ -20,6 +21,35 @@ with SDL's dummy video driver, so no window opens.
 | `omflib.py FILE.LIB [MODULE]` | Reads an OMF library or object file: each module's segments, the bytes LINK fills in (fixups), and its public names. Lists the modules, or one module's segments and names. |
 | `buildlib.py PDS71 OUT` | Builds the runtime library Hutsell linked with into `OUT`, with copies of `LINK.EXE`, `QBX.LIB` and the stubs, so that `OUT` can be the PDS folder of `linkcheck.py`. It is the far-string library (see below). |
 | `runtimemap.py UNPACKED.EXE OUT.tsv LIB...` | Finds each library module's code in an unpacked program, with fixups as wildcards, and writes the address of each runtime routine (`B$PESD`, `B$OPEN`, ...) to `OUT.tsv`. Checks that every far call from the game's code into the runtime hits a name. |
+| `procsplit.py UNPACKED.EXE RUNTIME.tsv MODULE... [--tsv OUT]` or `procsplit.py FILE.OBJ...` | Splits module code into its SUBs and FUNCTIONs, from BC's entry (`mov cx / mov bx / call far B$ENRA`) and exit (`call far B$EXSA / retf`). Lists each one's place, size, frame, parameters, calls and callers in other modules. In a program, procedures are labeled `MODULE.NN` in order; in an object file they get their public names. |
+| `compare.py UNPACKED.EXE RUNTIME.tsv OBJ... [--show LABEL]` | The compare tool. Compares each compiled module (`MODULE_CODE` in the object) with the same module in the program, procedure by procedure in order, and the module-level code. Reports each as `exact`, `shape` (same instructions, other numbers) or the share that aligns with the first instruction that differs. Then compares the module's constant segment `BC_CN` with its place in the program. `--show` prints one procedure side by side. Compile first with `calibrate_bc.py`. |
+| `pairprocs.py UNPACKED.EXE RUNTIME.tsv MODULES OBJ... [--tsv OUT]` | Pairs each procedure of the program with a procedure of the objects (Civil War Strategy's), by shape, keeping each module's alphabetical order. Gives `same`, `changed` or `new` per procedure. Its output is the table of `docs\recovery.md`. |
+| `commonmap.py FILE.BI UNPACKED.EXE RUNTIME.tsv MODULES PAIRS.tsv OBJ...` | Works out the `COMMON SHARED` layout of `FILE.BI` and maps each variable to its place in the program, through the paired procedures. Lists the program's other `COMMON` offsets. |
+
+| `disasm.py UNPACKED.EXE RUNTIME.tsv MODULES LABEL... [--lift]` | Prints a procedure, or `MODULE(module)`, with runtime calls and game procedures named, and string and floating-point constants shown. `--lift` folds the pushed arguments into each call's line, such as `B$DRAW("C10R2")` or `B$N1I2(500, 185)`. |
+| `lift2bas.py LIFTED.txt` | Turns the graphics statements of a lifted listing back into BASIC (`SCREEN`, `CLS`, `LINE`, `PSET`, `PAINT`, `DRAW`). Other lines become `'?` comments to write by hand. |
+| `stmtdiff.py DRAFT.bas SOURCE.BAS NAME` | Diffs a draft from `lift2bas.py` against a procedure of the source, statement by statement, with the source's line numbers. Used to edit a changed procedure in place, keeping Hutsell's layout. |
+
+`codecmp.py` holds what `compare.py` and `pairprocs.py` share: instruction shapes, BC's floating-point
+emulator calls (`INT 34h`–`3Dh`), and the exact comparison. Two details matter for `/E` modules and static
+arrays. A word that points into the module's own code (a `GOSUB` target) is an offset from the module's start
+in both the object and the program, so its base is 0 and is not voted for. A 16-bit displacement that LINK
+fills in is 0 in the object, which capstone prints as `[si]`; the shape writes it `[si + N]`, as in the program.
+
+To compare all three modules at once, and so check the calls between them, compile them into one folder and
+pass all three objects:
+
+```
+python -I calibrate_bc.py . PDS W/out_repo WON=O,E,Fs WON2=O,Fs WONMENU=O,Fs
+python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out_repo/WON.OBJ W/out_repo/WON2.OBJ W/out_repo/WONMENU.OBJ
+```
+
+A typical round of step 4, with the PDS 7.1 folder in `PDS` and the scratch folder in `W`:
+
+```
+python -I calibrate_bc.py SRC PDS W/out WON2=O,Fs
+python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out/WON2.OBJ
+```
 
 ## What the tools have shown
 
@@ -41,4 +71,10 @@ with SDL's dummy video driver, so no window opens.
   modules are laid out in another order: Hutsell's LINK took the runtime in
   one pass over the library, part after part, while ours makes three.
 
-The procedure splitter and the compare tool come next.
+- **The compare tool is exact on Civil War Strategy.** `CWSMENU` and
+  `CWSTRAT` from `calib-fs`, and `CWSTRAT2` from `calib-fs2`, compared
+  with the unpacked `CWS.EXE`: all 76 procedures, the 3 module-level
+  bodies and the 3 constant segments are equal. A literal changed by one
+  letter is caught in `BC_CN`.
+- **87% of `WON.EXE`'s procedure code pairs with Civil War Strategy.** The
+  table and what follows from it are in `docs\recovery.md`.
