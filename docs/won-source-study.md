@@ -503,7 +503,8 @@ and the tool checks it against the game's far calls into the runtime.
 - **The compiler switches are pinned down: `/Fs` was used.** `BC /O /Fs` compiles `CWSMENU.BAS` to Hutsell's
   `CWSMENU.OBJ`. `/O /E /Fs` does the same for `CWSTRAT`, and `/O /Fs` without `/E` for `CWSTRAT2`, though
   `CWSMAK.BTM` says `/o/e` for it. Each code segment is then equal to Hutsell's except for one word at offset
-  `0x2C`: `FFFF` from our BC, `0002` in his. It is not a fixup, and what sets it is not known yet. Without `/Fs`,
+  `0x2C`: `FFFF` from our BC, `0002` in his. It is not a fixup, and what sets it is not known yet (it is
+  `/C:512`, section 12). Without `/Fs`,
   only 20% of the bytes were equal at the same offset. The 97–98% shape alignment of the calibration came from
   this switch. So D1's checkpoint condition on the switches is met: the switches are known, with `/E` read per
   module.
@@ -512,7 +513,8 @@ and the tool checks it against the game's far calls into the runtime.
   code (`gwcom`, `llcom3`) that `nocom` removes. The modules lie in another order. In the shipped program the
   runtime comes in one sweep, part library after part library: `BLIBFP`, `EMR`, `B71OBJ`, `B71OEJ`, `B71OBF`,
   `B71OOF`, `B71ROBJ`, `B71ROOJ`, `B71ROEJ`, `B71ROBF`, `B71ROOF`, `B71ROEF`. Our LINK, with the parts in that
-  order, makes three sweeps. This belongs to step 5 and does not hold up the panel's target.
+  order, makes three sweeps. This belongs to step 5 and does not hold up the panel's target. (Section 12: the
+  programs were linked without the stubs, `/NOE` or `/PACKCODE`.)
 - **For QB64Rust:** `tools\qb45\pds71_install.py` builds the near-string library, which matches how `qb45.py`
   compiles (without `/Fs`). Nothing there changes.
 
@@ -599,7 +601,7 @@ quitting, part of session 15's purpose.
 
 - The other fourteen sessions of section 3.2. Each is written a few keys at a time with `play.py run`.
 - Step 6 for each new session, as section 11 shows.
-- Step 5, the whole program byte for byte. It needs open question 1 (the word at +2Ch of each module header).
+- Step 5, the whole program byte for byte. Done, section 12.
 
 ## 11. Step 6 so far (2026-11-07)
 
@@ -615,7 +617,8 @@ recordings:
 So the link and the runtime library behave like Hutsell's in what these sessions cover. Each new session of
 section 3.2 gets the same check once it is recorded.
 
-**How the build was made.** `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder,
+**How the build was made.** This was the build of step 6; section 12 gives the present one, which differs in
+`/C:512` and in `WON.LNK`. `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder,
 and the commands run from `tools\recover\`:
 
 ```
@@ -647,6 +650,69 @@ python -I tools/play/play.py check tests/scripts/*.keys --exe W/link/WON.EXE --t
 - **Not explained:** `runtimemap.py` counts 3,684 far calls from the game's code into the runtime in the build,
   all of them named. In the shipped program it counts 3,693. The 9 calls were not looked into. Since every screen
   and file matches, they did not change what these sessions show.
+
+## 12. Step 5: the whole program byte for byte (2026-11-07)
+
+**The recovered source builds `WON.EXE` exactly.** Compiled and linked as below, the program's unpacked load
+image equals the unpacked `WON.EXE` byte for byte: 193,056 bytes, the same 4,438 relocations, the same entry
+point (1a08:1136) and the same stack. One layer down it is equal too. LINK's output, still packed by EXEPACK,
+equals `WON.EXE` with only its LZEXE layer undone: 191,662 bytes. The only part not reproduced is LZEXE's own
+packing of that file.
+
+Two things were missing.
+
+**1. The word at +2Ch of each module header is BC's `/C:n`.** That switch sets the size of the COM port
+buffer. `WONMENU.BAS` was compiled with `/O /Fs` and each other switch of BC 7.10 in turn. Only `/C:512`
+changed the word: from FFFF to 0200h. Read as bytes, that is `00 02`, which is what Hutsell's objects hold. The
+earlier notes read it as "0002". `/C:2` and `/C:1` write 0002 and 0001, so the word is the number given. 512 is BC's default size, so the switch changes no other byte. Hutsell's `CWSMENU.OBJ` and ours, compiled
+with `/O /Fs /C:512`, have every segment equal. `compare.py` now checks the word.
+
+**2. The programs were not linked with their `.LNK` files.** `NWS.LNK` and `CWS.LNK` link the `NO*.OBJ` stubs
+with `/NOE /PACKCODE`. The shipped programs show none of that:
+
+- **No stubs.** Our build had them right after the game's code, at the start of `RTCODE`: 16 bytes of `jmp`s
+  and a `ret`. The shipped program has no such bytes anywhere, and it was 32 bytes smaller. Since the stubs come
+  first, `RTCODE` was also the first runtime segment in our build. In `WON.EXE`, `_TEXT` is first.
+- **No `/NOE`.** Without the stubs but with `/NOE`, LINK still took the runtime modules in another order. In
+  `WON.EXE` the modules of each segment lie in the order of the library, with no exception; ours went back 8
+  times. Without `/NOE` the order matched. Probably LINK then searches the library through its extended
+  dictionary, which `/NOE` turns off; that was not checked further.
+- **No `/PACKCODE`.** With it, all the runtime's code segments share one frame, 1a08h. In `WON.EXE` each has its
+  own: `_TEXT` 1a08h, `EMULATOR_TEXT` 1b4dh, `RTCODE` 1da5h, `LMEM` 27e1h and `LOADRTM` 2887h. Each game
+  module has its own frame too. The two layouts had the same addresses, so only the segment words of the far
+  calls differed.
+
+So `tools\recover\WON.LNK` is now the three modules with `/E` and nothing else. As a check, Hutsell's own three
+Civil War Strategy objects were linked the same way. The result equals the unpacked `CWS.EXE` byte for byte:
+220,912 bytes and 6,299 relocations. So this is how Hutsell built both programs, not only a link that happens
+to fit one. The switches match a build made from inside the QBX editor rather than by `CWSMAK.BTM` and the
+`.LNK` files: QBX uses far strings and its own compile switches. That is a guess; it was not checked against
+QBX.
+
+QB 4.5's LINK 3.69 was also tried, without the stubs. It gives a program of 203,504 bytes and 4,504
+relocations, so it is not the linker Hutsell used. PDS 7.1's own LINK 5.10 gives both programs exactly.
+
+**How to build it.** `PDS` is the PDS 7.1 folder of `tools\qb45\pds71_install.py`, `W` a scratch folder, and
+the commands run from `tools\recover\`:
+
+```
+python -I buildlib.py PDS W/lib
+python -I calibrate_bc.py ../.. PDS W/obj WON=O,E,Fs,C:512 WON2=O,Fs,C:512 WONMENU=O,Fs,C:512
+python -I linkcheck.py W/lib W/link WON.LNK ../../WON.EXE W/obj/WON.OBJ W/obj/WON2.OBJ W/obj/WONMENU.OBJ
+```
+
+`linkcheck.py` should end with `load modules: 0 bytes differ` and `relocations equal: True`. This was run from
+an empty scratch folder on 2026-11-07.
+
+**What follows for step 6.** The build's runtime now lies where the shipped program's does. So `play.py check`
+takes the shipped addresses for the seed patch: `--timr 27c7c --rnzp 24389`. It still needs them given,
+because the unpacked file's header is not the shipped one. Its memory fields come from LINK in the build and
+from LZEXE in `WON.EXE`, and `play.py` knows the shipped program by the hash of the whole file. Section 11's
+open point, 3,684 far calls into the runtime in the build against 3,693 in `WON.EXE`, came from the other
+layout. The program is now the same, so it is closed.
+
+With those addresses, `play.py check` on this build gave the same screens and files as both recordings:
+`01-1796-french` 49 of 49 screens and 4 files, `02-1796-allies` 13 of 13 screens and 2 files (2026-11-07).
 
 ## Decisions recorded in QB64Rust
 

@@ -145,7 +145,8 @@ class Bases:
 
 
 HEADER = 0x2E  # BC's module header: the "bl" marker, then the places of the data segments
-UNKNOWN_HEADER_WORD = 0x2C  # FFFF from our BC, 0002 in Hutsell's objects; cause not known
+# The word at +2Ch is BC's /C:n, the COM buffer size; FFFF without the switch.
+# Hutsell compiled with /C:512, so it is 0200h (bytes 00 02) in his objects and in WON.EXE.
 
 
 def header_bases(obj_view, exe_view, bases):
@@ -158,13 +159,8 @@ def header_bases(obj_view, exe_view, bases):
 
 
 def header_diff(obj_view, exe_view):
-    """Offsets in the module header where unfixed bytes differ, apart from the
-    word at UNKNOWN_HEADER_WORD."""
-    return [
-        k for k in range(HEADER)
-        if not obj_view.fixed[k] and k not in (UNKNOWN_HEADER_WORD, UNKNOWN_HEADER_WORD + 1)
-        and obj_view.data[k] != exe_view.data[k]
-    ]
+    """Offsets in the module header where unfixed bytes differ."""
+    return [k for k in range(HEADER) if not obj_view.fixed[k] and obj_view.data[k] != exe_view.data[k]]
 
 
 def collect_bases(obj_view, exe_view, pairs, bases):

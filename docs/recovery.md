@@ -67,10 +67,14 @@ knows where each module's constants are without having to guess.
 
 **`WON` was compiled with `/E`; `WON2` and `WONMENU` were not.** The word at +22h is nonzero only with `/E`.
 For Civil War Strategy it is 0006 in `CWSTRAT` (`/O /E /Fs`) and 0000 in the other two (`/O /Fs`). So the
-compile switches are `WON=O,E,Fs`, `WON2=O,Fs` and `WONMENU=O,Fs`.
+compile switches are `WON=O,E,Fs,C:512`, `WON2=O,Fs,C:512` and `WONMENU=O,Fs,C:512`.
 
-**The word at +2Ch is still not explained.** Hutsell's objects have 0002 there and our BC writes FFFF.
-`WON.EXE` has 0002 in all three modules. `compare.py` skips this word.
+**The word at +2Ch is BC's `/C:n` switch, the size of the COM port buffer** (found 2026-11-07). Without the
+switch BC writes FFFF there. With `/C:512` it writes 0200h, the bytes `00 02`, which is what Hutsell's objects
+and `WON.EXE` hold in every module. (The earlier note read the two bytes as "0002".) 512 is also BC's default
+buffer size, so the switch changes nothing else: `WONMENU` compiled with and without it differs only in these
+two bytes. Hutsell's `CWSMENU.OBJ` and ours compiled with `/O /Fs /C:512` have every segment equal.
+`compare.py` now checks this word like the rest of the header.
 
 **The `COMMON SHARED` block is 2,242 bytes, 4 more than Civil War Strategy's 2,238.** `commonmap.py` worked
 out `CWS14.BI`'s layout from BC's sizes: INTEGER 2 bytes, SINGLE 4, an array's descriptor 46. The total is
@@ -98,14 +102,15 @@ place as in `WON.EXE`.
 | `WON` | **exact** (2026-11-06): all 17 procedures, the module-level code (13,275 bytes) and the constant segment (5,240 bytes) | `WON.BAS`, `WON.BI` |
 
 `compare.py` on the three objects compiled from the repo together
-(`calibrate_bc.py . PDS W WON=O,E,Fs WON2=O,Fs WONMENU=O,Fs`) reports `69 exact, 0 shape, 0 differ`: the 66
-procedures and the three module-level bodies. The three constant segments are equal, and so are the headers
-apart from the word at +2Ch (open question 1). Every call between the modules is checked: it calls the paired
-procedure. Checking them found one mistake in `WON2.BAS`, now fixed: `navy` called `showcity`, Civil War
-Strategy's name, where `WON.EXE` calls `showcities`.
+(`calibrate_bc.py . PDS W WON=O,E,Fs,C:512 WON2=O,Fs,C:512 WONMENU=O,Fs,C:512`) reports
+`69 exact, 0 shape, 0 differ`: the 66 procedures and the three module-level bodies. The three constant
+segments are equal, and so are the three headers. Every call between the modules is checked: it calls the
+paired procedure. Checking them found one mistake in `WON2.BAS`, now fixed: `navy` called `showcity`, Civil
+War Strategy's name, where `WON.EXE` calls `showcities`.
 
-What is not checked yet is the program as a whole: the order LINK put the modules and the runtime in, and the
-bytes outside the three modules' code and constants (step 5 of the study).
+**The whole program is exact too (step 5, 2026-11-07).** The three objects, linked with `tools\recover\WON.LNK`
+and `buildlib.py`'s library, give a program whose unpacked load image equals the unpacked `WON.EXE` byte for
+byte: 193,056 bytes, the same 4,438 relocations and the same entry point. Section 12 of the study has how.
 
 `WON2.BAS` is built from Hutsell's `CWSTRAT2.BAS` and `CWSTRAT.BAS` (for the five procedures that moved), with
 edits; the procedures that exist in neither were written from the disassembly. The drafts and the edit lists that
@@ -291,9 +296,8 @@ Learned on `WON`:
 
 ## Open questions
 
-1. **What sets the word at +2Ch of the module header?** It is 0002 in every module Hutsell compiled and FFFF
-   from our BC. It does not affect the code. It matters only for the byte-for-byte match of the whole program
-   (step 5). Candidates are a BC version or patch level, an environment variable, or a switch not tried.
+1. **What sets the word at +2Ch of the module header?** Settled (2026-11-07): BC's `/C:512`. See "Facts for
+   step 4" above.
 2. **Is the word at +22h the size of something?** It is 0006 in `CWSTRAT` and 0008 in `WON`, so it is not a
    flag. It may count `RESUME` line-table entries or error handlers. This needs no answer as long as the
    compiled module's word equals the program's; `compare.py` prints both.

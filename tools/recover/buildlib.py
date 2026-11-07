@@ -12,8 +12,10 @@ shipped CWS.EXE and WON.EXE is that of the far-string parts (B71OBF,
 B71ROBF, B71ROEF, B71OOF, B71ROOF), not the near-string ones. With these
 parts every runtime module those programs link is found in them byte for
 byte (runtimemap.py). The part order is the order in which the shipped
-CWS.EXE lays out the runtime; it does not yet reproduce Hutsell's module
-order (docs/won-source-study.md, section 8).
+CWS.EXE lays out the runtime. Linked with /E alone (WON.LNK), this library
+gives WON.EXE and CWS.EXE byte for byte (docs/won-source-study.md,
+section 12). The NO*.OBJ stubs are copied for other experiments; those
+programs were not linked with them.
 """
 import os
 import shutil

@@ -4,9 +4,9 @@ Usage: python -I calibrate_bc.py SRC_DIR PDS71_DIR WORK_DIR MODULE[=SWITCHES] ..
 
 Copies the .BAS and .BI files of SRC_DIR into WORK_DIR with CRLF line ends,
 then runs "bc MODULE.BAS /S1 /S2, MODULE.OBJ, NUL.LST;" for each module.
-SWITCHES are BC's switch letters without the slash, separated by commas, for
-example CWSTRAT=O,E or CWSMENU=O; the default is O,E. (A slash in an argument
-is rewritten as a path by Git Bash, so none is used.)
+SWITCHES are BC's switches without the slash, separated by commas, for
+example CWSTRAT=O,E or WON=O,E,Fs,C:512; the default is O,E. (A slash in an
+argument is rewritten as a path by Git Bash, so none is used.)
 
 BC's messages go to MODULE.CMP. Any object file left from an earlier run is
 deleted first. Prints each module's object size, or the tail of BC's messages
@@ -23,8 +23,8 @@ DOSBOX = Path(r"C:\Program Files (x86)\DOSBox-0.74-3\DOSBox.exe")
 def parse_switches(text: str) -> str:
     letters = [s.strip() for s in text.split(",") if s.strip()]
     for s in letters:
-        if not s.isalnum():
-            raise SystemExit(f"bad switch {s!r}: give letters such as O,E")
+        if not s.replace(":", "").isalnum():
+            raise SystemExit(f"bad switch {s!r}: give letters such as O,E or C:512")
     return " ".join("/" + s.upper() for s in letters)
 
 

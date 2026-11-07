@@ -15,7 +15,7 @@ with SDL's dummy video driver, so no window opens.
 |---|---|
 | `unlzexe91.py PACKED.EXE OUT.EXE` | Unpacks LZEXE 0.91, then EXEPACK (LINK's `/E`), giving a plain MZ file with its relocations. `WON.EXE`, `NAPOLEON.EXE` and Civil War Strategy's `CWS.EXE` are packed both ways. |
 | `omfdump.py A.OBJ [B.OBJ]` | Lists an object file's module name and segments. With two files, counts equal code bytes per segment. |
-| `calibrate_bc.py SRC PDS71 WORK MODULE[=SWITCHES] ...` | Compiles modules with BC 7.10. Switches are letters without slashes, such as `CWSTRAT=O,E` (default `O,E`), because Git Bash turns an argument with a slash into a path. Exits with 1 if a module gives no object file. |
+| `calibrate_bc.py SRC PDS71 WORK MODULE[=SWITCHES] ...` | Compiles modules with BC 7.10. Switches are given without slashes, such as `CWSTRAT=O,E` or `WON=O,E,Fs,C:512` (default `O,E`), because Git Bash turns an argument with a slash into a path. Exits with 1 if a module gives no object file. |
 | `linkcheck.py [--drop STUB] PDS71 WORK FILE.LNK SHIPPED.EXE OBJ...` | Links with a response file such as `NWS.LNK`, unpacks the result and the shipped program, and compares them. |
 | `normalign.py WON_UNPACKED.EXE BUILT SHIPPED` | Compares code as instruction shapes (numbers masked) between the unpacked `WON.EXE`'s modules and the Civil War Strategy objects compiled into `BUILT`. As a control, also compares the compiled `CWSMENU.OBJ` with Hutsell's in `SHIPPED`. |
 | `omflib.py FILE.LIB [MODULE]` | Reads an OMF library or object file: each module's segments, the bytes LINK fills in (fixups), and its public names. Lists the modules, or one module's segments and names. |
@@ -30,9 +30,10 @@ with SDL's dummy video driver, so no window opens.
 | `lift2bas.py LIFTED.txt` | Turns the graphics statements of a lifted listing back into BASIC (`SCREEN`, `CLS`, `LINE`, `PSET`, `PAINT`, `DRAW`). Other lines become `'?` comments to write by hand. |
 | `stmtdiff.py DRAFT.bas SOURCE.BAS NAME` | Diffs a draft from `lift2bas.py` against a procedure of the source, statement by statement, with the source's line numbers. Used to edit a changed procedure in place, keeping Hutsell's layout. |
 
-`WON.LNK` is the linker response file for the recovered source: `NWS.LNK` with the module names
-`won+won2+wonmenu`. Link with it through `linkcheck.py --drop nocom`, because `WON.EXE` holds the serial-port
-code. The whole build, from `buildlib.py` to `play.py check`, is in section 11 of `docs\won-source-study.md`.
+`WON.LNK` is the linker response file for the recovered source. It links the three modules with `/E` and
+nothing else: no `NO*.OBJ` stubs, no `/NOE` and no `/PACKCODE`, although `NWS.LNK` has all three. That is how
+`WON.EXE` and `CWS.EXE` were linked: it gives both programs byte for byte. The whole build, from `buildlib.py`
+to `play.py check`, is in section 12 of `docs\won-source-study.md`.
 
 `codecmp.py` holds what `compare.py` and `pairprocs.py` share: instruction shapes, BC's floating-point
 emulator calls (`INT 34h`–`3Dh`), and the exact comparison. Two details matter for `/E` modules and static
@@ -44,14 +45,14 @@ To compare all three modules at once, and so check the calls between them, compi
 pass all three objects:
 
 ```
-python -I calibrate_bc.py . PDS W/out_repo WON=O,E,Fs WON2=O,Fs WONMENU=O,Fs
+python -I calibrate_bc.py . PDS W/out_repo WON=O,E,Fs,C:512 WON2=O,Fs,C:512 WONMENU=O,Fs,C:512
 python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out_repo/WON.OBJ W/out_repo/WON2.OBJ W/out_repo/WONMENU.OBJ
 ```
 
 A typical round of step 4, with the PDS 7.1 folder in `PDS` and the scratch folder in `W`:
 
 ```
-python -I calibrate_bc.py SRC PDS W/out WON2=O,Fs
+python -I calibrate_bc.py SRC PDS W/out WON2=O,Fs,C:512
 python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out/WON2.OBJ
 ```
 
@@ -66,14 +67,16 @@ python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out/WON2.OBJ
   hit a named routine (5,511 in `CWS.EXE`).
 - **So the modules were compiled with `/Fs`.** `calibrate_bc.py` with `/O /Fs`
   gives Hutsell's `CWSMENU.OBJ` and, with `/E`, `CWSTRAT.OBJ`; `CWSTRAT2.OBJ`
-  comes from `/O /Fs` without `/E`, although `CWSMAK.BTM` says `/o/e`. Each
-  code segment then equals Hutsell's except one word at offset `0x2C`: `FFFF`
-  from our BC, `0002` in his. It is not a fixup; what sets it is not known.
-- **The whole program does not match yet.** `linkcheck.py --drop nocom`
-  (the shipped `CWS.EXE` has the serial-port code that `nocom` would remove)
-  gives 220,944 bytes against 220,912, with the same 6,299 relocations. The
-  modules are laid out in another order: Hutsell's LINK took the runtime in
-  one pass over the library, part after part, while ours makes three.
+  comes from `/O /Fs` without `/E`, although `CWSMAK.BTM` says `/o/e`. The
+  word at offset `0x2C` of the code segment is `/C:n`, the COM buffer size:
+  `FFFF` without the switch, `0200h` with `/C:512`, as in Hutsell's objects.
+  With `/C:512` too, every segment equals his.
+- **The whole program matches.** Hutsell's three Civil War Strategy objects,
+  linked with `/E` alone (no stubs, no `/NOE`, no `/PACKCODE`), give the
+  unpacked `CWS.EXE` byte for byte: 220,912 bytes and 6,299 relocations.
+  The recovered `WON` source does the same for `WON.EXE` with `WON.LNK`.
+  With the stubs and `/NOE`, LINK lays the runtime out in another order,
+  and `/PACKCODE` puts the runtime's code segments into one frame.
 
 - **The compare tool is exact on Civil War Strategy.** `CWSMENU` and
   `CWSTRAT` from `calib-fs`, and `CWSTRAT2` from `calib-fs2`, compared
@@ -85,3 +88,5 @@ python -I compare.py W/WON_unp.EXE W/won_runtime.tsv W/out/WON2.OBJ
 - **The recovered source plays like `WON.EXE`.** Built with `buildlib.py`'s
   library and `WON.LNK`, it gives the same 62 screens and 6 files as the
   shipped program in the two recorded sessions (2026-11-07).
+- **The recovered source builds `WON.EXE` byte for byte** (2026-11-07):
+  compiled with `/C:512` and linked with the present `WON.LNK`.
