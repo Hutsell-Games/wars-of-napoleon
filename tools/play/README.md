@@ -31,6 +31,12 @@ another build of `WON.EXE`. A build other than the shipped one also needs `--tim
 addresses of `B$TIMR` and `B$RNZP` in its load image, from `tools\recover\runtimemap.py`; the two go
 together.
 
+On the branch `qb64rust`, a build of the port in the repo's folder overwrites `WON.EXE` and `NAPOLEON.EXE`,
+and `ARCH2.EXE`, `VIC.EXE` and `NAPIC.EXE` are not there (`docs\devnotes.md`, step 5). To replay with the
+shipped programs, run the harness in a worktree of `main`, which has all five: `git worktree add
+..\won-main main`, then the commands above from that folder. Once the branch is merged into `main`, use the
+commit `7738434` instead of `main`.
+
 Session 1 has 320 seconds of play, and a run takes about 3 minutes.
 
 A run stops after 120 seconds plus three times its play time, with the shots it has. If Windows goes into

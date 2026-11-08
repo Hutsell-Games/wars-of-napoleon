@@ -429,3 +429,81 @@ step 3's small parent and child showed that it does.
 
 The user chose how the roads are drawn (2026-11-07): with QB 4.5's own steps in the port (item 9), after a
 first try that only drew each road from its left end.
+
+## Step 5: what DOS did that QB64 does not (2026-11-08)
+
+### The changes
+
+The numbers go on from step 4. Line numbers are those of the files before this step.
+
+10. **Every `GOSUB` routine in a SUB ends by `RETURN`.** QB64 keeps one `GOSUB` stack for the whole program, so
+    a routine that leaves its SUB by `GOTO` or `EXIT SUB` leaves its entry behind (step 2, section 2). Each of
+    the six routines step 2 found now returns. It sets a flag where it used to leave, and the line after its
+    `GOSUB` does what the routine did:
+
+    | Routine | Where it left | Now |
+    |---|---|---|
+    | `crsr` in the strategic `menu` (`WONMENU.BM`) | `GOTO called` at 6 places: Esc, an entry's first letter, any key when `switch` is 3, F4, F1, and F7 when `switch` is 0 | `leave = 1: RETURN`. The line after `GOSUB crsr` is `IF leave = 1 GOTO called` |
+    | `crsr` in the tactical `menu` (`NAP1C.BM`) | `GOTO called` at 3 places: the space bar, Esc and an entry's first letter | The same |
+    | `getlist` in `init` (`WON2.BM`) | `EXIT SUB` at 3 places, each after `choose = -1` | `RETURN`. The line after `GOSUB getlist` is `IF choose = -1 THEN EXIT SUB`. On the way that goes on, `choose` is the chosen entry, never -1 |
+    | `otherside` in `order` (`NAP1.BM`) | `GOTO asleep` at 4 places | `RETURN`. The one `GOSUB otherside` is followed by `GOTO asleep`, so the play goes on at the same line |
+    | `wait5` in `order` (`NAP1.BM`) | `EXIT SUB` on F10 | `leave = 1: RETURN`. The line after `GOSUB wait5` is `IF leave = 1 THEN EXIT SUB` |
+    | `eval` in `general` (`NAP1A.BM`) | `GOTO improve` | `leave = 1: RETURN`. Each of the six `GOSUB eval` lines ends with `IF leave = 1 GOTO improve`, inside its one-line `IF`. `leave = 0` comes before the first |
+
+    `leave` is a new local variable of each SUB. No SUB of either program has that name, and none of the four
+    SUBs is `STATIC`. Each routine has a comment that says why it returns.
+11. **The copy of `NWS.HIS` goes through `scriptshell`** (`WON.BAS` line 632). The line is now `CALL
+    scriptshell("copy nws.his oldhist.ory")`. `scriptshell` is Civil War Strategy's, unchanged, in a new
+    `SCRIPT.BM` that `WON.BAS` includes after `QB64.BM`. When the program runs under a script, it copies the
+    file in BASIC. Otherwise it runs the `SHELL` as before. `WON.BI` declares `scripted` (`DIM SHARED`), which
+    nothing sets until step 6's hooks, so for now the program always runs the `SHELL`. In normal play QB64 runs
+    `copy` through `cmd.exe` (step 3, section 3). Whether a console window then shows for a moment was not
+    measured. The game makes the copy only when history is on, which the shipped `NWS.CFG` turns off.
+    `scriptshell` uses `_FILEEXISTS`, which PDS 7.1 does not have, so step 7's PDS build needs its own form.
+12. **`OUTCOME.&&&` holds the numbers DOS wrote** (`over`, `NAP1A.BM`, decision D8). The line was `WRITE #1, 3 -
+    sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))`. Now `hundredth! = .01` comes first, and each
+    product is `hundredth! * CDBL(score&(…))`. Step 3 measured that form in QB64Rust and QB64pe at 30 scores:
+    each gave the value PDS 7.1 gives, so `INPUT #` reads the same INTEGER as in DOS. The text can have one
+    more digit: `1.499999966472387` for 150, where PDS 7.1 writes `1.49999996647239`. PDS 7.1 gives the same numbers as before, so the bridge of step 7 sees no change.
+13. **The DOS programs with no source leave the branch (D6), and their pictures are in `docs\`:**
+    [ARCH2.png](ARCH2.png) (the intro, from session 1), [VIC.png](VIC.png) (the victory picture) and
+    [NAPIC.png](NAPIC.png) (the tactical title, from session 9). Session 15's shot of the victory picture was
+    taken while `VIC.EXE` was still drawing it. So `VIC.png` comes from a run of `VIC.EXE` alone in the play
+    harness's DOSBox-X: shots at 4, 8, 12, 20, 30, 45 and 60 seconds were byte-identical. The three
+    `.EXE` files are still in the folder: removing a tracked file is the user's to do (`ARCH2.EXE`, `VIC.EXE`,
+    `NAPIC.EXE`). Every `SHELL` of them is guarded by `DIR$`, so no line of the game changes. Without
+    `ARCH2.EXE` the game shows its own title, as step 4 checked.
+
+**Where `WON.EXE` and `NAPOLEON.EXE` stay (D7, decided again).** The plan had them move to a folder `dos\`, so
+that a build in the repo's folder could not overwrite them. The user chose to leave them where they are, and
+let a build overwrite them (2026-11-08). They stay in git's history. `tools\play\play.py`, which replays the
+recordings with the shipped programs, then refuses an overwritten `WON.EXE` ("not the shipped WON.EXE").
+`tools\play\README.md` says to replay from a worktree of `main` instead. The recordings
+already made, and step 7's bridge, which plays the PDS 7.1 builds of the port, do not need the shipped
+programs in the folder.
+
+### The checks
+
+Both programs build with QB64Rust 0.3.0 and QB64pe 4.7.0, with the same warnings as in step 4.
+
+Each check ran the QB64Rust build with the screen tool, on a hidden desktop, with timed keys. The run's folder
+held the game's data and no `.EXE`, so no `SHELL` of a DOS program ran. There are no test hooks yet, so the
+games seeded their random numbers from `TIMER`.
+
+- **The start year chosen by its letter.** Key `1` at "Start Year" chooses 1796. Step 4's build, built again
+  from `HEAD`, stopped there with exit code 1, as step 4 found. In 1 of 12 runs, the first, it stopped
+  with 0xC0000374 instead, a heap corruption, on the same path. It did not come back in the next eleven.
+  The cause is not the error but the `SOUND 700, .5` that `called` plays just before it. In libqb, as
+  QB64pe has it at the reference commit, the audio thread swaps the two buffers of a `SOUND` stream without
+  the lock that the program thread holds while it fills them. A small program that plays a `SOUND` and ends
+  with `SYSTEM` crashed in about 1 run in 40, with QB64Rust and with QB64pe alike. Upstream added the lock on
+  2026-10-28 (QB64pe pull request 800), and with it no run of 380 crashed. QB64Rust took that line on
+  2026-11-08 (its divergence D-062), so a build with a later qb64rust has the lock. QB64pe 4.7.0 does not. This
+  step's build loads 1796 and shows the objective, then the main menu.
+- **Esc at "Start Year"** (`getlist`'s first `RETURN` with -1) goes back to the start menu. **`i` at the main
+  menu** opens Information by its letter, and **F1** shows the Hot Keys box. Both go through `crsr`'s new
+  `RETURN`.
+- **The tactical game alone**, from the repo's `BATTLE.$$$` (a Waterloo battle): two runs of 40 seconds each,
+  with many computer moves. Each of those moves goes through `otherside`, and some through `general`. No error. The
+  timed F9 never met the player's turn, so the retreat's Yes/No menu was not reached by letter. Nor was F10
+  (`wait5`). Step 6's hooks make both scriptable, and step 8's scripts cover them.

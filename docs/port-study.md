@@ -355,6 +355,11 @@ would break once `qb64rust` is merged into `main`. The reverse engineer notes th
 `WON.EXE` to recognize the shipped program, so only its path changes. **Recommended: (a).** This departs from
 `PORTING-PDS.md`'s "remove the DOS programs from the branch". The reason is that this repo's tests use them.
 
+*User (2026-11-08), at step 5:* `WON.EXE` and `NAPOLEON.EXE` stay where they are, as in (b), but a build in
+the repo's folder may overwrite them. `ARCH2.EXE`, `VIC.EXE` and `NAPIC.EXE` leave the branch as D6 says. To
+replay the recordings with the shipped programs, `tools\play\README.md` uses a worktree of `main`. The bridge
+of step 7 plays the PDS 7.1 builds of the port, so it does not need them.
+
 **D8. LONG times SINGLE.** PDS computes `.01 * score&` in DOUBLE, QB64 in SINGLE (section 2). The values differ
 in the 8th digit.
 - (a) Leave the game's lines as they are. Compare `OUTCOME.&&&` by the values `WON.EXE` reads from it,
@@ -498,6 +503,14 @@ changes is either a mistake or is named in the commit message.
 5. **What DOS did that QB64 does not.** Rows 7–10: the copy of `NWS.HIS`, the DOS programs (D6, D7), and the
    `GOSUB` fixes. `SHELL "napoleon.exe"` stays as it is (D5). The `OUTCOME.&&&` line of `over` computes in
    DOUBLE (D8).
+
+   **Done (2026-11-08).** The six `GOSUB` routines that could leave their SUB now end by `RETURN`, and a flag
+   tells the line after the `GOSUB` what to do. Choosing the start year by its letter no longer stops the game.
+   The copy of `NWS.HIS` goes through `scriptshell` in a new `SCRIPT.BM`. Until step 6 sets `scripted`, it runs
+   the `SHELL` as before. `over` writes `hundredth! * CDBL(score&(…))`. The pictures of the three DOS programs
+   are in `docs\`, and the user removes the three files. `WON.EXE` and `NAPOLEON.EXE` stay where they are (D7,
+   decided again). The tactical changes build and ran through many computer moves, but the Yes/No menu by
+   letter and F10 wait for step 6's hooks (`docs\devnotes.md`, "Step 5").
 6. **The test hooks**, in BASIC that both PDS 7.1 and QB64 compile: the seed from `WON_SEED` and `NAP_SEED`,
    `announce` before each wait (row 14), `TICK` as D2 says, the date 06-24-1998, `scriptshell` (section 4 and
    D4), and trace mode (`WON_TRACE`). Both programs play as before when no variable is set.

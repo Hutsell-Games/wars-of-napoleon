@@ -629,7 +629,7 @@ RETURN
 history:
 IF history = 1 THEN
 	CLS
-	IF LEN(DIR$("nws.his")) > 0 THEN SHELL "copy nws.his oldhist.ory"
+	IF LEN(DIR$("nws.his")) > 0 THEN CALL scriptshell("copy nws.his oldhist.ory")
 	OPEN "O", 2, "nws.his"
 	PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; DATE$; " ]"
 	CLOSE #2
@@ -650,3 +650,4 @@ RETURN
 ' $INCLUDE: 'won2.bm'
 ' $INCLUDE: 'wonmenu.bm'
 ' $INCLUDE: 'qb64.bm'
+' $INCLUDE: 'script.bm'

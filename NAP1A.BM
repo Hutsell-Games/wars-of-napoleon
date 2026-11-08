@@ -433,12 +433,15 @@ a = terrain(index): IF a = 239 GOTO best
 IF (a = 94 OR a = 35) AND RND < .99 GOTO best
 IF a = 42 AND RND < .95 GOTO best
 
-IF y > 1 THEN y = unity(index) - 1: x = unitx(index) - 1: GOSUB eval
-IF y > 1 THEN y = unity(index) - 1: x = unitx(index) + 1: GOSUB eval
-IF y < 22 THEN y = unity(index) + 1: x = unitx(index) - 1: GOSUB eval
-IF y < 22 THEN y = unity(index) + 1: x = unitx(index) + 1: GOSUB eval
-IF x > 1 THEN x = unitx(index) - 2: GOSUB eval
-IF x < 59 THEN x = unitx(index) + 2: GOSUB eval
+' eval ends by RETURN, with leave at 1 where it went to improve: QB64 keeps
+' one GOSUB stack for the program.
+leave = 0
+IF y > 1 THEN y = unity(index) - 1: x = unitx(index) - 1: GOSUB eval: IF leave = 1 GOTO improve
+IF y > 1 THEN y = unity(index) - 1: x = unitx(index) + 1: GOSUB eval: IF leave = 1 GOTO improve
+IF y < 22 THEN y = unity(index) + 1: x = unitx(index) - 1: GOSUB eval: IF leave = 1 GOTO improve
+IF y < 22 THEN y = unity(index) + 1: x = unitx(index) + 1: GOSUB eval: IF leave = 1 GOTO improve
+IF x > 1 THEN x = unitx(index) - 2: GOSUB eval: IF leave = 1 GOTO improve
+IF x < 59 THEN x = unitx(index) + 2: GOSUB eval: IF leave = 1 GOTO improve
 
 a = 1 + INT(m1 * RND): IF side = 2 THEN a = a + m1
 IF (strength(a) > 0 AND uorder(a) <> 99) AND LEFTY$(index) <> "R" THEN uorder(index) = 100 * unity(a) + unitx(a)
@@ -449,7 +452,7 @@ IF x < 1 THEN x = 1
 IF x > 59 THEN x = 59
 IF y < 1 THEN y = 1
 IF y > 22 THEN y = 22
-z = SCREEN(y + 1, x): IF z = 35 OR z = 42 XOR z = 94 XOR z = 239 GOTO improve
+z = SCREEN(y + 1, x): IF z = 35 OR z = 42 XOR z = 94 XOR z = 239 THEN leave = 1: RETURN
 RETURN
 
 afraid:
@@ -664,7 +667,11 @@ END SUB
 
 SUB over (flag)
 OPEN "O", 1, "outcome.&&&"
-WRITE #1, 3 - sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))    'scale down unit size
+' A SINGLE variable times a DOUBLE gives the value DOS wrote, which won.exe reads as
+' the same INTEGER. In QB64, .01 times a LONG is a SINGLE: one score in 200 then
+' reads as 100 more losses.
+hundredth! = .01
+WRITE #1, 3 - sidex(flag), hundredth! * CDBL(score&(sidex(1))), hundredth! * CDBL(score&(sidex(2)))    'scale down unit size
 CLOSE #1
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
 SYSTEM

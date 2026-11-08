@@ -770,6 +770,8 @@ EXIT SUB
 '============================================================================
 '                               Enemy Update
 '============================================================================
+' otherside ends by RETURN where it went to asleep: the one GOSUB otherside
+' goes to asleep next. QB64 keeps one GOSUB stack for the program.
 otherside:
 IF flag = 0 THEN CALL kleer: flag = 1
 COLOR 11: CALL clrbot: LOCATE 23, 50: PRINT name$(active); "'s TURN";
@@ -780,15 +782,15 @@ IF a$ = "S" THEN
 	CALL Near1(active, Enemy, d)
 	IF timex > .8 * timelimit AND possess <> 3 - side AND bold > 3 THEN
 		CALL squares(active, 1)
-		GOTO asleep
+		RETURN
 	END IF
 
 	IF Enemy > 0 AND LEFTY$(Enemy) = "C" AND d < 9 THEN
 		movesleft = 0
-		GOTO asleep
+		RETURN
 	ELSE
 		CALL squares(active, 1)
-		GOTO asleep
+		RETURN
 	END IF
 END IF
 IF a$ = "I" OR a$ = "è" AND (terrain(active) = 43 OR terrain(active) = 46) THEN
@@ -799,7 +801,7 @@ IF a$ = "I" OR a$ = "è" AND (terrain(active) = 43 OR terrain(active) = 46) THEN
 		IF strength(active) < x * strength(Enemy) THEN
 			IF unitx(Enemy) <> objx AND unity(Enemy) <> objy THEN
 				CALL squares(active, 2)
-				GOTO asleep
+				RETURN
 			END IF
 		END IF
 	END IF
@@ -887,7 +889,7 @@ wait5:
 		CALL help
 		GOTO wait5
 	CASE 68
-		 IF a = 2 THEN CLS : file$ = "ô": EXIT SUB
+		 IF a = 2 THEN CLS : file$ = "ô": leave = 1: RETURN
 	CASE ELSE
 	END SELECT
 
@@ -1079,7 +1081,8 @@ SELECT CASE dx
 	CASE ELSE
 END SELECT
        
-	GOSUB wait5
+	leave = 0: GOSUB wait5
+	IF leave = 1 THEN EXIT SUB
 	IF ASC(commnd$) = 13 GOTO here2
 	CALL curser(commnd$, xloc, yloc)
 

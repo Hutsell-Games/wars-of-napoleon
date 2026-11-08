@@ -1,0 +1,26 @@
+' ===========================================================================
+' SCRIPT.BM - hooks for the whole-game scripts of the strategic game.
+' Included at the end of WON.BAS. Taken from Civil War Strategy's SCRIPT.BM.
+'
+' The variable scripted (WON.BI) is 1 when the program runs under a test
+' script. Nothing sets it yet: the test hooks are step 6 of the plan in
+' docs\port-study.md. Until then the program plays as before.
+' ===========================================================================
+
+' SHELL cmd$, or under a script the same work done in BASIC. The game runs
+' "copy <from> <to>" (the history file of the game before, WON.BAS). QB64
+' runs copy through cmd.exe, whose console window shows on the user's
+' desktop even when the program runs on a hidden one, so the scripts must
+' not run it. Copy replaces <to>, as copy does.
+SUB scriptshell (cmd$)
+IF scripted = 0 THEN SHELL cmd$: EXIT SUB
+c$ = LTRIM$(RTRIM$(cmd$))
+sp = INSTR(c$, " "): verb$ = LCASE$(LEFT$(c$, sp - 1)): args$ = LTRIM$(MID$(c$, sp + 1))
+sp = INSTR(args$, " "): from$ = LEFT$(args$, sp - 1): into$ = LTRIM$(MID$(args$, sp + 1))
+IF verb$ <> "copy" THEN SHELL cmd$: EXIT SUB
+IF NOT _FILEEXISTS(from$) THEN EXIT SUB
+f = FREEFILE: OPEN from$ FOR BINARY AS #f
+d$ = SPACE$(LOF(f)): GET #f, , d$: CLOSE #f
+IF _FILEEXISTS(into$) THEN KILL into$
+f = FREEFILE: OPEN into$ FOR BINARY AS #f: PUT #f, , d$: CLOSE #f
+END SUB

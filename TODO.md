@@ -9,6 +9,11 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
   `"nws.cfg"`, `'won.bi'`, `'nap10.bi'` and others. That works on Windows only. The copy of the history file
   (`SHELL "copy nws.his oldhist.ory"`) is a Windows command too.
 
+- **Show the pictures of the DOS programs in the game** (D6 (b) of the plan). `ARCH2.EXE`, `VIC.EXE` and
+  `NAPIC.EXE` have no source, and the port no longer runs them. Their screens are in `docs\` (`ARCH2.png`,
+  `VIC.png`, `NAPIC.png`). The game could show them with `_LOADIMAGE` where it ran the programs. The QB64 user
+  on the panel would like this for all four games at once.
+
 ## The tests
 
 - **The city markers are not DOS's pixel for pixel.** `cityicon` (`WON2.BM`) draws each city with `CIRCLE` of

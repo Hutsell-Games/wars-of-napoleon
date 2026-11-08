@@ -214,7 +214,8 @@ showsize:
 		PRINT mtx$(row)
 		IF bw > 0 THEN LINE (8 * (tlx + 1), 16 * (tly + row + 1))-(8 * (tlx + LEN(mtx$(row)) + 1) - 1, 16 * (tly + row + 2) - 1), hilite, B
 	END IF
-	GOSUB crsr
+	leave = 0: GOSUB crsr
+	IF leave = 1 GOTO called
 	IF switch <> 3 GOTO reglr
 	IF a$ = "H" THEN choose = 1: GOTO called
 	IF ASC(a$) = 13 THEN choose = 2: GOTO called
@@ -235,15 +236,17 @@ reglr:
 
 	choose = row
 	GOTO sel1
+' crsr ends by RETURN. Where it went to called, it sets leave to 1: QB64 keeps
+' one GOSUB stack for the program, and a routine left by GOTO stays on it.
 crsr:   a$ = INKEY$: IF a$ = "" GOTO crsr
 	IF ASC(a$) = 13 THEN RETURN
 	IF LEN(a$) = 2 GOTO arrows
-	IF switch = 3 THEN choose = -ASC(UCASE$(a$)): GOTO called
-	IF ASC(a$) = 27 THEN choose = -1: GOTO called
+	IF switch = 3 THEN choose = -ASC(UCASE$(a$)): leave = 1: RETURN
+	IF ASC(a$) = 27 THEN choose = -1: leave = 1: RETURN
 		row1 = row
 		FOR k = 1 TO size
 		c1$ = UCASE$(LEFT$(LTRIM$(mtx$(k)), 1))
-		IF c1$ = UCASE$(a$) THEN choose = k: GOSUB limits: GOTO called
+		IF c1$ = UCASE$(a$) THEN choose = k: GOSUB limits: leave = 1: RETURN
 		NEXT k
 	GOTO crsr
 arrows:
@@ -251,7 +254,7 @@ arrows:
 	IF a$ = ">" THEN
 		CALL report(side, 4)
 		choose = -1
-		GOTO called
+		leave = 1: RETURN
 	END IF
 	IF a$ = ";" THEN
 		PUT (8 * tlx - 6, 16 * tly - 11), box, PSET
@@ -265,7 +268,7 @@ arrows:
 		LOCATE tly + 5, tlx + 1: PRINT "F7:EndTurn"
 		CALL tick(99)
 		choose = -1
-		GOTO called
+		leave = 1: RETURN
 	END IF
 	row1 = row
 	 IF a$ = "H" THEN row = row - 1: GOSUB limits: RETURN
@@ -281,7 +284,7 @@ arrows:
 	 END IF
 	 IF a$ = "A" AND switch = 0 THEN
 		choose = 99
-		GOTO called
+		leave = 1: RETURN
 	 END IF
 	 RETURN
 

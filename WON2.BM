@@ -585,13 +585,16 @@ mtx$(0) = "Start Year"
 f$ = DIR$("nws*.ini")
 colour = 3
 GOSUB getlist
+IF choose = -1 THEN EXIT SUB
 CALL clrbot
 LOCATE 29, 1: PRINT "Loading "; scenario$
 EXIT SUB
 
+' getlist ends by RETURN, with choose at -1 where it left init by EXIT SUB:
+' QB64 keeps one GOSUB stack for the program.
 getlist:
 	size = 0
-	IF LEN(f$) = 0 THEN choose = -1: EXIT SUB
+	IF LEN(f$) = 0 THEN choose = -1: RETURN
 	size = size + 1
 	mtx$(size) = LTRIM$(MID$(f$, 4, 4))
 	array(size) = size
@@ -606,9 +609,9 @@ getlist:
 	CALL bubble((size))
 	tlx = 18: tly = 14 - .5 * size
 	CALL menu(11)
-	IF choose < 0 THEN choose = -1: EXIT SUB
+	IF choose < 0 THEN choose = -1: RETURN
 	scenario$ = mtx$(choose)
-	IF LEN(scenario$) < 1 THEN choose = -1: EXIT SUB
+	IF LEN(scenario$) < 1 THEN choose = -1: RETURN
 	RETURN
 END SUB
 
