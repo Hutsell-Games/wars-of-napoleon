@@ -238,7 +238,7 @@ reglr:
 	GOTO sel1
 ' crsr ends by RETURN. Where it went to called, it sets leave to 1: QB64 keeps
 ' one GOSUB stack for the program, and a routine left by GOTO stays on it.
-crsr:   a$ = INKEY$: IF a$ = "" GOTO crsr
+crsr:   CALL announce(2, LEFT$(LTRIM$(mtx$(0)), 1)): DO: a$ = INKEY$: LOOP WHILE a$ = ""
 	IF ASC(a$) = 13 THEN RETURN
 	IF LEN(a$) = 2 GOTO arrows
 	IF switch = 3 THEN choose = -ASC(UCASE$(a$)): leave = 1: RETURN

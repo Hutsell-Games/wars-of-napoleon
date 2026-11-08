@@ -179,7 +179,7 @@ IF armysize(attack) / armysize(defend) > 3 XOR armysize(defend) / armysize(attac
 	a = 1: y = 2: IF attack < 25 THEN a = 2: y = 1
 	WRITE #1, city$(armyloc(defend)), 3 - side, a, y, armyname$(attack), x, armylead(attack), armyexper(attack), armyname$(defend), x1, armylead(attack), armyexper(defend), difficult, fort(armyloc(defend)), noise
 	CLOSE #1
-	SHELL "napoleon.exe"
+	CALL scriptbattle
 	OPEN "I", 1, "outcome.&&&"
 	INPUT #1, w, killa, killd
 	CLOSE #1

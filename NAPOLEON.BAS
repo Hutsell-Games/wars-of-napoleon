@@ -15,7 +15,7 @@ DECLARE SUB routed (index%, flag%)
 DECLARE SUB startmap ()
 DECLARE SUB vistarg (active%, flag%)
 REM $INCLUDE: 'nap10.bi'
-RANDOMIZE TIMER: CLS
+CALL napstart: CLS
 
 choose = 22: GOSUB lodecfg
 mdly! = mdsp: IF mdsp = 5 THEN mdly! = 10
@@ -130,3 +130,4 @@ DATA Beaten,Low,Good,High,Fearless
 ' $INCLUDE: 'nap1a.bm'
 ' $INCLUDE: 'nap1c.bm'
 ' $INCLUDE: 'qb64.bm'
+' $INCLUDE: 'napscript.bm'

@@ -1,26 +1,149 @@
 ' ===========================================================================
-' SCRIPT.BM - hooks for the whole-game scripts of the strategic game.
-' Included at the end of WON.BAS. Taken from Civil War Strategy's SCRIPT.BM.
+' SCRIPT.BM - the test hooks of the strategic game. Included at the end of
+' WON.BAS. Written in BASIC that both QB64 and BASIC PDS 7.1 compile, so that
+' the bridge of docs\port-study.md (step 7) can build the same source in DOS.
+' NAPSCRIPT.BM holds the same hooks for the tactical game.
 '
-' The variable scripted (WON.BI) is 1 when the program runs under a test
-' script. Nothing sets it yet: the test hooks are step 6 of the plan in
-' docs\port-study.md. Until then the program plays as before.
+' Two environment variables choose how the program runs:
+'   WON_SEED   RANDOMIZE takes this number instead of TIMER. Alone, it makes
+'              the program "scripted" (scripted = 1):
+'              - each wait for a key is announced (announce, below), so that
+'                a keys file gives each key only when the program waits;
+'              - every TICK waits for a key (D2 of the plan), and its key is
+'                thrown away, as TICK always did;
+'              - the history file shows the date 06-24-1998, the date the
+'                DOSBox-X sessions ran with;
+'              - the copy of the history file is done in BASIC, not by a
+'                SHELL of cmd.exe;
+'              - each battle gets its own keys file, state file and seed
+'                (scriptbattle), or with WON_OUTCOME set no battle at all.
+'   WON_TRACE  Trace mode (traced = 1), for the PDS 7.1 build in DOSBox-X: the
+'              waits are announced and nothing else changes. TICK pauses as
+'              before and the SHELLs run. WON_SEED may be set too, for the
+'              seed alone.
+' A program started with neither plays as before.
 ' ===========================================================================
+
+' Chooses the mode from the environment. Runs first thing in WON.BAS.
+SUB scriptstart
+IF ENVIRON$("WON_TRACE") <> "" THEN
+	traced = 1
+ELSEIF ENVIRON$("WON_SEED") <> "" THEN
+	scripted = 1
+END IF
+END SUB
+
+' Seeds the random numbers, from WON_SEED when it is set, else from TIMER.
+' It stands where WON.BAS had RANDOMIZE TIMER, the place that the
+' recordings' WONSEED.EXE patched to RANDOMIZE 1# (tools\play\wonseed.py).
+' VAL gives a DOUBLE, so WON_SEED=1 is the same RANDOMIZE 1#.
+SUB scriptseed
+seed$ = ENVIRON$("WON_SEED")
+IF seed$ = "" THEN RANDOMIZE TIMER ELSE RANDOMIZE VAL(seed$)
+END SUB
+
+' The date of the history file's first line.
+FUNCTION scriptdate$
+IF scripted THEN scriptdate$ = "06-24-1998" ELSE scriptdate$ = DATE$
+END FUNCTION
+
+' Called first in TICK. Announces the pause as a wait at place 3, with the
+' letter S when it is shorter than a second (the animations), so that a
+' script's rule can answer those apart. When the program is scripted, it
+' waits for a key and gives -1, and TICK returns. Otherwise it gives 0, and
+' TICK pauses as before.
+FUNCTION scripttick% (sec!)
+scripttick% = 0
+IF scripted = 0 AND traced = 0 THEN EXIT FUNCTION
+IF sec! < 1 THEN CALL announce(3, "S") ELSE CALL announce(3, "")
+IF scripted = 0 THEN EXIT FUNCTION
+DO WHILE INKEY$ = "": LOOP
+scripttick% = -1
+END FUNCTION
+
+' Copies the file from$ to into$, as DOS's copy does: it replaces into$, and
+' does nothing when from$ is not there. It copies 16 KB at a time: a PDS 7.1
+' string holds at most 32,767 bytes, and the history file can grow larger.
+SUB scriptcopy (from$, into$)
+IF LEN(DIR$(from$)) = 0 THEN EXIT SUB
+IF LEN(DIR$(into$)) > 0 THEN KILL into$
+f = FREEFILE: OPEN from$ FOR BINARY AS #f
+g = FREEFILE: OPEN into$ FOR BINARY AS #g
+rest& = LOF(f)
+DO WHILE rest& > 0
+	n& = rest&: IF n& > 16384 THEN n& = 16384
+	d$ = SPACE$(n&): GET #f, , d$: PUT #g, , d$
+	rest& = rest& - n&
+LOOP
+CLOSE #g: CLOSE #f
+END SUB
 
 ' SHELL cmd$, or under a script the same work done in BASIC. The game runs
 ' "copy <from> <to>" (the history file of the game before, WON.BAS). QB64
 ' runs copy through cmd.exe, whose console window shows on the user's
-' desktop even when the program runs on a hidden one, so the scripts must
-' not run it. Copy replaces <to>, as copy does.
+' desktop even when the program runs on a hidden one, so a script must not
+' run it.
 SUB scriptshell (cmd$)
 IF scripted = 0 THEN SHELL cmd$: EXIT SUB
 c$ = LTRIM$(RTRIM$(cmd$))
 sp = INSTR(c$, " "): verb$ = LCASE$(LEFT$(c$, sp - 1)): args$ = LTRIM$(MID$(c$, sp + 1))
 sp = INSTR(args$, " "): from$ = LEFT$(args$, sp - 1): into$ = LTRIM$(MID$(args$, sp + 1))
 IF verb$ <> "copy" THEN SHELL cmd$: EXIT SUB
-IF NOT _FILEEXISTS(from$) THEN EXIT SUB
-f = FREEFILE: OPEN from$ FOR BINARY AS #f
-d$ = SPACE$(LOF(f)): GET #f, , d$: CLOSE #f
-IF _FILEEXISTS(into$) THEN KILL into$
-f = FREEFILE: OPEN into$ FOR BINARY AS #f: PUT #f, , d$: CLOSE #f
+CALL scriptcopy(from$, into$)
+END SUB
+
+' Fights a battle in the tactical game: SHELL "napoleon.exe", which waits
+' until it ends. When the program is scripted:
+'   - with WON_OUTCOME set, the file it names is copied to OUTCOME.&&& and no
+'     battle is fought (D4 of the plan: session 9's run that is held to the
+'     recorded outcome);
+'   - otherwise the n-th battle of the run gets the keys file <keys>.battle<n>
+'     and the state file <state>.battle<n>, from QB64_SCREEN_KEYS and
+'     QB64_SCREEN_STATE, and NAP_SEED, which is WON_SEED unless NAP_SEED is
+'     set already. The variables are put back after the battle: the screen
+'     tool reads QB64_SCREEN_STATE again when it writes the strategic game's
+'     states (docs\devnotes.md, "Step 3").
+' In DOS the screen tool's variables are not set, and nothing is done for them.
+' There the harness sets NAP_SEED (and NAP_TRACE) before WON.EXE starts, so
+' that no ENVIRON statement runs: PDS 7.1's ENVIRON stops with "Out of
+' memory" (error 7) when the environment has no room for a new variable,
+' as it had none in qb45.py's DOSBox (docs\devnotes.md, "Step 6").
+SUB scriptbattle
+STATIC battles
+IF scripted = 0 THEN SHELL "napoleon.exe": EXIT SUB
+o$ = ENVIRON$("WON_OUTCOME")
+IF o$ <> "" THEN CALL scriptcopy(o$, "outcome.&&&"): EXIT SUB
+battles = battles + 1: n$ = ".battle" + LTRIM$(STR$(battles))
+k$ = ENVIRON$("QB64_SCREEN_KEYS"): s$ = ENVIRON$("QB64_SCREEN_STATE")
+seed$ = ENVIRON$("NAP_SEED")
+IF k$ <> "" THEN ENVIRON "QB64_SCREEN_KEYS=" + k$ + n$
+IF s$ <> "" THEN ENVIRON "QB64_SCREEN_STATE=" + s$ + n$
+IF seed$ = "" THEN ENVIRON "NAP_SEED=" + ENVIRON$("WON_SEED")
+SHELL "napoleon.exe"
+IF k$ <> "" THEN ENVIRON "QB64_SCREEN_KEYS=" + k$
+IF s$ <> "" THEN ENVIRON "QB64_SCREEN_STATE=" + s$
+IF seed$ = "" THEN ENVIRON "NAP_SEED="
+END SUB
+
+' Says that the program is about to wait for a key, when it is scripted or
+' traced. place names the kind of wait (1 to 255) and letter$ narrows it
+' (its first character, or ""):
+'   1  a pause that any key ends ("press a key", the player's turn)
+'   2  a menu; letter$ is the first letter of the menu's title
+'   3  TICK; letter$ is S for a pause shorter than a second
+'   4  a line of text (the commander's name in the Hall of Fame)
+' Byte &H4F1 holds the place, &H4F2 the letter, and &H4F0 counts the waits:
+' QB64Rust's tools\screen\README.md, "Prompts". In DOS the bytes are the
+' BIOS's intra-application area, which PLAYKEYS.COM reads (step 7).
+' It leaves DEF SEG at 0, as BuffClear does: the four PEEK(1052) checks in
+' WON2.BM read after BuffClear without setting DEF SEG again, and a plain
+' DEF SEG here would make them read elsewhere.
+SUB announce (place, letter$)
+IF scripted = 0 AND traced = 0 THEN EXIT SUB
+code = 0
+IF letter$ <> "" THEN code = ASC(UCASE$(letter$))
+DEF SEG = 0
+POKE &H4F1, place
+POKE &H4F2, code
+POKE &H4F0, (PEEK(&H4F0) + 1) AND 255
 END SUB

@@ -507,3 +507,119 @@ games seeded their random numbers from `TIMER`.
   with many computer moves. Each of those moves goes through `otherside`, and some through `general`. No error. The
   timed F9 never met the player's turn, so the retreat's Yes/No menu was not reached by letter. Nor was F10
   (`wait5`). Step 6's hooks make both scriptable, and step 8's scripts cover them.
+
+## Step 6: the test hooks (2026-11-08)
+
+### The changes
+
+The numbers go on from step 5. Line numbers are those of the files before this step.
+
+14. **Two hook files, in BASIC that PDS 7.1 compiles too.** `SCRIPT.BM` (the strategic game, included at the end
+    of `WON.BAS`) and a new `NAPSCRIPT.BM` (the tactical game, included at the end of `NAPOLEON.BAS`). They use
+    no QB64-only name. `scriptcopy` tests for a file with `DIR$`, which PDS has and `QB64.BM` gives QB64. Step
+    5's `scriptshell` used `_FILEEXISTS`. It copies 16 KB at a time, because a PDS string holds at most 32,767
+    bytes and the history file can grow larger.
+15. **The variables that choose the mode.**
+
+    | Variable | Program | What it does |
+    |---|---|---|
+    | `WON_SEED` | strategic | `RANDOMIZE VAL(WON_SEED)` in place of `RANDOMIZE TIMER`. Alone, it makes the program scripted |
+    | `WON_TRACE` | strategic | Trace mode: the waits are announced and nothing else changes. The seed still comes from `WON_SEED` when that is set |
+    | `WON_OUTCOME` | strategic, scripted | A battle copies this file to `OUTCOME.&&&` instead of starting `napoleon.exe` (D4) |
+    | `NAP_SEED` | tactical | As `WON_SEED`. `scriptbattle` sets it to `WON_SEED` for each battle, unless it is set already |
+    | `NAP_TRACE` | tactical | As `WON_TRACE` |
+
+    The plan named only `WON_TRACE`. The tactical game is a program of its own, and runs alone for D3's
+    references, so it has its own trace variable.
+
+    Each program has two flags, `scripted` and `traced`, in a `COMMON SHARED` line after the `COMMON` block of
+    `WON.BI` and `NAP10.BI`. Step 5's `DIM SHARED scripted` is gone: in the PDS build each module would have its
+    own copy of a `DIM SHARED` variable, and only `COMMON` shares one between modules.
+16. **The seed.** `RANDOMIZE TIMER` (`WON.BAS` line 77) is now `CALL scriptseed`. That is the place that
+    `tools\play\wonseed.py` patched to `RANDOMIZE 1#` for the recordings, and `VAL("1")` is the same DOUBLE.
+    `CALL scriptstart`, which sets the flags, is now the program's first statement, before the title's `TICK`.
+    In the tactical game, `RANDOMIZE TIMER` (`NAPOLEON.BAS` line 18) is `CALL napstart`, which does both.
+17. **`announce` before each wait for a key**, as in Civil War Battleset. Byte `&H4F1` gets the place, `&H4F2`
+    the letter and `&H4F0` the count (QB64Rust's `tools\screen\README.md`, "Places and rules"). It does nothing
+    unless the program is scripted or traced. It leaves `DEF SEG` at 0, as `BuffClear` does, for the four
+    `PEEK(1052)` checks. The places:
+
+    | Place | Letter | Strategic game | Tactical game |
+    |---|---|---|---|
+    | 1 | | "press a key" after the random events, and the player's turn (`WON.BAS` lines 488 and 620) | "hit a key" (`hold8`, `NAP1A.BM` line 841) |
+    | 2 | first letter of the menu's title | `crsr` (`WONMENU.BM`) | `crsr` (`NAP1C.BM`) |
+    | 3 | `S` for less than a second (strategic only) | every `TICK` | a `TICK` of a second or more |
+    | 4 | | the commander's name in the Hall of Fame (`INPUT`, `WON2.BM` line 692) | |
+    | 5 | | | the command for a unit (`wait3`, `NAP1.BM` line 610) |
+    | 6 | | | the cursor on the map: move, Intell and inspire, where F10 quits (`wait5`, `NAP1.BM` line 878) |
+
+    The strategic `crsr` and the tactical `wait3` and `wait5` were loops by `GOTO` to their own label. Each is
+    now `announce` and a `DO` loop, so it announces once for each key it reads. A key that the routine ignores
+    reaches its `GOTO` back to the label, and it announces again.
+18. **`TICK` under a script (D2).** Each `TICK` calls `scripttick%` first.
+    - Strategic: every `TICK` reads `INKEY$` at least once, even for 0 seconds, because BASIC evaluates both
+      sides of `AND`. So every `TICK` is a wait, as D2 says. Scripted, it waits for a key and throws it away.
+      Traced, it announces and then pauses as before.
+    - Tactical: its `TICK` reads no key when the pause is under a second (`NAP1A.BM` line 1205). Such a pause is
+      not announced, and under a script it returns at once. A longer one is a wait, as in the strategic game.
+      D2 was written for the strategic game, and this is Claude's reading of it for the tactical one. An
+      announced wait that takes no key in DOS would give step 7's converter waits that no recorded key went to.
+      `scripttick%` comes after `sec! = ABS(sec!)`, which changes the caller's variable, so that still happens.
+19. **The date.** The history file's first line takes `scriptdate$`: `06-24-1998` when scripted, which is the
+    date the DOSBox-X sessions ran with, else `DATE$`. No other line reads the date or the time.
+20. **The battle goes through `scriptbattle`** (`WON1.BM` line 182, `SHELL "napoleon.exe"`). When the program
+    is not scripted, it runs the `SHELL` as before (D5). When it is scripted, it does what section 4 of the plan
+    says: the n-th battle gets the keys file `<keys>.battle<n>`, the state file `<state>.battle<n>` and
+    `NAP_SEED`. The three variables are put back after the `SHELL`. With `WON_OUTCOME` set, it copies that file
+    instead (D4).
+
+### The checks
+
+Both programs build with QB64Rust 0.3.0 and QB64pe 4.7.0, with the same warnings as in step 4. Each run below
+used the QB64Rust build with the screen tool, on a hidden desktop. The run's folder held the game's data and the
+two built programs, and no DOS `.EXE`. Under a script no `SHELL` of `cmd.exe` can run: the copy of `NWS.HIS` is
+done in BASIC, and `napoleon.exe` is started directly (step 3).
+
+- **Session 9's first turn, by announced waits.** The keys file has rules for places 1 and 3, and a
+  `play until 2` at each menu: Start NEW Game, 1805, End Turn, Yes, and the Retreat menu after the battle. The
+  battle's keys file plays until place 5 twice, then gives F9, and `y` at the "RETREAT?" menu. `BATTLE.$$$`
+  and `NWS9.SAV` are session 9's, byte for byte. `OUTCOME.&&&` is `1,0,.6599999852478504`, as in step 4: the
+  port's tactical game is another revision from the shipped one. The QB64pe build gave the same states, byte
+  for byte, in both programs.
+- **`WON_OUTCOME`**, set to session 9's recorded `OUTCOME.&&&`: no battle ran, the file was copied, and the
+  Retreat menu showed the recording's losses, 000/12500 and 100/14000.
+- **The tactical game alone**, with `NAP_SEED=1` and the same `BATTLE.$$$`, wrote the same `OUTCOME.&&&` as the
+  battle that the strategic game started. Step 5 could not reach two keys with timed keys. Both work now:
+  - `y` at the "RETREAT?" menu chooses Yes by its letter;
+  - F10 at the map cursor (Intell, then F10) ends the program with exit code 0 and writes no `OUTCOME.&&&`
+    (`TODO.md`, "The game"). At the unit's command, F10 does not quit.
+- **Three battles in one run.** Rules answered the main menu with End Turn, its Yes/No menu with Yes, and the
+  Retreat menu with Enter, and each battle's keys file retreated as in session 9. Three battles ran, at
+  Innsbruck, Salzburg and Budapest. Each wrote 4 states to its own file, `screen.txt.battle1` to
+  `screen.txt.battle3`, and the strategic game's state at exit went to its own file. So `scriptbattle` counts
+  the battles and puts the screen tool's variables back each time. Every battle ran scripted, so each had
+  `NAP_SEED`. The run does not show whether `ENVIRON "NAP_SEED="` cleared it in between: either way the next
+  battle sets it again. The game then came back to its start menu, where the rules stopped.
+- **Trace mode** (`WON_TRACE=1`): the waits are announced, and a keys file reaches the start menu and the year
+  menu with `play until 2`.
+- **No variable set:** the title pauses for its 2 seconds, and the start menu waits, with nothing announced.
+- **PDS 7.1** (QB64Rust's `tools\qb45\qb45.py --compiler pds71`): two small programs that include `SCRIPT.BM`
+  and `NAPSCRIPT.BM` compile and run. The copy in BASIC, the date, the announce bytes (the count, place 3,
+  letter 83 for `S`) and `scripttick%` in trace mode all give what they should. One finding: **`ENVIRON
+  "NAP_SEED=5"` stops with error 7, "Out of memory"**, because the DOS environment had no room for a new
+  variable. So no `ENVIRON` statement may run in DOS. `scriptbattle` sets `NAP_SEED` only when it is not set,
+  and the screen tool's variables are never set in DOS. Step 7's harness therefore sets `NAP_SEED` and
+  `NAP_TRACE` itself, before `WON.EXE` starts.
+- **The copy of a large file:** a 50,893-byte file copied over an existing one came out the same, in PDS 7.1
+  and in QB64Rust. A copy whose source is missing makes no file.
+
+**Left for step 7: the modules.** Step 7's `pdsbuild.py` splits each program back into PDS modules. Each module
+includes `WON.BI` or `NAP10.BI`, and so gets the flags' `COMMON` line and the `DECLARE FUNCTION` lines of
+`scriptdate$` and `scripttick%`. Which module the hook SUBs go into is for `pdsbuild.py` to choose.
+
+**Found on the way: the French moves differ already in May.** `TODO.md` had the difference from July. With the
+hooks, the screen can be saved at every wait of the first turn. Before the battle, the port marches Davout to
+Köln, and a French army stands at Bologna. Session 9's attack screenshot (`03-attack`) shows French armies at
+Cherbourg and Rouen, and none at Bologna. May's `NWS9.SAV` is still equal. Step 4's
+runs with timed keys also had the army at Bologna, so the hooks did not cause this. Step 7's trace mode is
+meant to find where the two plays part.

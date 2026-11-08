@@ -121,7 +121,7 @@ before the game is changed.
 | 4 | `DIR$` | 16 calls in the strategic game, one of them bare, and 1 in the tactical game (`docs\devnotes.md`, step 2) | Civil War Strategy's `DIR$` FUNCTION in a `QB64.BM` that both programs include. The bare one becomes `DIR$("")` |
 | 5 | `FRE(-1)` | `NAP1C.BAS` line 91 | Commented out, as Civil War Battleset did (QB64pe has no `FRE`) |
 | 6 | `END` in the tactical game | `NAPOLEON.BAS` line 107, `NAP1A.BAS` lines 677 (`over`) and 1290 | `SYSTEM`. In QB64, `END` shows "Press any key to continue" and waits. `WON.EXE` waits for the tactical game to end, so every battle would stop there until the player pressed a key in the tactical window. In DOS, `END` went straight back. The strategic game's two `END`s stay, as in the earlier ports |
-| 7 | `SHELL "napoleon.exe"` | `WON.BAS` line 831 | Stays a plain `SHELL` (D5). Under a script, `scriptshell` gives the child its own keys, state and seed (section 5) |
+| 7 | `SHELL "napoleon.exe"` | `WON.BAS` line 831 | Stays a plain `SHELL` (D5), in `scriptbattle`. Under a script, `scriptbattle` gives the child its own keys, state and seed (section 4) |
 | 8 | `SHELL "copy nws.his oldhist.ory"` | `WON.BAS` line 633 | Through `scriptshell`, which copies in BASIC under a script. Taken from Civil War Strategy |
 | 9 | The DOS programs with no source | `ARCH2.EXE` (intro), `VIC.EXE` (victory picture), `NAPIC.EXE` (tactical title, not called by the source); `RRS.EXE` is not in the repo | D6. Every `SHELL` of them is guarded by `DIR$`, so once the files are gone no line needs to change |
 | 10 | `GOSUB` routines that may leave their SUB | 107 `GOSUB`s inside SUBs: 34 in the strategic game (8 in `WON`, 19 in `WON2`, 7 in `WONMENU`), 83 in the tactical game (55 in `NAPOLEON`, 18 in `NAP1A`, 10 in `NAP1C`) | Read every routine one by one (step 2). Already seen: `crsr` in both menus leaves by `GOTO called` on Esc or a letter, the bug of the other three games. Whether a `RETURN` then takes the stale entry, and stops the port with "RETURN without GOSUB", is what step 2 finds. The fix is the earlier ports': the routine sets a flag and `RETURN`s, and the line after the `GOSUB` jumps |
@@ -140,7 +140,7 @@ environment variable `QB64_SCREEN_KEYS` names the keys file and `QB64_SCREEN_STA
 A program started by `SHELL` inherits the environment. So without care, `napoleon.exe` would read the strategic
 game's keys file from its first line and write over its states.
 
-Under a script, `scriptshell` starts the battle like this:
+Under a script, `scriptbattle` (`SCRIPT.BM`, step 6) starts the battle like this:
 
 1. It counts the battle (1, 2, …) and sets, with `ENVIRON`, the child's keys file to `<keys>.battle<n>`, its
    state file to `<state>.battle<n>`, and `NAP_SEED` to the seed of the run.
@@ -301,7 +301,7 @@ ours to build. The pragmatic engineer agrees, with the number of battles kept sm
 the hand-written tactical scripts of step 8 on top. **Recommended: (a), with the hook rather than a patch.**
 
 **D4. Session 9 runs twice.**
-- (a) Once with the battle replaced: under a script with `WON_OUTCOME` set, `scriptshell` copies the recorded
+- (a) Once with the battle replaced: under a script with `WON_OUTCOME` set, `scriptbattle` copies the recorded
   `OUTCOME.&&&` in place of starting the tactical game. That run is held to the whole recording but the battle
   screens. A second run starts the port's tactical game, and is held to the strategic screens up to the battle
   and to `BATTLE.$$$`.
@@ -514,11 +514,27 @@ changes is either a mistake or is named in the commit message.
 6. **The test hooks**, in BASIC that both PDS 7.1 and QB64 compile: the seed from `WON_SEED` and `NAP_SEED`,
    `announce` before each wait (row 14), `TICK` as D2 says, the date 06-24-1998, `scriptshell` (section 4 and
    D4), and trace mode (`WON_TRACE`). Both programs play as before when no variable is set.
+
+   **Done (2026-11-08).** The hooks are in `SCRIPT.BM` and a new `NAPSCRIPT.BM`. The battle goes through a new
+   `scriptbattle`, and the tactical game has its own trace variable, `NAP_TRACE`. A tactical `TICK` under a
+   second reads no key in DOS, so it is not a wait. Played by announced waits, session 9's first turn writes
+   the recording's `BATTLE.$$$` and `NWS9.SAV`, and the QB64pe and QB64Rust builds give the same screens. The
+   Yes/No menu by letter and F10 work. Two findings for step 7 (`docs\devnotes.md`, "Step 6"):
+   - In DOS, PDS 7.1's `ENVIRON` stops with "Out of memory" when the environment has no room. So the harness
+     sets `NAP_SEED` and `NAP_TRACE` before `WON.EXE` starts.
+   - The French moves already differ from session 9 in May, before the battle (`TODO.md`).
 7. **The bridge** (D1, section 5), in two halves with a check between them (the pragmatic engineer's review,
    2026-11-07).
    - **7a.** In `tools\`: `pdsbuild.py`; the trace mode of `PLAYKEYS.COM`; `sessions.py`, which writes the
      announce-driven keys files into `tests\sessions\`. Run the 15 sessions in trace mode and check them against
      the recordings.
+
+     The DOSBox-X folder of a trace run holds `ARCH2.EXE` and `VIC.EXE`, taken from git history (they left the
+     branch in step 5). The recordings ran both: the first key of each session dismissed `ARCH2.EXE`'s
+     picture, and session 15 shows `VIC.EXE`'s. Without them the PDS build shows its built-in title, whose
+     `TICK 2` takes another key, and the trace parts from the recording at its first key. `WON.BAS` still runs
+     each program when its file is there. The harness also sets `NAP_SEED` and `NAP_TRACE` itself: PDS
+     7.1's `ENVIRON` has no room for a new variable in DOS (`docs\devnotes.md`, "Step 6").
    - **The check.** Run the converted keys files once with the QB64 builds and compare them straight with the
      recordings. If the only differences are screens of pauses and the four `PEEK(1052)` checks (row 12), the
      scripted reference of 7b is made only for the sessions that need it. Otherwise for all 15.

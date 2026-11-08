@@ -838,7 +838,7 @@ GOTO runner
 
 hold8:
 LOCATE 24, 1: PRINT "hit a key";
-DO WHILE INKEY$ = "": LOOP
+CALL announce(1, ""): DO WHILE INKEY$ = "": LOOP
 RETURN
 
 fog:
@@ -1201,6 +1201,7 @@ END SUB
 SUB TICK (sec!)
 start! = TIMER
 sec! = ABS(sec!)
+IF scripttick%(sec!) THEN EXIT SUB
 IF sec! < 1 THEN
 	DO WHILE TIMER - start! < sec!: LOOP: EXIT SUB
 END IF

@@ -7,6 +7,7 @@ DECLARE SUB retreat (active%, x%)
 DECLARE SUB stax (who%)
 ' $INCLUDE: 'won.bi'
 
+CALL scriptstart
 IF LEN(DIR$("arch2.exe")) > 0 AND COMMAND$ = "" THEN CLS : SHELL "arch2.exe": GOTO regist
 SCREEN 12
 GOSUB tricolor
@@ -74,7 +75,7 @@ IF side = 2 THEN randbal = 3
 CLS
 CALL filer(-1)
 CALL clrbot
-RANDOMIZE TIMER
+CALL scriptseed
 CALL TICK(.3)
 wtype = 2: hilite = 15
 GOSUB tricolor
@@ -485,7 +486,7 @@ utile:
 		 a$ = "": IF randbal = 0 THEN a$ = "OFF"
 		 COLOR 11: PRINT "Random Events : "; a$; " "; t$;
 		 COLOR 14: PRINT "			press a key";
-		 DO WHILE INKEY$ = "": LOOP
+		 CALL announce(1, ""): DO WHILE INKEY$ = "": LOOP
 		 CLS
 		 CALL europe
 		 choose = 29
@@ -617,7 +618,7 @@ blanken:        c = 1: IF side = 2 THEN c = 4
 		LINE (100, 200)-(500, 300), 8 - c, B
 		COLOR 7: LOCATE 14, 31: PRINT " "; month$(month); year
 		COLOR 11: LOCATE 17, 30: PRINT force$(side); " PLAYER TURN"
-		DO WHILE INKEY$ = "": LOOP
+		CALL announce(1, ""): DO WHILE INKEY$ = "": LOOP
 		RETURN
 '............................................................................
 tricolor:
@@ -631,7 +632,7 @@ IF history = 1 THEN
 	CLS
 	IF LEN(DIR$("nws.his")) > 0 THEN CALL scriptshell("copy nws.his oldhist.ory")
 	OPEN "O", 2, "nws.his"
-	PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; DATE$; " ]"
+	PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; scriptdate$; " ]"
 	CLOSE #2
 END IF
 RETURN

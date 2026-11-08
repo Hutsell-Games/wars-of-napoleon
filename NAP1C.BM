@@ -66,6 +66,7 @@ sel1:
 ' crsr ends by RETURN. Where it went to called, it sets leave to 1: QB64 keeps
 ' one GOSUB stack for the program, and a routine left by GOTO stays on it.
 crsr:
+	CALL announce(2, LEFT$(LTRIM$(mtx$(0)), 1))
 	DO: a$ = INKEY$: LOOP WHILE a$ = ""
 akey5:
 	IF ASC(a$) = 32 THEN choose = 99: leave = 1: RETURN

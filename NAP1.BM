@@ -607,7 +607,7 @@ wait2:
 '                     Get Keyboard Command
 '============================================================================
 wait3:
-	commnd$ = INKEY$: IF commnd$ = "" GOTO wait3
+	CALL announce(5, ""): DO: commnd$ = INKEY$: LOOP WHILE commnd$ = ""
 kez:
 	a = LEN(commnd$): commnd$ = RIGHT$(commnd$, 1)
 	z = ASC(UCASE$(commnd$))
@@ -875,7 +875,7 @@ cline:
 	COLOR 11
 	RETURN
 wait5:
-	commnd$ = INKEY$: IF commnd$ = "" GOTO wait5
+	CALL announce(6, ""): DO: commnd$ = INKEY$: LOOP WHILE commnd$ = ""
 	dxs = ASC(UCASE$(commnd$)): dys = LEN(commnd$)
 	IF dxs = 27 OR dxs = 32 OR dxs = 76 OR dxs = 88 THEN RETURN
 	IF dxs = 13 THEN RETURN
