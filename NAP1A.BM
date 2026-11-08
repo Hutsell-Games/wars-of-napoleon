@@ -1,11 +1,3 @@
-DEFINT A-Z
-DECLARE SUB arrange (who%, xloc%, yloc%)
-DECLARE SUB brittle (who%)
-DECLARE SUB routed (index%, flag%)
-DECLARE SUB ishi (x%)
-DECLARE SUB over (flag%)
-REM $INCLUDE: 'nap10.bi'
-
 SUB arrange (who, xloc, yloc)
 SELECT CASE setupx
 	CASE 1
@@ -674,7 +666,8 @@ SUB over (flag)
 OPEN "O", 1, "outcome.&&&"
 WRITE #1, 3 - sidex(flag), .01 * score&(sidex(1)), .01 * score&(sidex(2))    'scale down unit size
 CLOSE #1
-END
+' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
+SYSTEM
 END SUB
 
 SUB proximity (index, bonus)
@@ -1287,7 +1280,8 @@ NEXT k
 IF dx > 0 AND dy > 0 THEN EXIT SUB
 s = 2: IF dx = 0 THEN s = 1
 COLOR 14: CALL clrbot: PRINT sname$(s); " forces ANNIHILATED : Bonus = 250"; : vp&(3 - s) = vp&(3 - s) + 250
-CALL TICK(99): CALL expire: CALL TICK(99): END
+' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
+CALL TICK(99): CALL expire: CALL TICK(99): SYSTEM
 
 END SUB
 

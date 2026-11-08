@@ -105,3 +105,5 @@ DIM SHARED victory(2), capcity(2), price(3), armynat(50)
 DIM SHARED font$(36), brray(cities), casualty&(2), batwon(2), cityo(cities)
 DIM SHARED mtnx(19), mtny(19), nation$(12), spare(2)
 DIM SHARED homenat(50)
+' The pictures' arrays, declared in WON.BAS for DOS.
+DIM SHARED graphic(1 TO 2000), fren(1 TO 90), nat2(1 TO 90), nat3(1 TO 90), nat4(1 TO 90), nat5(1 TO 90), nat6(1 TO 90), nap(1 TO 90)

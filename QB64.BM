@@ -1,0 +1,44 @@
+' ===========================================================================
+' QB64.BM - what the game needs from BASIC PDS 7.1 that QB64 does not have:
+' DIR$, and the pixels of a dotted LINE. Included at the end of WON.BAS and
+' of NAPOLEON.BAS.
+' DIR$ is that of the Civil War Strategy port (Hutsell-Games/civil-war-strategy).
+' ===========================================================================
+
+' PDS 7.1's DIR$: the first file that matches spec$, or the next match of
+' the last search when spec$ is "" (PDS: DIR$ with no argument). Folders are
+' skipped, and the name is in upper case, as DOS gave it.
+' Without this FUNCTION, QB64pe and QB64Rust read DIR$("*.sav") as an array.
+FUNCTION DIR$ (spec$)
+IF spec$ = "" THEN f$ = _FILES$ ELSE f$ = _FILES$(spec$)
+DO WHILE RIGHT$(f$, 1) = CHR$(92) OR RIGHT$(f$, 1) = "/"
+	f$ = _FILES$
+LOOP
+DIR$ = UCASE$(f$)
+END FUNCTION
+
+' LINE (xa, ya)-(xb, yb), c, , style& with the pixels PDS 7.1 and QB 4.5 gave.
+' QB64 starts the style at the first point, and steps to the next row halfway
+' along the line. The old compilers start at the left end (the bottom end of a
+' vertical line) and step earlier, from a first error of 3/4 of the longer
+' side. Measured with QB64Rust's verification\qb45\q45_line_style and
+' q45_line_pixels (DIVERGENCES-QB45.md Q-024 and Q-025).
+SUB styledline (xa, ya, xb, yb, c, style&)
+x = xa: y = ya: x2 = xb: y2 = yb
+IF x > x2 OR (x = x2 AND y < y2) THEN SWAP x, x2: SWAP y, y2
+sx = SGN(x2 - x): sy = SGN(y2 - y)
+ax = ABS(x2 - x): ay = ABS(y2 - y)
+IF ax >= ay THEN n = ax: d = ay ELSE n = ay: d = ax
+e = (3 * n) \ 4
+FOR i = 0 TO n
+	IF style& AND 2& ^ (15 - (i MOD 16)) THEN PSET (x, y), c
+	e = e + d
+	IF ax >= ay THEN
+		IF e >= n AND n > 0 THEN e = e - n: y = y + sy
+		x = x + sx
+	ELSE
+		IF e >= n THEN e = e - n: x = x + sx
+		y = y + sy
+	END IF
+NEXT i
+END SUB

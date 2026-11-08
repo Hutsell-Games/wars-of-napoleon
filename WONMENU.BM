@@ -1,8 +1,3 @@
-DEFINT A-Z
-DECLARE SUB choices (b1%, wide%)
-DECLARE SUB mxw (wide%)
-DECLARE SUB stax (who%)
-' $INCLUDE: 'won.bi'
 '============================================================================
 '                GENmenu 3.05 : Generic Menu Main Module Level  12/91
 '                Updated to Use Graphic Screens 8, 9, 12
@@ -20,10 +15,12 @@ DECLARE SUB stax (who%)
 '                            2=double line
 '               if >10 then 10's digit=box color  1's digit= window type
 
-y = 68: COLOR 11: LOCATE 1, y: PRINT "Attacker"
-c = 9: IF attack > 25 THEN c = 7
-COLOR c: LOCATE 3, y: PRINT armyname$(attack)
-LOCATE 4, y: CALL strong(attack)
+' Module-level code of a linked module, which never ran in DOS. QB64 would
+' run it as part of the main program's code, so these four lines are comments.
+'y = 68: COLOR 11: LOCATE 1, y: PRINT "Attacker"
+'c = 9: IF attack > 25 THEN c = 7
+'COLOR c: LOCATE 3, y: PRINT armyname$(attack)
+'LOCATE 4, y: CALL strong(attack)
 
 SUB choices (b1, wide)
 IF 8 * (tlx + wide + 1) + 7 > 639 THEN tlx = 78 - wide

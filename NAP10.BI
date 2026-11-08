@@ -89,3 +89,11 @@ DIM SHARED sdtext$(24), mtx$(20), vp&(2), sname$(2), bigg(2), array(20), waver(2
 DIM SHARED stex$(22), highscore(2), xper(most), commander$(2), expbase(2)
 DIM SHARED morlev$(5), xplev$(5), ledlev$(5), equip$(5), elan(2), sidex(2)
 
+' The pictures' arrays, declared in NAPOLEON.BAS for DOS.
+DIM SHARED Image(1 TO 1564), IAlly(60), CAlly(60), AAlly(60), GAlly(60)
+DIM SHARED IFrench(60), CFrench(60), AFrench(60), GFrench(60)
+DIM SHARED Cterr(60), Hterr(60), Sterr(60), Fterr(60)
+DIM SHARED Tterr(60), Mterr(60), Oterr(60), Rterr(60)
+DIM SHARED Wterr(60), Vterr(60), Bridge(60), Xhair(60)
+DIM SHARED Explo(60), Death(60), Boat(60), RAlly(60), RFrench(60)
+DIM SHARED WFrench(60), Wally(60), HSFrench(60), HSAlly(60), LAAlly(60), LAFrench(60)

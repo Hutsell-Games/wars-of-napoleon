@@ -1,15 +1,3 @@
-DEFINT A-Z
-DECLARE SUB armyxy (x%, y%, z%)
-DECLARE SUB center (y%, a$)
-DECLARE SUB flags (who%, w%, a%)
-DECLARE SUB image2 (a$, s%)
-DECLARE SUB maptext ()
-DECLARE SUB mountain (xx%, yy%)
-DECLARE SUB mxw (wide%)
-DECLARE SUB roman (target%, a$)
-DECLARE SUB stax (who%)
-' $INCLUDE: 'won.bi'
-
 SUB barnacle (who)
 navysize(who) = navysize(who) - 1
 IF navysize(who) < 1 THEN navyloc(who) = 0
@@ -608,7 +596,7 @@ getlist:
 	mtx$(size) = LTRIM$(MID$(f$, 4, 4))
 	array(size) = size
 	DO WHILE f$ <> "" AND size < 21
-		f$ = DIR$
+		f$ = DIR$("")
 		f$ = LTRIM$(MID$(f$, 4, 4))
 		IF f$ = "" THEN EXIT DO
 		size = size + 1
