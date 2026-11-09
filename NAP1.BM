@@ -80,10 +80,13 @@ sunk:
 	CALL scrcol(2)
 	IF unity(attack) = objy AND unitx(attack) = objx GOTO Explode
 	CALL YouorMe(attack, F): IF F > 0 AND LEFTY$(defend) <> "R" THEN uorder(defend) = 0: GOTO Explode
-	IF uorder(defend) = 0 AND rely > 1 AND RND > .4 + .1 * bold AND morale(defend) > 3 THEN
-		IF LEFTY$(defend) <> "A" THEN
-			uorder(defend) = 100 * unity(attack) + unitx(attack)
-			CALL flee(defend)
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF uorder(defend) = 0 AND rely > 1 THEN
+		IF RND > .4 + .1 * bold AND morale(defend) > 3 THEN
+			IF LEFTY$(defend) <> "A" THEN
+				uorder(defend) = 100 * unity(attack) + unitx(attack)
+				CALL flee(defend)
+			END IF
 		END IF
 	END IF
 Explode:
@@ -386,7 +389,10 @@ smash:
 		IF RND > .5 THEN CALL routed(defend, 3)
 		CALL SHOWUNIT(defend): toa(defend) = timex + z
 	ELSE
-		IF LEFTY$(defend) = "S" AND RND < .18 * morale(defend) THEN
+		' ELSEIF: PDS 7.1 drew this RND only when the defender was an S (docs\devnotes.md, step 7).
+		IF LEFTY$(defend) <> "S" THEN
+			GOTO smash
+		ELSEIF RND < .18 * morale(defend) THEN
 			roll! = .5 * roll!
 			IF RND > .18 * morale(attack) THEN
 				CALL routed(attack, 3)
@@ -920,7 +926,9 @@ canplace:
 	IF F > 0 AND t$ = "G" THEN RETURN
 	CALL Near2(active, Enemy, d)
 	TICK .5 * mdly!
-	IF Enemy = 0 OR RND > .5 THEN uorder(active) = 100 * objy + objx: RETURN
+	' Two lines: PDS 7.1 drew this RND only when Enemy was not 0 (docs\devnotes.md, step 7).
+	IF Enemy = 0 THEN uorder(active) = 100 * objy + objx: RETURN
+	IF RND > .5 THEN uorder(active) = 100 * objy + objx: RETURN
 	IF t$ = "A" THEN CALL cannon(active, Enemy): RETURN
 	uorder(active) = 100 * unity(Enemy) + unitx(Enemy)
 	IF F > 0 THEN TICK .2 * mdly!
@@ -1214,7 +1222,8 @@ END IF
 notart:
 	IF INSTR("GL", t$) > 0 GOTO ours
 
-	IF uorder(index) > 0 AND RND > .1 * bold GOTO ours
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF uorder(index) > 0 THEN IF RND > .1 * bold THEN GOTO ours
 
 	pct! = strength(index) / strength(Enemy)
 	pct! = pct! * .002 * RND * leader(index) * morale(index)
@@ -1349,7 +1358,8 @@ IF Visible(index) > 0 THEN CALL SHOWUNIT(index)
 	a = Pnlty / 2: IF a < 1 THEN a = 1
 	movesleft = movesleft - a
 	toa(index) = timex + Pnlty + plus
-	IF LEFTY$(index) = "è" AND (RND > .97 OR (terrain(index) <> 43 AND terrain(index) <> 46)) THEN unit$(index) = "Infantry": toa(index) = timex + 2 + 2 * RND
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF LEFTY$(index) = "è" THEN IF RND > .97 OR (terrain(index) <> 43 AND terrain(index) <> 46) THEN unit$(index) = "Infantry": toa(index) = timex + 2 + 2 * RND
 	CALL YouorMe(active, F)
 	IF F = 0 THEN
 		IF toa(index) > timex + 1 AND difficult > 2 THEN
@@ -1496,7 +1506,8 @@ SELECT CASE i
 	CASE 1: armx = 3
 	CASE IS < .1 * allarm + (2 * RND): armx = 3
 	CASE IS < .3 * allarm + (2 * RND): armx = 1
-	CASE IS < .5 * allarm + (2 * RND): armx = 2: IF allarm < 11 AND RND > .5 THEN amrx = 4
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	CASE IS < .5 * allarm + (2 * RND): armx = 2: IF allarm < 11 THEN IF RND > .5 THEN amrx = 4
 	CASE ELSE: armx = 4
 END SELECT
 	unit$(index) = equip$(armx)
@@ -1523,11 +1534,13 @@ IF index = 41 AND name$(index) = "Napoleon" THEN leader(index) = 5
 xper(index) = expbase(who) + (-1 + 2 * RND)
 IF xper(index) > 3 AND leader(index) < 3 THEN leader(index) = 3
 IF leader(index) < 2 AND morale(index) > 2 THEN leader(index) = 2
-IF LEFTY$(index) = "C" AND leader(index) < 4 AND RND > .5 THEN leader(index) = 4
-IF LEFTY$(index) = "G" AND leader(index) < 4 AND RND > .5 THEN leader(index) = 4
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF LEFTY$(index) = "C" AND leader(index) < 4 THEN IF RND > .5 THEN leader(index) = 4
+IF LEFTY$(index) = "G" AND leader(index) < 4 THEN IF RND > .5 THEN leader(index) = 4
 	uorder(index) = 0: toa(index) = 0
 	IF RND > .9 THEN toa(index) = 25 * RND: IF RND > .5 OR toa(index) > 15 THEN uorder(index) = 99
-	IF side = sidex(2) AND who = side AND LEFTY$(index) <> "G" AND toa(index) = 0 AND RND > .5 THEN toa(index) = 1 + INT(3 * RND): IF fort > 0 THEN unit$(index) = "w" + unit$(index)
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF side = sidex(2) AND who = side AND LEFTY$(index) <> "G" AND toa(index) = 0 THEN IF RND > .5 THEN toa(index) = 1 + INT(3 * RND): IF fort > 0 THEN unit$(index) = "w" + unit$(index)
 	IF i = allarm THEN uorder(i) = 99: toa(i) = .5 * timelimit
 count:
 CALL SHOWUNIT(index)

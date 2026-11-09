@@ -143,8 +143,9 @@ IF terrain(Enemy) = 233 THEN choose = choose + 1: IF timelimit - timex < 10 THEN
 IF leader(index) < 3 THEN choose = 3 - INT(2 * RND)
 IF morale(index) < 3 THEN choose = choose - 1
 IF RND > .9 THEN choose = choose - 1: IF RND < .5 THEN choose = choose + 2
-IF bold > 3 AND RND > .7 THEN choose = choose + 1: IF bold = 5 AND RND > .5 THEN choose = 4
-IF bold < 3 AND RND > .5 THEN choose = choose - 1: IF bold = 1 AND RND > .5 THEN choose = 1
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF bold > 3 THEN IF RND > .7 THEN choose = choose + 1: IF bold = 5 THEN IF RND > .5 THEN choose = 4
+IF bold < 3 THEN IF RND > .5 THEN choose = choose - 1: IF bold = 1 THEN IF RND > .5 THEN choose = 1
 SELECT CASE a$
 	CASE "G"
 		choose = choose - 2
@@ -216,7 +217,8 @@ GOTO cancel2
 
 cancel2:
 CALL SHOWUNIT(Enemy)
-IF LEFTY$(index) <> "R" AND RND > .05 + .15 * difficult THEN uorder(index) = 0
+' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+IF LEFTY$(index) <> "R" THEN IF RND > .05 + .15 * difficult THEN uorder(index) = 0
 END SUB
 
 SUB Compact (flag)
@@ -333,10 +335,11 @@ IF z <> 0 AND xloc > 26 THEN xloc = xloc - 1
 END SUB
 
 SUB despair (index)
-IF xper(index) = 5 AND RND < .99 THEN EXIT SUB
-IF xper(index) = 4 AND RND < .88 THEN EXIT SUB
-IF leader(index) = 5 AND RND < .9 THEN EXIT SUB
-IF leader(index) = 4 AND RND < .7 THEN EXIT SUB
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF xper(index) = 5 THEN IF RND < .99 THEN EXIT SUB
+IF xper(index) = 4 THEN IF RND < .88 THEN EXIT SUB
+IF leader(index) = 5 THEN IF RND < .9 THEN EXIT SUB
+IF leader(index) = 4 THEN IF RND < .7 THEN EXIT SUB
 pct! = .5
 SELECT CASE leader(index)
 	CASE 1
@@ -420,18 +423,22 @@ IF uorder(index) < 0 AND INSTR("AHB", LEFTY$(index)) > 0 THEN EXIT SUB
 IF uorder(index) < 0 GOTO best      ' unit is DUG IN
 IF uorder(index) = 99 GOTO best     ' unit is DELAYED
 s = 1: IF index > m1 THEN s = 2
-IF possess <> s AND RND > .2 AND LEFTY$(index) <> "R" THEN uorder(index) = 100 * objy + objx: EXIT SUB
-IF uorder(index) > 0 AND RND < .15 * bold GOTO mine
-	t$ = LEFTY$(index): IF t$ = "A" AND RND > .03 + .01 * bold GOTO mine
-	IF t$ = "G" AND RND > .03 * bold GOTO mine
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF possess <> s THEN IF RND > .2 AND LEFTY$(index) <> "R" THEN uorder(index) = 100 * objy + objx: EXIT SUB
+IF uorder(index) > 0 THEN IF RND < .15 * bold THEN GOTO mine
+	' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+	t$ = LEFTY$(index): IF t$ = "A" THEN IF RND > .03 + .01 * bold THEN GOTO mine
+	IF t$ = "G" THEN IF RND > .03 * bold THEN GOTO mine
 	d = ABS(unity(index) - objy) + ABS(unitx(index) - objx)
-	CALL ranger(index, vantage): IF d > vantage AND RND < .1 * bold GOTO mine
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	CALL ranger(index, vantage): IF d > vantage THEN IF RND < .1 * bold THEN GOTO mine
 	uorder(index) = 100 * objy + objx: GOTO best
 mine:
 CALL see(index): IF uorder(index) > 0 GOTO best
 a = terrain(index): IF a = 239 GOTO best
-IF (a = 94 OR a = 35) AND RND < .99 GOTO best
-IF a = 42 AND RND < .95 GOTO best
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF a = 94 OR a = 35 THEN IF RND < .99 THEN GOTO best
+IF a = 42 THEN IF RND < .95 THEN GOTO best
 
 ' eval ends by RETURN, with leave at 1 where it went to improve: QB64 keeps
 ' one GOSUB stack for the program.
@@ -718,11 +725,15 @@ IF unity(index) = objy AND unitx(index) = objx THEN EXIT SUB
 a = terrain(index)
 IF (a <> z) AND (z = 233 OR z = 239 OR z = 35) GOTO runn
 
-IF ((a = 94 OR a = 239 OR a = 35)) AND RND < .9 THEN EXIT SUB
-IF a = 42 AND RND < .7 THEN EXIT SUB
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF a = 94 OR a = 239 OR a = 35 THEN IF RND < .9 THEN EXIT SUB
+IF a = 42 THEN IF RND < .7 THEN EXIT SUB
 
-IF z = 61 AND RND < .7 THEN EXIT SUB
-IF z = 43 OR z = 46 AND RND < .15 * bold GOTO runn
+' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+IF z = 61 THEN IF RND < .7 THEN EXIT SUB
+' AND binds closer than OR: the old line was z = 43 OR (z = 46 AND RND < .15 * bold).
+IF z = 43 THEN GOTO runn
+IF z = 46 THEN IF RND < .15 * bold THEN GOTO runn
 IF morale(index) < 2 THEN EXIT SUB
 
 
@@ -1117,8 +1128,9 @@ suresee:
 	pct! = strength(attack) / strength(defend)
 	pct! = pct! * .3 * leader(attack) * morale(attack) / d
 	IF pct! < 1.2 - .1 * bold GOTO ourboy
-	IF uorder(attack) > 0 AND RND > .15 * bold GOTO ourboy
-	IF uorder(attack) = 100 * objy + objx AND RND < .95 GOTO ourboy
+	' Nested: PDS 7.1 drew these RNDs only when the test before each held (docs\devnotes.md, step 7).
+	IF uorder(attack) > 0 THEN IF RND > .15 * bold THEN GOTO ourboy
+	IF uorder(attack) = 100 * objy + objx THEN IF RND < .95 THEN GOTO ourboy
 	IF flag = 0 THEN IF RND > 1 - .1 * bold THEN uorder(attack) = 100 * objy + objx: EXIT SUB
 	IF flag > 0 THEN
 		IF LEFTY$(attack) = "C" THEN IF RND > .5 OR LEFTY$(defend) = "S" THEN uorder(attack) = 0: GOTO ourboy

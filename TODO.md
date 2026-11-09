@@ -31,10 +31,9 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
   &H101`) is still QB64's `LINE`. A box has only flat and vertical edges, which QB64 draws with the same pixels
   as QB 4.5, but where the dots start on each edge is not measured. The tactical screens are compared by
   character, so it matters only if `tests\dosshot.py` (step 8) compares this screen's pixels.
-- **The tactical game's conditions that PDS 7.1 cut short** (D13). The strategic game and both `TICK`s are
-  rewritten (`docs\devnotes.md`, change 24). The tactical game has 34 lines with `RND` or `INKEY$` next to an
-  `AND` or `OR` in a condition. Sort out those where `RND` or `INKEY$` is on the side PDS can skip, and write
-  them as nested `IF`s, when `pdsbuild.py` builds the tactical game, so that its PDS build shows the change.
+- **The tactical game's rewritten conditions are not played yet** (D13, `docs\devnotes.md` change 28). The 29
+  lines build with PDS 7.1, QB64Rust and QB64pe, but no battle has run with them. The references of D3 show
+  whether the PDS build and the QB64 builds draw the same numbers.
 
 ## The game
 
@@ -47,3 +46,7 @@ game plays changes the recorded screens.
 - **A battle won by wiping out the other side writes no `OUTCOME.&&&`.** `wipeout` (`NAP1A.BM`) ends the tactical
   game, and `expire` writes the file only when the time is up. The strategic game then reads the result of the
   battle before. The same when the player quits the battle with F10.
+- **A small random army keeps all its cavalry.** In `randarm` (`NAP1.BM`), a unit that is to be cavalry
+  (`armx = 2`) in an army of fewer than 11 units should become infantry half the time: `IF allarm < 11 … THEN
+  amrx = 4`. The line sets `amrx`, and the rest of the SUB reads `armx`, so it only draws an `RND`. A fix
+  changes which units the tactical game makes.

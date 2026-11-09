@@ -1,7 +1,12 @@
-"""Build the port's strategic game with BASIC PDS 7.1: the bridge of docs/port-study.md (step 7).
+"""Build one of the port's programs with BASIC PDS 7.1: the bridge of docs/port-study.md (step 7).
 
 Usage (from anywhere):
-    python -I tools/pdsbuild.py OUT [--pds DIR] [--lib DIR]
+    python -I tools/pdsbuild.py OUT [--game won|napoleon] [--pds DIR] [--lib DIR]
+
+--game napoleon builds the tactical game the same way: NAPOLEON.BAS with NAP1.BM,
+NAPSCRIPT.BM and PDS.BM after its main code, the pictures' DIM SHARED lines back after
+the include of nap10.bi, and NAP1A.BAS and NAP1C.BAS with their old headers. The
+program is OUT/NAPOLEON.EXE. What follows says how the strategic game is built.
 
 The port is one QB64 program: WON.BAS includes its other files at its end. PDS 7.1 compiles
 modules, so this writes the three modules that WON.EXE was built from back into OUT/src:
@@ -38,7 +43,8 @@ RECOVER = REPO / "tools" / "recover"
 DEFAULT_PDS = REPO.parent / "pds71" / "install"
 DOSBOX = Path(r"C:\Program Files (x86)\DOSBox-0.74-3\DOSBox.exe")
 
-# The module headers of the source before step 4 (git 7738434, WON2.BAS and WONMENU.BAS).
+# The module headers of the source before step 4 (git 7738434: WON2.BAS, WONMENU.BAS,
+# NAP1A.BAS and NAP1C.BAS).
 HEADERS = {
     "WON2": [
         "DEFINT A-Z",
@@ -60,18 +66,60 @@ HEADERS = {
         "DECLARE SUB stax (who%)",
         "' $INCLUDE: 'won.bi'",
     ],
+    "NAP1A": [
+        "DEFINT A-Z",
+        "DECLARE SUB arrange (who%, xloc%, yloc%)",
+        "DECLARE SUB brittle (who%)",
+        "DECLARE SUB routed (index%, flag%)",
+        "DECLARE SUB ishi (x%)",
+        "DECLARE SUB over (flag%)",
+        "REM $INCLUDE: 'nap10.bi'",
+    ],
+    "NAP1C": [
+        "DEFINT A-Z",
+        "DECLARE SUB Mickey (a$, lButton%, rButton%, xc%, yc%)",
+        "REM $INCLUDE: 'nap10.bi'",
+    ],
 }
-# The main module's includes and what the PDS module gets for each.
-MAIN_INCLUDES = {
-    "won1.bm": "WON1.BM",
-    "won2.bm": None,  # a module of its own
-    "wonmenu.bm": None,
-    "qb64.bm": "PDS.BM",
-    "script.bm": "SCRIPT.BM",
+
+
+class Game:
+    """What pdsbuild.py needs to know of one of the two programs."""
+
+    def __init__(self, main, bi, includes, modules, switches, pictures_before):
+        self.main = main          # the main module, WON or NAPOLEON
+        self.bi = bi              # its include file, which holds the pictures' DIM SHARED lines
+        self.includes = includes  # the main module's includes and what the PDS module gets for each
+        self.modules = modules    # the linked modules: (name, .BM file, blank line after the header)
+        self.switches = switches  # BC's switches of each module
+        # In DOS the pictures' lines stood before the include of the .BI (WON.BAS) or after it
+        # (NAPOLEON.BAS, after its RANDOMIZE TIMER: CLS, which is now CALL napstart: CLS).
+        self.pictures_before = pictures_before
+        self.pictures_comment = f"' The pictures' arrays, declared in {main}.BAS for DOS."
+        names = "+".join(m.lower() for m in [main] + [n for n, _, _ in modules])
+        self.link_rsp = f"{names} /E\r\n{main.lower()}\r\nnul\r\nc:\\bcl71enr.lib c:\\qbx.lib;\r\n"
+
+
+GAMES = {
+    # The strategic game: the three modules that WON.EXE was built from, with the recovery's
+    # switches (docs/won-source-study.md, section 12).
+    "won": Game(
+        "WON", "WON.BI",
+        {"won1.bm": "WON1.BM", "won2.bm": None, "wonmenu.bm": None,  # None: a module of its own
+         "qb64.bm": "PDS.BM", "script.bm": "SCRIPT.BM"},
+        [("WON2", "WON2.BM", True), ("WONMENU", "WONMENU.BM", False)],
+        ["WON=O,E,Fs,C:512", "WON2=O,Fs,C:512", "WONMENU=O,Fs,C:512"],
+        pictures_before=True),
+    # The tactical game: the modules of NAPOLEON.MAK (git 6e0930f). Its source is not the
+    # shipped NAPOLEON.EXE, so no switches were recovered; it takes the strategic game's.
+    "napoleon": Game(
+        "NAPOLEON", "NAP10.BI",
+        {"nap1.bm": "NAP1.BM", "nap1a.bm": None, "nap1c.bm": None,
+         "qb64.bm": "PDS.BM", "napscript.bm": "NAPSCRIPT.BM"},
+        [("NAP1A", "NAP1A.BM", True), ("NAP1C", "NAP1C.BM", False)],
+        ["NAPOLEON=O,E,Fs,C:512", "NAP1A=O,Fs,C:512", "NAP1C=O,Fs,C:512"],
+        pictures_before=False),
 }
-SWITCHES = ["WON=O,E,Fs,C:512", "WON2=O,Fs,C:512", "WONMENU=O,Fs,C:512"]
-PICTURES_COMMENT = "' The pictures' arrays, declared in WON.BAS for DOS."
-LINK_RSP = "won+won2+wonmenu /E\r\nwon\r\nnul\r\nc:\\bcl71enr.lib c:\\qbx.lib;\r\n"
 
 
 SRC = REPO  # the folder of the port's sources; --src changes it
@@ -82,50 +130,60 @@ def lines_of(name):
 
 
 def include_name(line):
-    """The file of a "' $INCLUDE: 'x'" line, in lower case, or None."""
+    """The file of a "' $INCLUDE: 'x'" or "REM $INCLUDE: 'x'" line, in lower case, or None."""
     s = line.strip()
-    if not (s.startswith("'") and "$INCLUDE:" in s.upper()):
+    if not ((s.startswith("'") or s.upper().startswith("REM ")) and "$INCLUDE:" in s.upper()):
         return None
     return s.split("'")[-2].strip().lower()
 
 
-def write_modules(src):
-    bi = lines_of("WON.BI")
-    if PICTURES_COMMENT not in bi:
-        raise SystemExit(f"WON.BI: no line {PICTURES_COMMENT!r}; pdsbuild.py needs to know where the pictures' DIM is")
-    at = bi.index(PICTURES_COMMENT)
-    pictures = bi[at + 1]
-    if not pictures.upper().startswith("DIM SHARED GRAPHIC("):
-        raise SystemExit(f"WON.BI: the line after the pictures' comment is not their DIM: {pictures!r}")
-    del bi[at:at + 2]
+def write_modules(game, src):
+    bi = lines_of(game.bi)
+    if game.pictures_comment not in bi:
+        raise SystemExit(f"{game.bi}: no line {game.pictures_comment!r}; "
+                         "pdsbuild.py needs to know where the pictures' DIM is")
+    at = bi.index(game.pictures_comment)
+    end = at + 1
+    while end < len(bi) and bi[end].upper().startswith("DIM SHARED "):
+        end += 1
+    pictures = bi[at + 1:end]
+    if not pictures:
+        raise SystemExit(f"{game.bi}: the line after the pictures' comment is not their DIM: {bi[at + 1]!r}")
+    if any(l.strip() for l in bi[end:]):
+        raise SystemExit(f"{game.bi}: more lines after the pictures' DIM SHARED lines")
+    del bi[at:end]
 
-    won = []
+    module = []
     seen = set()
-    for line in lines_of("WON.BAS"):
+    for line in lines_of(f"{game.main}.BAS"):
         inc = include_name(line)
-        if inc == "won.bi":
-            won.append(pictures)
-            won.append(line)
+        if inc == game.bi.lower():
+            module += (pictures + [line]) if game.pictures_before else ([line] + pictures)
         elif inc is not None and inc.endswith(".bm"):
-            if inc not in MAIN_INCLUDES:
-                raise SystemExit(f"WON.BAS includes {inc}, which pdsbuild.py does not know")
+            if inc not in game.includes:
+                raise SystemExit(f"{game.main}.BAS includes {inc}, which pdsbuild.py does not know")
             seen.add(inc)
-            if MAIN_INCLUDES[inc]:
-                won += lines_of(MAIN_INCLUDES[inc])
+            if game.includes[inc]:
+                module += lines_of(game.includes[inc])
         else:
-            won.append(line)
-    if seen != set(MAIN_INCLUDES):
-        raise SystemExit(f"WON.BAS does not include {sorted(set(MAIN_INCLUDES) - seen)}")
+            module.append(line)
+    if seen != set(game.includes):
+        raise SystemExit(f"{game.main}.BAS does not include {sorted(set(game.includes) - seen)}")
 
-    won2 = HEADERS["WON2"] + [""] + lines_of("WON2.BM")
-    bare = [i for i, l in enumerate(won2) if 'DIR$("")' in l]
-    if len(bare) != 1:
-        raise SystemExit(f'WON2.BM: expected one DIR$(""), found {len(bare)}')
-    won2[bare[0]] = won2[bare[0]].replace('DIR$("")', "DIR$")
-    menu = HEADERS["WONMENU"] + lines_of("WONMENU.BM")
+    files = [(f"{game.main}.BAS", module)]
+    for name, bm, blank in game.modules:
+        files.append((f"{name}.BAS", HEADERS[name] + ([""] if blank else []) + lines_of(bm)))
+    if game.main == "WON":
+        # The bare DIR$ of getlist, which the port writes DIR$("").
+        won2 = files[1][1]
+        bare = [i for i, l in enumerate(won2) if 'DIR$("")' in l]
+        if len(bare) != 1:
+            raise SystemExit(f'WON2.BM: expected one DIR$(""), found {len(bare)}')
+        won2[bare[0]] = won2[bare[0]].replace('DIR$("")', "DIR$")
+    files.append((game.bi, bi))
 
     src.mkdir(parents=True, exist_ok=True)
-    for name, text in [("WON.BAS", won), ("WON2.BAS", won2), ("WONMENU.BAS", menu), ("WON.BI", bi)]:
+    for name, text in files:
         while text and text[-1] == "":
             text = text[:-1]
         (src / name).write_bytes(("\r\n".join(text) + "\r\n").encode("latin1"))
@@ -139,12 +197,13 @@ def python(script, cwd, *args):
         raise SystemExit(f"{script} failed (exit {r.returncode})")
 
 
-def link(lib, objdir, work):
+def link(game, lib, objdir, work):
     work.mkdir(parents=True, exist_ok=True)
-    (work / "WON.EXE").unlink(missing_ok=True)
-    for m in ("WON", "WON2", "WONMENU"):
+    exe = work / f"{game.main}.EXE"
+    exe.unlink(missing_ok=True)
+    for m in [game.main] + [n for n, _, _ in game.modules]:
         shutil.copy(objdir / f"{m}.OBJ", work / f"{m}.OBJ")
-    (work / "LINK.RSP").write_bytes(LINK_RSP.encode("ascii"))
+    (work / "LINK.RSP").write_bytes(game.link_rsp.encode("ascii"))
     conf = work / "run.conf"
     conf.write_text("\n".join([
         "[sdl]", "fullscreen=false", "output=surface", "",
@@ -158,16 +217,18 @@ def link(lib, objdir, work):
     env = dict(os.environ, SDL_VIDEODRIVER="dummy")
     subprocess.run([str(DOSBOX), "-conf", str(conf), "-noconsole"], env=env, timeout=300, cwd=work,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-    exe = work / "WON.EXE"
     if not exe.is_file():
         out = work / "LINK.OUT"
-        raise SystemExit("LINK made no WON.EXE:\n" + (out.read_text(errors="replace") if out.is_file() else "(no LINK.OUT)"))
+        raise SystemExit(f"LINK made no {exe.name}:\n"
+                         + (out.read_text(errors="replace") if out.is_file() else "(no LINK.OUT)"))
     return exe
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Build the port's strategic game with PDS 7.1.")
+    ap = argparse.ArgumentParser(description="Build one of the port's two programs with PDS 7.1.")
     ap.add_argument("out")
+    ap.add_argument("--game", choices=sorted(GAMES), default="won",
+                    help="won, the strategic game (the default), or napoleon, the tactical game")
     ap.add_argument("--pds", default=str(DEFAULT_PDS))
     ap.add_argument("--lib")
     ap.add_argument("--src", help="build the sources of this folder instead of the repo's (a scratch copy)")
@@ -181,16 +242,18 @@ def main():
         raise SystemExit(f"no BC.EXE in {pds}: give the PDS 7.1 folder with --pds")
     if not DOSBOX.is_file():
         raise SystemExit(f"no DOSBox 0.74-3 at {DOSBOX}")
-    write_modules(out / "src")
-    python("calibrate_bc.py", out, out / "src", pds, out / "obj", *SWITCHES)
+    game = GAMES[args.game]
+    write_modules(game, out / "src")
+    python("calibrate_bc.py", out, out / "src", pds, out / "obj", *game.switches)
     lib = Path(args.lib).resolve() if args.lib else out / "lib"
     if not args.lib:
         python("buildlib.py", out, pds, lib)
     elif not (lib / "BCL71ENR.LIB").is_file():
         raise SystemExit(f"--lib {lib} has no BCL71ENR.LIB: make it with tools/recover/buildlib.py")
-    exe = link(lib, out / "obj", out / "link")
-    shutil.copy(exe, out / "WON.EXE")
-    print(f"built {out / 'WON.EXE'}: {(out / 'WON.EXE').stat().st_size} bytes")
+    exe = link(game, lib, out / "obj", out / "link")
+    built = out / exe.name
+    shutil.copy(exe, built)
+    print(f"built {built}: {built.stat().st_size} bytes")
 
 
 if __name__ == "__main__":

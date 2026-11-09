@@ -393,7 +393,7 @@ What it showed:
 - **"RETURN without GOSUB" when the start year is chosen by its letter**, as step 2 expected. Key `1` at "Start
   Year" chooses 1796 by its first letter, `crsr` leaves `menu` by `GOTO called`, and `getlist`'s `RETURN` takes
   `crsr`'s entry. A build with `$CONSOLE` added said "Runtime error: Line: 612 (in won2.bm) RETURN without
-  GOSUB" (`WON2.BAS` line 624). QB64Rust exits with code 1, QB64pe with 0 (QB64Rust's `QB64PE-DIVERGENCES.md`
+  GOSUB" (`WON2.BAS` line 624). QB64Rust exits with code 1, QB64pe with 0 (QB64Rust's `DIVERGENCES-QB64PE.md`
   D-012). The tactical case (`otherside`'s `RETURN` after `general`) did not come up in the short battle. Step 5
   fixes both.
 - **The dotted roads differed from DOS, in two ways; item 9 fixes both.** QB64 starts a dotted style at the
@@ -942,3 +942,75 @@ QB64 does. A search for (b) would have to take in comparisons as well (`docs\SOM
 
 D12 said to bring (b) back to the user if more than two or three sessions meet the rounding. Four do: 4, 5, 9
 and 10. The user kept (a), and (b) is a row of `docs\SOMEDAY.md`.
+
+## Step 7b: the tactical game's conditions, and its PDS build (2026-11-09)
+
+The first part of the tactical references (D3): the tactical game's lines that PDS 7.1 cut short (D13), and a
+PDS build to show them.
+
+### Which lines
+
+34 lines had `RND` or `INKEY$` next to an `AND` or `OR` in a condition. One was `TICK` (`NAP1A.BM`), already
+rewritten in change 24. The other 33 all have `RND`, and no `INKEY$`. QB64Rust's
+`verification\qb45\q45_and_short_circuit` sorts them. It now also measures two shapes found here:
+
+- **A condition in parentheses as a side.** In `NAP1.BM` line 1352, `LEFTY$(index) = "Φ" AND (RND > .97 OR
+  (…))`, PDS 7.1 skips the whole parenthesis when the test on the left is false. So its `RND` is skipped too,
+  though it comes first inside.
+- **`a OR b AND RND`.** `AND` binds closer than `OR`, so `NAP1A.BM` line 725 is `z = 43 OR (z = 46 AND RND <
+  .15 * bold)`. PDS 7.1 calls its `RND` only when `z` is 46.
+
+QB 4.5, QB64pe and QB64Rust call `RND` in every case (`.qb45.txt` and `.pds71.txt`, both recorded again).
+
+The sort: 29 lines draw an `RND` that PDS 7.1 could skip. The other 4 draw it on the left, where PDS always
+evaluates it, and stay as they are: `NAP1.BM` 1529 (`IF RND > .5 OR toa(index) > 15`) and `NAP1A.BM` 264, 865
+and 1124.
+
+### The changes
+
+28. **The 29 lines are written so that QB64 draws the same numbers as PDS 7.1.** Each place has a comment that
+    says why, as in change 24. Line numbers are those before the change.
+    - **Nested single-line `IF`s:** `NAP1.BM` lines 1217, 1352, 1499, 1526, 1527 and 1530. `NAP1A.BM` lines 146
+      and 147 (two each), 219, 336 to 339, 423 to 426, 428, 433, 434, 721, 722, 724, 1120 and 1121. The
+      parentheses of `NAP1A.BM` lines 433 and 721 went, as the test is now alone before `THEN`.
+    - **Nested block `IF`s:** `NAP1.BM` line 83, in `cannon`.
+    - **`ELSEIF`:** `NAP1.BM` line 389, whose `ELSE` was `GOTO smash`. It became `IF LEFTY$(defend) <> "S" THEN
+      GOTO smash`, then `ELSEIF RND < .18 * morale(defend) THEN` with the old body, and the old `ELSE`.
+    - **Two lines for an `OR`:** `NAP1.BM` line 923, `IF Enemy = 0 OR RND > .5 THEN …: RETURN`, became one line
+      for `Enemy = 0` and one for the `RND`, each with the same statements. `NAP1A.BM` line 725 became `IF z = 43
+      THEN GOTO runn`, then `IF z = 46 THEN IF RND < .15 * bold THEN GOTO runn`.
+
+    `NAP1.BM` line 1499 sets `amrx`, where the line before it and the rest of `randarm` use `armx`. So its `IF`
+    does nothing but draw an `RND`. That is the game's own slip, kept (`TODO.md`).
+29. **`tools/pdsbuild.py --game napoleon` builds the tactical game** with PDS 7.1, as change 21 builds the
+    strategic game:
+    - `NAPOLEON.BAS` gets `NAP1.BM`, `NAPSCRIPT.BM` and `PDS.BM` after its main code.
+    - The pictures' seven `DIM SHARED` lines go back after the include of `nap10.bi`, where they were in DOS.
+    - `NAP1A.BAS` and `NAP1C.BAS` get their headers of `7738434` back.
+
+    It links them with the modules of `NAPOLEON.MAK`. No switches were recovered for the tactical game, since its
+    source is not the shipped `NAPOLEON.EXE`, so it takes the strategic game's: `/O /E /Fs /C:512` for the main
+    module and `/O /Fs /C:512` for the others. `include_name` now also reads the `REM $INCLUDE:` form, which
+    `NAPOLEON.BAS` uses.
+
+### The checks
+
+- **PDS 7.1** compiles the three modules with no warning, and LINK makes a `NAPOLEON.EXE` of 158,446 bytes.
+- **The strategic build is unchanged:** the old and the new `pdsbuild.py` write the same four modules for
+  `WON.EXE`, byte for byte.
+- **QB64Rust 0.3.0 and QB64pe 4.7.0** build `NAPOLEON.BAS` with no warning, and with the same messages as
+  before the change.
+- **Not checked yet: what the battles do.** No battle has been played with either build. The tactical game has
+  no recording from its source, so there is nothing to compare a run with until the references of D3 are made.
+
+### What the references still need: a mode of `PLAYKEYS.COM` that waits
+
+The game's side is ready. `NAPSCRIPT.BM` announces every wait in DOS too (bytes `0:4F0h` to `4F2h`). With
+`NAP_SEED` alone, the PDS build is scripted as the QB64 builds are: a `TICK` of a second or more waits for a
+key, and a shorter one returns at once. `napstart` only reads the environment, so PDS 7.1's `ENVIRON` problem
+of step 6 does not arise.
+
+`PLAYKEYS.COM` is the missing part. It types each key after a fixed number of timer ticks, and its trace mode
+only logs the waits. A tactical keys file has no recording behind it, so its keys must come at announced waits,
+as the screen tool gives them to the QB64 builds. That needs a mode that holds the next key until the count at
+`0:4F0h` changes. Trace mode already reads that count at every tick, so the new mode is small.

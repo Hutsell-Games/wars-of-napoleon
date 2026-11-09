@@ -1,6 +1,6 @@
 # Porting Wars of Napoleon to QB64Rust: the plan
 
-> Paths such as `DECISIONS.md`, `PORTING-PDS.md`, `SOMEDAY.md`, `DIVERGENCES-QB45.md`, `QB64PE-DIVERGENCES.md`,
+> Paths such as `DECISIONS.md`, `PORTING-PDS.md`, `SOMEDAY.md`, `DIVERGENCES-QB45.md`, `DIVERGENCES-QB64PE.md`,
 > `CLAUDE.md`, `verification\...` and `tools\qb45\...` are QB64Rust's (`davidshq/QB64Rust`, cloned beside this
 > repo as `..\QB64Rust`). `tools\play\` and `tools\recover\` are this repo's. A bare `study\44` is Civil War
 > Battleset's `docs\port-study.md`, `study\45` this repo's `docs\won-source-study.md`, and `study\46` Civil War
@@ -590,6 +590,11 @@ changes is either a mistake or is named in the commit message.
      The tactical game has no recording from its source, and there one keys file can play the PDS build and
      both QB64 builds. Step 8 records the QB64 builds' own states as the strategic game's references, twice as
      in the earlier ports, and holds them to the recordings through that list.
+     **The tactical game's conditions are rewritten (2026-11-09).** 29 lines draw an `RND` that PDS 7.1 could
+     skip, and are nested `IF`s now (D13). `pdsbuild.py --game napoleon` builds the tactical game with PDS 7.1.
+     Both programs build with no warning in all three compilers. The game's hooks already announce each wait
+     in DOS, so the references need only a mode of `PLAYKEYS.COM` that holds each key until a wait is
+     announced (`docs\devnotes.md`, "Step 7b: the tactical game's conditions").
 
    While the bridge is used, every edit of the port must also compile with PDS 7.1, so a QB64-only statement
    goes into `QB64.BM` with its PDS form in `PDS.BM`. The bridge is kept until the first refactoring of the
