@@ -623,3 +623,113 @@ Köln, and a French army stands at Bologna. Session 9's attack screenshot (`03-a
 Cherbourg and Rouen, and none at Bologna. May's `NWS9.SAV` is still equal. Step 4's
 runs with timed keys also had the army at Bologna, so the hooks did not cause this. Step 7's trace mode is
 meant to find where the two plays part.
+
+## Step 7: the bridge, started (2026-11-08)
+
+The pragmatic engineer's review asked for one session first, before the 15: build the port with PDS 7.1, play
+session 9, and find out why the French move elsewhere than in DOS. This is that part of 7a.
+
+### The changes
+
+21. **`tools/pdsbuild.py` builds the strategic game with PDS 7.1.** It writes the three modules that `WON.EXE`
+    was built from back into a scratch folder: `WON.BAS` with `WON1.BM`, `SCRIPT.BM` and `PDS.BM` after its main
+    code; `WON2.BAS` and `WONMENU.BAS` with the headers that step 4 removed; and `WON.BI` without the pictures'
+    `DIM SHARED` line, which goes back before the include in `WON.BAS`, where it was in DOS. The bare `DIR$`
+    of `getlist` is `DIR$` again. It then compiles and links them with the recovery's switches and runtime
+    (`docs/won-source-study.md`, section 12). `--src` builds a copy of the sources instead, for trace lines.
+    The tactical game is not built yet.
+22. **`PDS.BM`** is `QB64.BM`'s PDS form: `styledline` is the plain `LINE` with the style, as DOS drew it.
+    PDS 7.1 has `DIR$` itself.
+23. **`tools/play/play.py --port WON.EXE`** plays a PDS build of the port in trace mode. The autoexec sets
+    `WON_SEED` (the script's seed) and `WON_TRACE=1` before the game starts, and the run's folder gets
+    `ARCH2.EXE`, `VIC.EXE`, `NAPIC.EXE` and `NAPOLEON.EXE` from git (`7738434`), so the build runs them as the
+    recordings did. The branch still tracks the shipped `NAPOLEON.EXE`, but a QB64 build of the port in the
+    repo's folder overwrites it with a Windows program.
+
+### Session 9 with the PDS build
+
+The build has no warning in BC 7.10 or LINK 5.10. **`play.py check` of session 9 with it gives the recording:
+12 of 12 screens and the 3 files.** So the port's source, with the edits of steps 4 to 6 and the hooks in trace
+mode, plays as `WON.EXE` did.
+
+### Why the French move elsewhere in QB64: PDS 7.1 skips the right side of AND
+
+The QB64 builds part from DOS in the computer's first turn: by the battle, French armies stand at Bologna and
+near Köln, where DOS has them at Cherbourg and Rouen (session 9's `03-attack`).
+
+**The cause:** in a condition, PDS 7.1 does not evaluate the right side of `AND` when the left side is false,
+nor the right side of `OR` when the left side is true. QB 4.5, QB64pe and QB64Rust evaluate both sides. So a
+line like `recruit`'s
+
+```
+IF y > x AND RND > .5 THEN x = y: choose = i      ' WON1.BM line 874, in randsel
+```
+
+calls `RND` in QB64 each time, and in DOS only when `y > x`. After the computer's first recruiting, every
+later `RND` of the QB64 build is another draw than in DOS.
+
+How it was found:
+
+- A scratch copy with trace lines in `evaluate` and `smarts`, built with PDS 7.1 and with QB64Rust, gave the
+  same trace in both. But each such PDS build no longer matched the recording from `03-attack` on. A build
+  that only replaced each `RND` by a FUNCTION that returns `RND`, with no trace line at all, did not match
+  either. A build that only added two variables to the `COMMON` block did.
+- Replacing `RND` by that FUNCTION at chosen places, and halving the places each time, gave one place that
+  changes the play: `WON1.BM` line 874. A FUNCTION on the right side of `AND` is always called in PDS, so
+  the FUNCTION made PDS call `RND` there as QB64 does.
+- QB64Rust's new `verification\qb45\q45_and_short_circuit` measures it, with `.pds71.txt` and `.qb45.txt`.
+  PDS 7.1 skips the right side in a single-line or block `IF`, in `ELSEIF`, and in the conditions of
+  `DO WHILE`, `DO UNTIL`, `LOOP WHILE` and `WHILE`. It does so only when both sides are relations:
+  `IF y AND RND > .5` (an INTEGER on the left), `XOR` and a value stored with `z = y > x AND RND > .5` evaluate both sides.
+  QB 4.5, QB64pe and QB64Rust evaluate both sides in every case. QB64Rust's `DIVERGENCES-QB45.md` has it as
+  row Q-026.
+- With line 874 written as `IF y > x THEN IF RND > .5 THEN x = y: choose = i`, in a scratch copy, the QB64Rust
+  build played session 9's first turn by announced waits to the Retreat menu after the battle. Its screen there
+  shows the armies where session 9's `10-retreat` has them, with the same losses. Without the change, it had
+  the army at Bologna.
+
+**Where else it can happen.** A line is affected when the side that PDS can skip has an effect. In these
+programs that is `RND` and `INKEY$`:
+
+- **The strategic game: 13 lines** with `RND` on the right of an `AND` or `OR` in a condition: `WON1.BM` lines
+  874 and 929; `WON2.BM` lines 375, 441, 480, 531, 533, 734, 825, 1100, 1586, 1627 and 1648.
+- **`TICK`** (`WON2.BM` line 1761 and `NAP1A.BM` line 1208): `DO WHILE TIMER - start! < sec! AND INKEY$ = ""`.
+  In DOS, a `TICK` whose time is already up reads no key. `TICK(0)` (`turbo! - 1` with `turbo!` at 1) leaves a
+  key typed ahead in the buffer, where QB64 takes it and throws it away. Step 6 read this line the other way
+  ("BASIC evaluates both sides of `AND`", change 18): under a script, every strategic `TICK` is announced as a
+  wait (D2), but in DOS a `TICK(0)` takes no key. That matters for `sessions.py`, which maps each recorded key
+  to the wait that took it.
+- **The tactical game:** 34 lines have `RND` or `INKEY$` next to an `AND` or `OR` in a condition, not yet sorted
+  into those where the skipped side has an effect.
+
+The user chose to rewrite the lines (D13 of `docs\port-study.md`, 2026-11-08).
+
+### The rewrite
+
+24. **The conditions that PDS 7.1 cut short are written so that QB64 does the same.** Each rewritten line has a
+    comment that says why. Line numbers are those before the change.
+    - **Nested single-line `IF`s**, so that `RND` comes after a test of its own: `WON1.BM` line 874 (`IF y > x
+      THEN IF RND > .5 THEN …`); `WON2.BM` lines 375, 480, 531, 533, 734, 825, 1100 and 1648; and line 1586,
+      whose `… AND RND > .5 AND cash(2) < 222 GOTO signup` became `… THEN IF RND > .5 AND cash(2) < 222 THEN
+      GOTO signup`. The parentheses of line 533 went, as they now enclose the whole test.
+    - **Nested block `IF`s:** `WON1.BM` line 929 (`brray(i) <> 999`, then `armylead(i) > 10 * RND`) and
+      `WON2.BM` line 441 (Trafalgar: `navysize(2) < 10`, then the `RND` and the date).
+    - **`ELSEIF`** for the one `OR`, `WON2.BM` line 1627: `IF occupied(navyloc(who)) = 0 THEN` and `ELSEIF RND >
+      .3 THEN` both call `navy(who, 2)`, so that line is there twice.
+    - **Both `TICK`s** (`WON2.BM` line 1761, `NAP1A.BM` line 1208) loop on the time alone, and read `INKEY$`
+      inside with `EXIT DO`. A `TICK` whose time is up leaves a key typed ahead in the buffer, as in DOS. The
+      hooks are unchanged: under a script every strategic `TICK` still waits for a key (D2), also `TICK(0)`,
+      which in DOS takes no key. `sessions.py` has to know that a `TICK(0)` of a recording took no key.
+
+    The tactical game's other lines are left for its PDS build (`TODO.md`).
+
+### The checks
+
+- **PDS 7.1** builds the rewritten source with no warning. **All 15 sessions with that build give their
+  recordings**, every screen and every file (`play.py check --port`, 2026-11-08). So the rewrite changes
+  nothing in DOS.
+- **QB64Rust 0.3.0 and QB64pe 4.7.0** build both programs, with the same warnings as in step 4.
+- **Session 9's first turn with the QB64Rust build**, by announced waits with `WON_OUTCOME` set to the recorded
+  `OUTCOME.&&&`, now ends at the Retreat menu with the armies where session 9's `10-retreat` has them, and the
+  same losses. 290 pixels of that screen differ from the screenshot, across the map: about the size of the
+  city-marker difference of step 4 (`TODO.md`).

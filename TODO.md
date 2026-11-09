@@ -25,12 +25,10 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
   &H101`) is still QB64's `LINE`. A box has only flat and vertical edges, which QB64 draws with the same pixels
   as QB 4.5, but where the dots start on each edge is not measured. The tactical screens are compared by
   character, so it matters only if `tests\dosshot.py` (step 8) compares this screen's pixels.
-- **The French armies move elsewhere than in DOS, already in May 1805**, in a replay of session 9. Before the
-  battle, the port has an army at Bologna and marches Davout to Köln. Session 9's `03-attack` screenshot has
-  French armies at Cherbourg and Rouen. By July one army is near Cherbourg in DOS and at Bologna in the port.
-  May's `NWS9.SAV` is equal. The hooks did not cause it: step 4's timed keys gave the same. Find where the
-  play parts with step 7's trace mode or QB64Rust's `--trace-values` (`docs\devnotes.md`, "Step 4" and
-  "Step 6").
+- **The tactical game's conditions that PDS 7.1 cut short** (D13). The strategic game and both `TICK`s are
+  rewritten (`docs\devnotes.md`, change 24). The tactical game has 34 lines with `RND` or `INKEY$` next to an
+  `AND` or `OR` in a condition. Sort out those where `RND` or `INKEY$` is on the side PDS can skip, and write
+  them as nested `IF`s, when `pdsbuild.py` builds the tactical game, so that its PDS build shows the change.
 
 ## The game
 

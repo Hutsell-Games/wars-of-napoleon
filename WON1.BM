@@ -871,7 +871,8 @@ randsel:
 			CALL cutoff(who, target, a)
 			IF a < 1 THEN y = y \ 3
 		END IF
-		IF y > x AND RND > .5 THEN x = y: choose = i
+		' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+		IF y > x THEN IF RND > .5 THEN x = y: choose = i
 		NEXT i
 	IF cash(who) < 100 THEN choose = size
 	RETURN
@@ -926,9 +927,12 @@ SELECT CASE armysize(i)         'bigger armies move slower
 	CASE ELSE
 		x = 1
 END SELECT
-IF brray(i) <> 999 AND armylead(i) > 10 * RND THEN
+' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+IF brray(i) <> 999 THEN
+IF armylead(i) > 10 * RND THEN
 		brray(i) = brray(i) - 100 * (armylead(i) \ 2)
 		IF brray(i) < 100 THEN brray(i) = 100 + i
+END IF
 END IF
 NEXT i
 

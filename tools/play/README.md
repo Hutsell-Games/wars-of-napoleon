@@ -31,6 +31,11 @@ another build of `WON.EXE`. A build other than the shipped one also needs `--tim
 addresses of `B$TIMR` and `B$RNZP` in its load image, from `tools\recover\runtimemap.py`; the two go
 together.
 
+`--port WON.EXE` plays a PDS 7.1 build of the port, made by `tools\pdsbuild.py`, in its trace mode. The build
+seeds itself, so it is not patched: the autoexec sets `WON_SEED` (the script's seed) and `WON_TRACE=1`. The run's
+folder also gets `ARCH2.EXE`, `VIC.EXE`, `NAPIC.EXE` and `NAPOLEON.EXE` from git (`7738434`), as the recordings
+had them (`docs\port-study.md`, step 7). So a QB64 build of the port in the repo's folder does not change the run.
+
 On the branch `qb64rust`, a build of the port in the repo's folder overwrites `WON.EXE` and `NAPOLEON.EXE`,
 and `ARCH2.EXE`, `VIC.EXE` and `NAPIC.EXE` are not there (`docs\devnotes.md`, step 5). To replay with the
 shipped programs, run the harness in a worktree of `main`, which has all five: `git worktree add

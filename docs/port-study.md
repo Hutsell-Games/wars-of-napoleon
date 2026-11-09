@@ -7,7 +7,7 @@
 > Strategy's `docs\port-study.md`.
 
 Written 2026-11-07, for the user's review. It is step 7 of `docs\won-source-study.md`: the port of both
-programs to QB64Rust. Section 6 holds twelve decisions, each with the panel's view; D12 came from step 0. The same day the
+programs to QB64Rust. Section 6 holds thirteen decisions, each with the panel's view. D12 came from step 0, and D13 from step 7. The same day the
 pragmatic engineer reviewed it: step 0 and the split of step 7 come from that review. The user then said
 "implement", which Claude took as taking every recommendation, D1 to D11. Nothing in the game's files has been
 changed yet. The branch `qb64rust` exists and is at `main`'s last commit, `7738434` ("Recover the
@@ -443,6 +443,22 @@ back, it needs three things: a search for every such store by type (QB64Rust's `
 measured in all four compilers until QB64 gives the old compilers' integers, and the bridge showing no
 difference left in the 15 sessions.
 
+**D13. Conditions that PDS 7.1 cut short** (step 7; QB64Rust's `DIVERGENCES-QB45.md` Q-026). PDS 7.1 skips
+the right side of `AND` when the left side is false, and of `OR` when the left side is true. QB64 evaluates
+both. So `IF y > x AND RND > .5` draws an `RND` in QB64 that DOS did not, and every later `RND` differs. In
+session 9 the computer's first recruiting already played another game. Both `TICK`s read `INKEY$` the same
+way.
+- (a) Write each such line so that the skipped side comes after a test of its own: a nested `IF`, an `ELSEIF`,
+  or an `EXIT DO` in `TICK`. It then does the same in PDS 7.1 and QB64.
+- (b) Leave the lines. The QB64 builds then match no session past the computer's first recruiting.
+
+*Panel:* the pragmatic engineer wants (a): about 15 mechanical lines, and the PDS build shows that DOS is
+unchanged. The compiler engineer notes that this is a rule of the old compiler, not of the machine, so
+`CLAUDE.md` working rule 8 does not apply, and that a QB64Rust change is a separate QB64Rust question. The test
+engineer asks for the 15 sessions with the PDS build after the change. **Recommended: (a).**
+**User (2026-11-08): (a).** Done in the strategic game and in both `TICK`s (`docs\devnotes.md`, change 24).
+The tactical game's other lines are sorted when its PDS build comes (`TODO.md`).
+
 ## 7. The plan
 
 Each step ends with a review of its changes, the user staging them, and one commit. Claude never stages
@@ -535,6 +551,11 @@ changes is either a mistake or is named in the commit message.
      `TICK 2` takes another key, and the trace parts from the recording at its first key. `WON.BAS` still runs
      each program when its file is there. The harness also sets `NAP_SEED` and `NAP_TRACE` itself: PDS
      7.1's `ENVIRON` has no room for a new variable in DOS (`docs\devnotes.md`, "Step 6").
+     **Started (2026-11-08).** `pdsbuild.py` and `play.py --port` exist, and session 9 with the PDS build gives
+     the recording. The trace mode of `PLAYKEYS.COM` and `sessions.py` are not written yet. Found on the way:
+     PDS 7.1 skips the right side of `AND` and `OR` in conditions, and QB64 does not. That is why the French
+     move elsewhere in the QB64 builds. The strategic game's lines and both `TICK`s are rewritten (D13), and
+     all 15 sessions with the PDS build still give their recordings (`docs\devnotes.md`, "Step 7").
    - **The check.** Run the converted keys files once with the QB64 builds and compare them straight with the
      recordings. If the only differences are screens of pauses and the four `PEEK(1052)` checks (row 12), the
      scripted reference of 7b is made only for the sessions that need it. Otherwise for all 15.

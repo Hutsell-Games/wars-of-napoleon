@@ -372,7 +372,8 @@ FOR j = 1 TO 6
 	   IF bold < 3 AND armysize(index) < 40 AND odds! < .8 THEN y = 0
 	   y = y - 15
 	   IF odds! < .5 THEN y = y - 200
-	   IF bold = 0 AND RND > .9 THEN y = y + 10 * (armylead(index) - armylead(c) + armyexper(index) - armylead(index))
+	   ' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	   IF bold = 0 THEN IF RND > .9 THEN y = y + 10 * (armylead(index) - armylead(c) + armyexper(index) - armylead(index))
 	   IF supply(index) < 1 THEN y = y - 100
 	   SELECT CASE odds! + .5 * bold
 		CASE IS < .3
@@ -438,10 +439,13 @@ SUB events
 IF randbal = 0 THEN EXIT SUB
 plus = difficult: IF side = 1 THEN plus = 6 - difficult
 pct! = .05 * (difficult - 3) + .1
-IF navysize(2) < 10 AND RND > .2 AND year = 1805 AND month = 11 THEN
+' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+IF navysize(2) < 10 THEN
+IF RND > .2 AND year = 1805 AND month = 11 THEN
 	CALL clrbot: COLOR 14: PRINT "Nelson has defeated the French fleet at Trafalgar";
 	empty = navyloc(2): who = 2: navysize(2) = 10
 	GOTO launch
+END IF
 END IF
 IF RND > pct! THEN EXIT SUB
 
@@ -477,7 +481,8 @@ mercen:
 	n = 0
 	FOR i = 1 TO 25
 		IF n > 9 GOTO dull2
-		IF armysize(i) > 0 AND RND > .5 THEN armysize(i) = 1.5 * armysize(i) + plus: n = n + 1
+		' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+		IF armysize(i) > 0 THEN IF RND > .5 THEN armysize(i) = 1.5 * armysize(i) + plus: n = n + 1
 	NEXT i
 	GOTO dull1
 egypt:
@@ -528,9 +533,11 @@ allsides:
 	FOR k = 1 TO cities
 		IF occupied(k) = 0 AND cityp(k) = who THEN
 			IF who = 1 THEN
-				IF cityo(k) <> who AND RND > .5 THEN c = k: GOTO revolt
+				' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+				IF cityo(k) <> who THEN IF RND > .5 THEN c = k: GOTO revolt
 			ELSE
-				IF (cityo(k) = 1 OR cityo(k) > 6) AND RND > .5 THEN c = k: GOTO revolt
+				' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+				IF cityo(k) = 1 OR cityo(k) > 6 THEN IF RND > .5 THEN c = k: GOTO revolt
 			END IF
 		END IF
 	NEXT k
@@ -731,7 +738,8 @@ IF chx > 0 THEN
 	ELSE
 		IF navyto > 0 THEN chx = 3
 		IF commerce = 3 - who AND raider > 0 THEN chx = 4
-		IF who = 2 AND navyloc(3 - who) <> 99 AND RND > .7 THEN chx = 4
+		' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+		IF who = 2 AND navyloc(3 - who) <> 99 THEN IF RND > .7 THEN chx = 4
 		IF grudge > 0 THEN chx = 3
 	END IF
 END IF
@@ -822,7 +830,8 @@ add2ship:
 	CASE 2
 	IF navyloc(who) = 99 GOTO ahoy
 	IF chx = 2 AND cityp(navyloc(who)) = who THEN EXIT SUB
-	IF chx = 2 AND occupied(navyloc(who)) > 0 AND RND > .5 THEN chx = 3: GOTO anchor
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF chx = 2 AND occupied(navyloc(who)) > 0 THEN IF RND > .5 THEN chx = 3: GOTO anchor
 	IF chx = 2 AND cityp(navyloc(who)) = 0 THEN chx = 3: GOTO ahoy
 	IF navyloc(who) < 1 THEN EXIT SUB
 	IF who = side THEN nflag = 1
@@ -1097,7 +1106,8 @@ nest:
 		best = i: IF RND > .2 THEN choose = best: RETURN
 	END IF
 
-	IF target = navyloc(3 - who) THEN IF navysize(who) >= navysize(3 - who) AND RND > .1 THEN choose = i: RETURN
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF target = navyloc(3 - who) THEN IF navysize(who) >= navysize(3 - who) THEN IF RND > .1 THEN choose = i: RETURN
 	IF cityp(target) <> who THEN
 		best = i: x = x + 1
 		IF RND > .8 THEN choose = best: RETURN
@@ -1583,7 +1593,8 @@ capital:
 	CALL clrbot: PRINT city$(target); " fortifications increased to "; fort(target);
 	CALL icon(target, 0, 6)
 	CALL showcities
-	IF who = 2 AND navysize(2) < 1 AND RND > .5 AND cash(2) < 222 GOTO signup
+	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+	IF who = 2 AND navysize(2) < 1 THEN IF RND > .5 AND cash(2) < 222 THEN GOTO signup
 	IF 3 * RND > 1 + aggress! AND cash(who) >= cost GOTO city2
 '==========================================================================
 '                       Recruit New Armies
@@ -1624,7 +1635,10 @@ movenavy:
 		GOTO movearmy
 	END IF
 	IF cityp(navyloc(who)) <> who THEN
-		IF occupied(navyloc(who)) = 0 OR RND > .3 THEN
+		' ELSEIF: PDS 7.1 drew this RND only when the city was occupied (docs\devnotes.md, step 7).
+		IF occupied(navyloc(who)) = 0 THEN
+			CALL navy(who, 2): nflag = 1
+		ELSEIF RND > .3 THEN
 			CALL navy(who, 2): nflag = 1
 		ELSE
 			CALL navy(who, 3): nflag = 1
@@ -1645,7 +1659,8 @@ a = who: CALL combine(a)
 FOR i = star TO fin
 target = armyloc(i)
 IF armyloc(i) < 1 OR armymove(i) < 0 GOTO deadman
-x = armysize(i): IF supply(i) < 1 AND RND > .1 GOTO deadman
+' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
+x = armysize(i): IF supply(i) < 1 THEN IF RND > .1 THEN GOTO deadman
 a = armynat(i): IF attitude(a) <= 50 GOTO deadman
 
 choose = 0
@@ -1758,7 +1773,11 @@ END SUB
 SUB TICK (sec!)
 IF scripttick%(sec!) THEN EXIT SUB
 start! = TIMER
-DO WHILE TIMER - start! < sec! AND INKEY$ = "": LOOP
+' PDS 7.1 read INKEY$ only while time was left, so a TICK whose time is up leaves a key in
+' the buffer (docs\devnotes.md, step 7).
+DO WHILE TIMER - start! < sec!
+	IF INKEY$ <> "" THEN EXIT DO
+LOOP
 END SUB
 
 SUB victor

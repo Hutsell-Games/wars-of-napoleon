@@ -63,6 +63,14 @@ DATE, TIME = "06/24/1998", "12:00:00"
 NOT_GAME = {".bas", ".bi", ".doc", ".txt", ".pag", ".md", ".lnk", ".py", ".gitattributes", ".gitignore"}
 NOT_GAME_NAMES = {"license"}
 HARNESS_FILES = {"WONSEED.EXE", "PLAYKEYS.COM", "KEYS.BIN", "IDLE.COM", "RUNDATE.TXT"}
+# The DOS programs with no source, which left the branch qb64rust in its step 5, and the
+# commit that still has them. --port takes them from there.
+SHIPPED_COMMIT = "7738434"
+SHIPPED_ONLY = ("ARCH2.EXE", "VIC.EXE", "NAPIC.EXE")
+# What --port takes from that commit: those three, and the tactical game. The branch still
+# tracks the shipped NAPOLEON.EXE, but a QB64 build of the port in the repo's folder
+# overwrites it with a Windows program, which DOSBox-X cannot run.
+FROM_GIT = SHIPPED_ONLY + ("NAPOLEON.EXE",)
 
 # Key names: (scan code, character, shifted character).
 LETTERS = dict(zip("qwertyuiop", range(0x10, 0x1A)))
@@ -187,10 +195,11 @@ class Script:
         return sum(gap for _, _, gap in self.ops)
 
 
-def game_files():
+def game_files(replaced=()):
     """The game's files: the files git tracks in the repo's top folder, without sources and documents.
     Untracked files (a save left by playing the game in the repo's folder) are not copied: they
-    would change the game's menus, and so every screen of a recording."""
+    would change the game's menus, and so every screen of a recording. The files named in
+    replaced are left out: the run writes them itself."""
     def git(*cmd):
         try:
             return subprocess.run(["git", "-C", str(REPO), *cmd], capture_output=True, text=True,
@@ -203,11 +212,26 @@ def game_files():
         p = REPO / name
         if p.suffix.lower() in NOT_GAME or name.lower() in NOT_GAME_NAMES or name.startswith("."):
             continue
+        if name in replaced:
+            continue
         if not p.exists():
             raise SystemExit(f"missing: {name} is tracked by git but not in the repo's folder")
         if name in changed:
             print(f"  warning: {name} has local changes; the run uses them")
         yield p
+
+
+def git_show(commit, name):
+    try:
+        return subprocess.run(["git", "-C", str(REPO), "show", f"{commit}:{name}"], capture_output=True,
+                              check=True).stdout
+    except (OSError, subprocess.CalledProcessError) as e:
+        raise SystemExit(f"cannot take {name} from git {commit}: {e}") from None
+
+
+def seed_text(seed):
+    """The seed as WON_SEED gives it to VAL: 1.0 is "1", the same DOUBLE as wonseed.py's RANDOMIZE 1#."""
+    return str(int(seed)) if seed == int(seed) else repr(seed)
 
 
 def dosbox_version(dosbox):
@@ -229,13 +253,23 @@ def run(script, out, args):
     game, cap = out / "game", out / "capture"
     game.mkdir(parents=True)
     cap.mkdir()
-    for p in game_files():
+    for p in game_files(("WON.EXE",) + FROM_GIT if args.port else ()):
         shutil.copy2(p, game / p.name)
-    exe = wonseed.unpacked(Path(args.exe).read_bytes())
-    if hashlib.sha256(exe).hexdigest() != wonseed.SHIPPED_UNPACKED_SHA256 and args.timr is None:
-        raise SystemExit("--exe is not the shipped WON.EXE: pass --timr and --rnzp")
-    seeded, _, _ = wonseed.patch(exe, args.timr or wonseed.B_TIMR, args.rnzp or wonseed.B_RNZP, script.seed)
-    (game / "WONSEED.EXE").write_bytes(seeded)
+    if args.port:
+        # A PDS 7.1 build of the port (tools/pdsbuild.py) seeds itself from WON_SEED, so it
+        # is not patched. The DOS programs come from git, so that it runs them as the
+        # recordings did (docs/port-study.md, step 7a).
+        (game / "WON.EXE").write_bytes(Path(args.port).read_bytes())
+        for name in FROM_GIT:
+            (game / name).write_bytes(git_show(SHIPPED_COMMIT, name))
+        program = "WON.EXE"
+    else:
+        exe = wonseed.unpacked(Path(args.exe).read_bytes())
+        if hashlib.sha256(exe).hexdigest() != wonseed.SHIPPED_UNPACKED_SHA256 and args.timr is None:
+            raise SystemExit("--exe is not the shipped WON.EXE: pass --timr and --rnzp")
+        seeded, _, _ = wonseed.patch(exe, args.timr or wonseed.B_TIMR, args.rnzp or wonseed.B_RNZP, script.seed)
+        (game / "WONSEED.EXE").write_bytes(seeded)
+        program = "WONSEED.EXE"
     (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes())
     (game / "KEYS.BIN").write_bytes(script.keyfile())
     (game / "IDLE.COM").write_bytes(bytes([0xFB, 0xF4, 0xEB, 0xFD]))  # sti / hlt / jmp hlt
@@ -256,7 +290,10 @@ def run(script, out, args):
         # After the game quits, IDLE.COM waits forever without printing, so a last shot shows
         # what the game left on the screen (-silent would end DOSBox-X with the autoexec).
         # The harness stops DOSBox-X after the last shot.
-        "PLAYKEYS.COM KEYS.BIN", "WONSEED.EXE", "IDLE.COM", "",
+        # The port's hooks read their variables (SCRIPT.BM). PDS 7.1's ENVIRON cannot add one
+        # in DOS, so the autoexec sets them before the game starts (docs/devnotes.md, step 6).
+        *([f"set WON_SEED={seed_text(script.seed)}", "set WON_TRACE=1"] if args.port else []),
+        "PLAYKEYS.COM KEYS.BIN", program, "IDLE.COM", "",
     ]), encoding="ascii")
     env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
     limit = 120 + 3 * script.seconds()
@@ -332,7 +369,10 @@ def main():
     ap.add_argument("--timr", type=lambda s: int(s, 16))
     ap.add_argument("--rnzp", type=lambda s: int(s, 16))
     ap.add_argument("--dosbox", default=str(DEFAULT_DOSBOX))
+    ap.add_argument("--port", help="a PDS 7.1 build of the port (tools/pdsbuild.py), played in trace mode")
     args = ap.parse_args()
+    if args.port and (args.timr is not None or args.exe != str(REPO / "WON.EXE")):
+        raise SystemExit("--port plays the port's own build: it takes no --exe, --timr or --rnzp")
     if (args.timr is None) != (args.rnzp is None):
         raise SystemExit("--timr and --rnzp go together: both from the build's runtime map")
     if not Path(args.dosbox).exists():

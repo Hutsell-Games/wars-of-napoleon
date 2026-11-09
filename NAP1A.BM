@@ -1205,7 +1205,11 @@ IF scripttick%(sec!) THEN EXIT SUB
 IF sec! < 1 THEN
 	DO WHILE TIMER - start! < sec!: LOOP: EXIT SUB
 END IF
-DO WHILE TIMER - start! < sec! AND INKEY$ = "": LOOP: EXIT SUB
+' PDS 7.1 read INKEY$ only while time was left, so a TICK whose time is up leaves a key in
+' the buffer (docs\devnotes.md, step 7).
+DO WHILE TIMER - start! < sec!
+	IF INKEY$ <> "" THEN EXIT DO
+LOOP
 END SUB
 
 SUB valid (index)
