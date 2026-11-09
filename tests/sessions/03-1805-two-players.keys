@@ -1,16 +1,20 @@
 # 03-1805-two-players: the session of tests/scripts/03-1805-two-players.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 101 waits; 45 keys typed: 44 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 101 waits in DOS, 102 prompts; 45 keys typed: 44 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -63,7 +67,7 @@ state
 key enter
 # wait 15, place 3
 prompt
-key space
+key f12
 # wait 16, place 2:M
 prompt
 # shot 08-french-moved
@@ -89,7 +93,7 @@ state
 key enter
 # wait 21, place 3
 prompt
-key space
+key f12
 # wait 22, place 2:R
 prompt
 # shot 12-allies-recruited
@@ -110,7 +114,7 @@ state
 key enter
 # wait 26, place 3
 prompt
-key space
+key f12
 # wait 27, place 2:M
 prompt
 # shot 15-allies-moved
@@ -122,7 +126,7 @@ text y
 # waits 29 to 57: pauses that read no key in DOS
 repeat 29
 prompt
-key space
+key f12
 end
 # wait 58, place 3
 prompt
@@ -131,7 +135,7 @@ state
 key space
 # wait 59, place 3:S
 prompt
-key space
+key f12
 # wait 60, place 3
 prompt
 # shot 17-events-a
@@ -139,7 +143,7 @@ state
 key space
 # wait 61, place 3
 prompt
-key space
+key f12
 # wait 62, place 2:R
 prompt
 # shot 18-retreat
@@ -148,7 +152,7 @@ text t
 # waits 63 to 78: pauses that read no key in DOS
 repeat 16
 prompt
-key space
+key f12
 end
 # wait 79, place 3
 prompt
@@ -209,7 +213,7 @@ text y
 # waits 93 to 96: pauses that read no key in DOS
 repeat 4
 prompt
-key space
+key f12
 end
 # wait 97, place 1
 prompt

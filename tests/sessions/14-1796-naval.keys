@@ -1,16 +1,20 @@
 # 14-1796-naval: the session of tests/scripts/14-1796-naval.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 424 waits; 73 keys typed: 72 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 424 waits in DOS, 425 prompts; 73 keys typed: 72 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -46,7 +50,7 @@ state
 text b
 # wait 12, place 3
 prompt
-key space
+key f12
 # wait 13, place 2:S
 prompt
 # shot 04-built
@@ -59,7 +63,7 @@ state
 text l
 # wait 15, place 3
 prompt
-key space
+key f12
 # wait 16, place 2:O
 prompt
 # shot 06-naval-combat
@@ -68,7 +72,7 @@ text a
 # waits 17 to 43: pauses that read no key in DOS
 repeat 27
 prompt
-key space
+key f12
 end
 # wait 44, place 2:O
 prompt
@@ -78,7 +82,7 @@ text a
 # waits 45 to 75: pauses that read no key in DOS
 repeat 31
 prompt
-key space
+key f12
 end
 # wait 76, place 2:O
 prompt
@@ -88,7 +92,7 @@ text a
 # waits 77 to 87: pauses that read no key in DOS
 repeat 11
 prompt
-key space
+key f12
 end
 # wait 88, place 2:O
 prompt
@@ -97,7 +101,7 @@ state
 text r
 # wait 89, place 3
 prompt
-key space
+key f12
 # wait 90, place 2:M
 prompt
 # shot 10-retreated
@@ -109,7 +113,7 @@ text y
 # waits 92 to 133: pauses that read no key in DOS
 repeat 42
 prompt
-key space
+key f12
 end
 # wait 134, place 3
 prompt
@@ -173,7 +177,7 @@ state
 text r
 # wait 152, place 3
 prompt
-key space
+key f12
 # wait 153, place 2:M
 prompt
 # shot 14-raid
@@ -190,7 +194,7 @@ text y
 # waits 156 to 193: pauses that read no key in DOS
 repeat 38
 prompt
-key space
+key f12
 end
 # wait 194, place 3
 prompt
@@ -253,7 +257,7 @@ text y
 # waits 212 to 348: pauses that read no key in DOS
 repeat 137
 prompt
-key space
+key f12
 end
 # wait 349, place 3
 prompt
@@ -263,7 +267,7 @@ key esc
 # waits 350 to 374: pauses that read no key in DOS
 repeat 25
 prompt
-key space
+key f12
 end
 # wait 375, place 3:S
 prompt
@@ -271,7 +275,7 @@ key esc
 # waits 376 to 409: pauses that read no key in DOS
 repeat 34
 prompt
-key space
+key f12
 end
 # wait 410, place 3
 prompt

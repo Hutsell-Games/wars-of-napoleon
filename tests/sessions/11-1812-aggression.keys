@@ -1,16 +1,20 @@
 # 11-1812-aggression: the session of tests/scripts/11-1812-aggression.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 310 waits; 94 keys typed: 93 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 310 waits in DOS, 311 prompts; 94 keys typed: 93 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -72,7 +76,7 @@ text y
 # waits 19 to 60: pauses that read no key in DOS
 repeat 42
 prompt
-key space
+key f12
 end
 # wait 61, place 3
 prompt
@@ -135,7 +139,7 @@ text y
 # waits 79 to 124: pauses that read no key in DOS
 repeat 46
 prompt
-key space
+key f12
 end
 # wait 125, place 3
 prompt
@@ -144,10 +148,10 @@ state
 key esc
 # wait 126, place 3
 prompt
-key space
+key f12
 # wait 127, place 3
 prompt
-key space
+key f12
 # wait 128, place 2:M
 prompt
 key esc
@@ -227,7 +231,7 @@ text y
 # waits 152 to 194: pauses that read no key in DOS
 repeat 43
 prompt
-key space
+key f12
 end
 # wait 195, place 3
 prompt
@@ -236,10 +240,10 @@ state
 key esc
 # wait 196, place 3
 prompt
-key space
+key f12
 # wait 197, place 3
 prompt
-key space
+key f12
 # wait 198, place 3
 prompt
 key esc
@@ -296,7 +300,7 @@ text y
 # waits 215 to 267: pauses that read no key in DOS
 repeat 53
 prompt
-key space
+key f12
 end
 # wait 268, place 3
 prompt
@@ -309,7 +313,7 @@ key esc
 # waits 270 to 277: pauses that read no key in DOS
 repeat 8
 prompt
-key space
+key f12
 end
 # wait 278, place 3
 prompt
@@ -317,7 +321,7 @@ key esc
 # waits 279 to 294: pauses that read no key in DOS
 repeat 16
 prompt
-key space
+key f12
 end
 # wait 295, place 3
 prompt
@@ -327,10 +331,10 @@ prompt
 key esc
 # wait 297, place 3
 prompt
-key space
+key f12
 # wait 298, place 3
 prompt
-key space
+key f12
 # wait 299, place 3
 prompt
 key esc

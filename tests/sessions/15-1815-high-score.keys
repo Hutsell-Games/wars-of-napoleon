@@ -1,19 +1,23 @@
 # 15-1815-high-score: the session of tests/scripts/15-1815-high-score.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 88 waits; 90 keys typed: 88 read by the strategic game, 2 by other programs, 0 by none, 0 dropped with the buffer full.
+# 88 waits in DOS, 89 prompts; 90 keys typed: 88 read by the strategic game, 2 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 #   left out: space at tick 4756, read by another program (PSP 4D43h, video mode 6Bh) during wait 83
 #   shot 16-vic: left out, another program's screen (video mode 6Bh)
 #   shot 20-dos: left out, the DOS prompt after Quit
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -77,7 +81,7 @@ prompt
 text y
 # wait 22, place 3
 prompt
-key space
+key f12
 # wait 23, place 3
 prompt
 # shot 03-month-end
@@ -129,7 +133,7 @@ prompt
 text y
 # wait 38, place 3
 prompt
-key space
+key f12
 # wait 39, place 3
 prompt
 # shot 05-month-end
@@ -181,7 +185,7 @@ prompt
 text y
 # wait 54, place 3
 prompt
-key space
+key f12
 # wait 55, place 3
 prompt
 # shot 07-month-end
@@ -257,7 +261,7 @@ prompt
 text y
 # wait 76, place 3
 prompt
-key space
+key f12
 # wait 77, place 3
 prompt
 # shot 12-month-end
@@ -286,7 +290,7 @@ key space
 prompt
 # shot 15-new-high-score
 state
-key space
+key f12
 # wait 84, place 4
 prompt
 # shot 17-name-prompt
@@ -304,15 +308,15 @@ text n
 key enter
 # wait 85, place 3
 prompt
-key space
+key f12
 # wait 86, place 3
 prompt
 # shot 18-hall-of-fame
 state
-key space
+key f12
 # wait 87, place 3:S
 prompt
-key space
+key f12
 # wait 88, place 2:W
 prompt
 # shot 19-start-menu

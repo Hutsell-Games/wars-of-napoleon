@@ -11,15 +11,20 @@ the PDS 7.1 build logs, for each key, the wait that read it (playkeys.py, trace 
 that log this writes a keys file in the screen tool's format (QB64Rust's
 tools/screen/README.md, "The keys file"):
 
+- first a "prompt" for the built-in title's TICK 2. The recordings ran ARCH2.EXE instead, whose
+  picture took the first key; the port runs no DOS program (D6);
 - one "prompt" for each wait the strategic game announced, in order, up to the last shot;
 - after it, the keys that the wait read in DOS;
-- a wait that read no key in DOS gets "key space". Under a script every TICK waits for a key
-  and throws it away (D2 of the plan), also the pauses that ran out in DOS. A wait at another
-  place that read no key is listed as a finding: there the key changes what the game does;
+- a wait that read no key in DOS gets "key f12", the filler. Under a script every TICK waits
+  for a key and throws it away (D2 of the plan), also the pauses that ran out in DOS. The game
+  reads F12 nowhere else, and scripttick (SCRIPT.BM) takes it back out of the BIOS buffer, so
+  that the four PEEK(1052) = 30 checks of naval combat see the buffer as DOS left it
+  (docs/devnotes.md, "Step 7b"). A wait at another place that read no key is listed as a
+  finding: there the key changes what the game does;
 - a "state" for each screenshot of the session: right after the prompt of the wait at which
   DOS took it, or, for a shot taken while the game was busy between two waits, after the
   prompt of the next wait (a finding too, since the screen may differ);
-- runs of waits that only take "key space" are written as a repeat block.
+- runs of waits that only take the filler are written as a repeat block.
 
 Left out, each with a comment: the keys and shots of the other programs (ARCH2.EXE, VIC.EXE,
 NAPIC.EXE and the shipped NAPOLEON.EXE, D6 and D3), told apart by the PSP that read each key
@@ -54,7 +59,9 @@ WORD_NAMES = {}
 for _name, (_scan, _ch, _sh) in play.KEYS.items():
     WORD_NAMES.setdefault(_scan * 256 + _ch, _name)
     WORD_NAMES.setdefault(_scan * 256 + _sh, "shift-" + _name)
-FILLER = "key space"
+# The key for a pause that read no key in DOS. It must be a key that only TICK reads, since
+# scripttick takes it back out of the buffer (SCRIPT.BM).
+FILLER = "key f12"
 
 
 def key_step(word):
@@ -171,13 +178,15 @@ class Session:
         lines = [
             f"# {name}: the session of tests/scripts/{name}.keys, for the scripted port.",
             "# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not",
-            "# edit, write it again. Each prompt is a wait the strategic game announced in DOS.",
+            "# edit, write it again. The first prompt is the port's built-in title; each other prompt",
+            "# is a wait the strategic game announced in DOS.",
             f"# seed {play.seed_text(self.script.seed)} (WON_SEED)",
         ]
         if battles:
             lines.append(f"# Run with WON_OUTCOME set to tests/recorded/{name}/files/OUTCOME.&&& (D4): the "
                          f"battle at wait {', '.join(map(str, battles))} is left out.")
-        lines.append(f"# {self.last} waits; {len(self.typed)} keys typed: {n_won} read by the strategic "
+        lines.append(f"# {self.last} waits in DOS, {self.last + 1} prompts; {len(self.typed)} keys typed: "
+                     f"{n_won} read by the strategic "
                      f"game, {len(self.other_keys)} by other programs, {len(self.unread)} by none, "
                      f"{len(self.dropped)} dropped with the buffer full.")
         def during(total):
@@ -195,11 +204,12 @@ class Session:
             if total is None:
                 lines.append(f"#   shot {shot}: left out, {note}")
         # A key typed while the game was busy waited in the buffer until the next wait. Under
-        # a script it is typed at its wait, later than in DOS. That matters to the four
+        # a script it is typed at its wait, later than in DOS. That could matter to the four
         # PEEK(1052) = 30 checks of WON2.BM (naval combat). They read the buffer's tail, which
         # every key typed moves on and only BuffClear sets back to 30, so each one asks whether
         # a key was typed since the last BuffClear. Each guards a TICK, so the answer changes
-        # the number of waits (docs/devnotes.md, "Step 7a").
+        # the number of waits (docs/devnotes.md, "Step 7a"). The filler cannot help here, so
+        # the header names these keys for the check of step 7b.
         ahead = [k for k in self.typed if k["read"] and k["read"]["psp"] == self.won_psp
                  and k["read"]["total"] > k["total"]]
         if ahead:
@@ -213,6 +223,11 @@ class Session:
             self.findings.append("keys read before the first wait was announced; they come before the "
                                  "first prompt")
         body = []
+        # The recordings ran ARCH2.EXE, whose picture took the session's first key. The port
+        # has no ARCH2.EXE (D6), so WON.BAS draws its built-in title instead, and that title's
+        # TICK 2 is one more wait before wait 1 of the trace.
+        body.append((None, ["# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)", "prompt",
+                            FILLER], False))
         for r in self.won_keys.get(0, []):
             body.append((None, [f"# {key_step(r['key'])[1]}, read before any wait", key_step(r["key"])[0]],
                          False))

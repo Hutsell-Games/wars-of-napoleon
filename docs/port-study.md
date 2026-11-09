@@ -436,6 +436,8 @@ then come out as in DOS. The test engineer notes that (b) touches many lines tha
 unchanged in PDS, which it can: in PDS the `CDBL` changes nothing. The reverse engineer agrees with the count
 first. **Recommended: (a), with (b) put to the user again if more than two or three sessions meet it.**
 **User (2026-11-07): (a).**
+**User, again (2026-11-09): (a).** The check of step 7b found the rounding in four sessions (4, 5, 9 and 10),
+more than the two or three that would bring (b) back. The user kept (a), and (b) is a row of `docs\SOMEDAY.md`.
 
 Found while the user weighed (b): the set of lines is not only a constant times an INTEGER. The old compilers
 keep the x87's precision across a whole SINGLE expression until it is stored, so any SINGLE expression stored
@@ -570,6 +572,24 @@ changes is either a mistake or is named in the commit message.
    - **7b.** The announce mode of `PLAYKEYS.COM`. Run the sessions in scripted mode and keep their screens and
      files beside the keys files, as the reference for step 8. List each difference from the recordings and its
      cause. Then the same for the tactical references of D3.
+     **Started (2026-11-09).** libqb keeps the buffer's tail as the BIOS does. Naval combat comes in sessions 1,
+     4, 5, 6 and 14, and in each one a filler key would have skipped a `TICK` that DOS ran. So the filler is
+     now F12, and `scripttick` takes it back out of the buffer (`docs\devnotes.md`, "Step 7b"). The tactical
+     game's `AND` and `OR` lines (`TODO.md`) are rewritten before its references are made.
+     **The check ran (2026-11-09)** with `tests\play.py bridge`. All 15 sessions stay in step to their last
+     shot, with both QB64 builds, and the two builds give the same report. 32 of the 35 files are equal. The
+     rest is the city markers, the drawing of the ships, a palette that `WIDTH` resets in QB64, and D12's
+     rounding in sessions 4, 5, 9 and 10. D12 went back to the user, who kept (a).
+     **7b changed (user, 2026-11-09, on the pragmatic engineer's review).** The check found no difference that
+     the hooks cause, so the scripted DOSBox-X run is not made for the strategic game. It would cost a mode of
+     `PLAYKEYS.COM`, about 1.5 hours of machine time and about 300 PNGs. It could not help sessions 4, 5 and 10
+     either, since a PDS build rounds as DOS did. The check is the bridge's result for the strategic game. The
+     recordings stay its reference, with a list of the known differences, each with its cause and the shot
+     where it starts. Session 5's missing wait was found with logging copies instead (`docs\devnotes.md`,
+     "Session 5's missing wait"). The announce mode of `PLAYKEYS.COM` moves to the tactical references (D3).
+     The tactical game has no recording from its source, and there one keys file can play the PDS build and
+     both QB64 builds. Step 8 records the QB64 builds' own states as the strategic game's references, twice as
+     in the earlier ports, and holds them to the recordings through that list.
 
    While the bridge is used, every edit of the port must also compile with PDS 7.1, so a QB64-only statement
    goes into `QB64.BM` with its PDS form in `PDS.BM`. The bridge is kept until the first refactoring of the

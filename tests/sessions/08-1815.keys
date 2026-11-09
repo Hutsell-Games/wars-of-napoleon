@@ -1,17 +1,21 @@
 # 08-1815: the session of tests/scripts/08-1815.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 304 waits; 116 keys typed: 115 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 304 waits in DOS, 305 prompts; 116 keys typed: 115 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 #   shot 16-dos: left out, the DOS prompt after Quit
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -97,7 +101,7 @@ text y
 # waits 27 to 51: pauses that read no key in DOS
 repeat 25
 prompt
-key space
+key f12
 end
 # wait 52, place 3
 prompt
@@ -106,7 +110,7 @@ state
 key space
 # wait 53, place 3
 prompt
-key space
+key f12
 # wait 54, place 2:R
 prompt
 key space
@@ -160,7 +164,7 @@ text b
 # waits 70 to 85: pauses that read no key in DOS
 repeat 16
 prompt
-key space
+key f12
 end
 # wait 86, place 3
 prompt
@@ -221,35 +225,35 @@ text y
 # waits 104 to 107: pauses that read no key in DOS
 repeat 4
 prompt
-key space
+key f12
 end
 # wait 108, place 3
 prompt
 # shot 09-turn-end
 state
-key space
+key f12
 # wait 109, place 3
 prompt
 key space
 # wait 110, place 3
 prompt
-key space
+key f12
 # wait 111, place 3
 prompt
-key space
+key f12
 # wait 112, place 3
 prompt
 key space
 # wait 113, place ? (in a tick with others)
 prompt
-key space
+key f12
 # wait 114, place 3
 prompt
 key space
 # waits 115 to 126: pauses that read no key in DOS
 repeat 12
 prompt
-key space
+key f12
 end
 # wait 127, place 3
 prompt
@@ -257,7 +261,7 @@ key space
 # waits 128 to 146: pauses that read no key in DOS
 repeat 19
 prompt
-key space
+key f12
 end
 # wait 147, place 3
 prompt
@@ -267,14 +271,14 @@ prompt
 key space
 # wait 149, place 3
 prompt
-key space
+key f12
 # wait 150, place 3
 prompt
 key space
 # waits 151 to 159: pauses that read no key in DOS
 repeat 9
 prompt
-key space
+key f12
 end
 # wait 160, place 3
 prompt
@@ -285,7 +289,7 @@ key space
 # waits 162 to 166: pauses that read no key in DOS
 repeat 5
 prompt
-key space
+key f12
 end
 # wait 167, place 3
 prompt
@@ -293,7 +297,7 @@ key space
 # waits 168 to 170: pauses that read no key in DOS
 repeat 3
 prompt
-key space
+key f12
 end
 # wait 171, place 3
 prompt
@@ -303,14 +307,14 @@ prompt
 key space
 # wait 173, place 3
 prompt
-key space
+key f12
 # wait 174, place 3
 prompt
 key space
 # waits 175 to 183: pauses that read no key in DOS
 repeat 9
 prompt
-key space
+key f12
 end
 # wait 184, place 3
 prompt
@@ -321,7 +325,7 @@ key space
 # waits 186 to 193: pauses that read no key in DOS
 repeat 8
 prompt
-key space
+key f12
 end
 # wait 194, place 3
 prompt
@@ -391,7 +395,7 @@ text y
 # waits 215 to 281: pauses that read no key in DOS
 repeat 67
 prompt
-key space
+key f12
 end
 # wait 282, place 3
 prompt
@@ -455,10 +459,10 @@ state
 key space
 # wait 300, place 3
 prompt
-key space
+key f12
 # wait 301, place 3
 prompt
-key space
+key f12
 # wait 302, place 3
 prompt
 # shot 14-hall-of-fame
@@ -466,7 +470,7 @@ state
 key space
 # wait 303, place 3:S
 prompt
-key space
+key f12
 # wait 304, place 2:W
 prompt
 # shot 15-start-menu

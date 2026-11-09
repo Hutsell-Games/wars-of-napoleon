@@ -1,17 +1,21 @@
 # 02-1796-allies: the session of tests/scripts/02-1796-allies.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 214 waits; 36 keys typed: 35 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 214 waits in DOS, 215 prompts; 36 keys typed: 35 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 #   shot 13-dos: left out, the DOS prompt after Quit
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -43,7 +47,7 @@ text y
 # waits 11 to 58: pauses that read no key in DOS
 repeat 48
 prompt
-key space
+key f12
 end
 # wait 59, place 3
 prompt
@@ -76,7 +80,7 @@ text y
 # waits 67 to 100: pauses that read no key in DOS
 repeat 34
 prompt
-key space
+key f12
 end
 # wait 101, place 3
 prompt
@@ -86,7 +90,7 @@ key space
 # waits 102 to 130: pauses that read no key in DOS
 repeat 29
 prompt
-key space
+key f12
 end
 # wait 131, place 3
 prompt
@@ -114,7 +118,7 @@ text y
 # waits 138 to 201: pauses that read no key in DOS
 repeat 64
 prompt
-key space
+key f12
 end
 # wait 202, place 3
 prompt
@@ -148,7 +152,7 @@ state
 key space
 # wait 210, place 3
 prompt
-key space
+key f12
 # wait 211, place 3
 prompt
 # shot 10-hall-of-fame
@@ -161,7 +165,7 @@ state
 key space
 # wait 213, place 3:S
 prompt
-key space
+key f12
 # wait 214, place 2:W
 prompt
 # shot 12-start-menu

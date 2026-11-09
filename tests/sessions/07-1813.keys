@@ -1,16 +1,20 @@
 # 07-1813: the session of tests/scripts/07-1813.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 249 waits; 80 keys typed: 79 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 249 waits in DOS, 250 prompts; 80 keys typed: 79 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -107,7 +111,7 @@ text y
 # waits 30 to 68: pauses that read no key in DOS
 repeat 39
 prompt
-key space
+key f12
 end
 # wait 69, place 2:M
 prompt
@@ -170,7 +174,7 @@ text y
 # waits 87 to 132: pauses that read no key in DOS
 repeat 46
 prompt
-key space
+key f12
 end
 # wait 133, place 3
 prompt
@@ -179,7 +183,7 @@ state
 key esc
 # wait 134, place 3
 prompt
-key space
+key f12
 # wait 135, place 2:M
 prompt
 key esc
@@ -236,7 +240,7 @@ text y
 # waits 152 to 232: pauses that read no key in DOS
 repeat 81
 prompt
-key space
+key f12
 end
 # wait 233, place 2:M
 prompt

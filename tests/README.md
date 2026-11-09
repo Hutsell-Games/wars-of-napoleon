@@ -19,6 +19,19 @@ python -I tools/play/play.py check tests/scripts/*.keys
 not edit them by hand. How they are made is in `tools\play\README.md`, "Trace mode and the announce-driven keys
 files".
 
+`play.py` plays those files with the port's QB64 builds and compares each run with the recording (step 7b,
+"the check"). It builds `WON.BAS` with the screen hook of QB64Rust's `tools\screen\`, from the QB64Rust repo
+beside this one, and runs the game on a hidden desktop:
+
+```
+python -I tests/play.py bridge [--compiler rust|pe|both] [--jobs N] [session ...]
+```
+
+It compares each kept shot pixel by pixel, and each file the recording's run wrote byte for byte. Text screens
+are not compared yet. For each shot that differs, `tests\out\qb64\run\<session>-<compiler>\diff\` gets a picture:
+the recorded screen dimmed, with the pixels that differ in magenta. Step 8 adds the port's own references and the
+other commands.
+
 | Session | What it covers |
 |---|---|
 | `01-1796-french` | 1796 as the French, Tactical off. The intro, the start menu, every menu and page once, Recruit, Moves, Fortify, Files → Save, and two turn ends with the Allies' moves. |

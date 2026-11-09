@@ -1,16 +1,20 @@
 # 12-1796-balance: the session of tests/scripts/12-1796-balance.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 334 waits; 100 keys typed: 99 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 334 waits in DOS, 335 prompts; 100 keys typed: 99 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -66,7 +70,7 @@ text y
 # waits 17 to 64: pauses that read no key in DOS
 repeat 48
 prompt
-key space
+key f12
 end
 # wait 65, place 3
 prompt
@@ -129,7 +133,7 @@ text y
 # waits 83 to 125: pauses that read no key in DOS
 repeat 43
 prompt
-key space
+key f12
 end
 # wait 126, place 3
 prompt
@@ -139,7 +143,7 @@ key esc
 # waits 127 to 148: pauses that read no key in DOS
 repeat 22
 prompt
-key space
+key f12
 end
 # wait 149, place 3
 prompt
@@ -196,10 +200,10 @@ prompt
 text n
 # wait 166, place 3
 prompt
-key space
+key f12
 # wait 167, place 3:S
 prompt
-key space
+key f12
 # wait 168, place 2:W
 prompt
 # shot 10-start-menu
@@ -258,7 +262,7 @@ text y
 # waits 183 to 228: pauses that read no key in DOS
 repeat 46
 prompt
-key space
+key f12
 end
 # wait 229, place 3
 prompt
@@ -321,7 +325,7 @@ text y
 # waits 247 to 295: pauses that read no key in DOS
 repeat 49
 prompt
-key space
+key f12
 end
 # wait 296, place 3
 prompt
@@ -331,7 +335,7 @@ key esc
 # waits 297 to 318: pauses that read no key in DOS
 repeat 22
 prompt
-key space
+key f12
 end
 # wait 319, place 3
 prompt

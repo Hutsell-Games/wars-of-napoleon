@@ -52,12 +52,27 @@ END FUNCTION
 ' script's rule can answer those apart. When the program is scripted, it
 ' waits for a key and gives -1, and TICK returns. Otherwise it gives 0, and
 ' TICK pauses as before.
+'
+' A keys file answers a pause that read no key in DOS with F12, which the
+' game reads nowhere else (tools\play\sessions.py). Once read, F12 is taken
+' back out of the BIOS buffer: the head and the tail go back one slot, to
+' where they were before it was typed. The four PEEK(1052) = 30 checks of
+' naval combat (WON2.BM) ask whether any key was typed since BuffClear, and
+' DOS typed none in such a pause (docs\devnotes.md, "Step 7b"). A real key
+' that a TICK reads stays counted, as in DOS. announce has set DEF SEG to 0.
 FUNCTION scripttick% (sec!)
 scripttick% = 0
 IF scripted = 0 AND traced = 0 THEN EXIT FUNCTION
 IF sec! < 1 THEN CALL announce(3, "S") ELSE CALL announce(3, "")
 IF scripted = 0 THEN EXIT FUNCTION
-DO WHILE INKEY$ = "": LOOP
+DO
+	k$ = INKEY$
+LOOP WHILE k$ = ""
+IF k$ = CHR$(0) + CHR$(134) THEN
+	slot = PEEK(1052) - 2
+	IF slot < 30 THEN slot = 60
+	POKE 1050, slot: POKE 1052, slot
+END IF
 scripttick% = -1
 END FUNCTION
 

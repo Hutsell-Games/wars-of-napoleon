@@ -813,3 +813,132 @@ buffer, so that a filler leaves the tail where DOS had it.
 
 The 15 keys files hold 6,638 lines (124 KB). `sessions.py --check` gives exit code 0 with the traces of this
 run.
+
+## Step 7b: the four naval checks (2026-11-09)
+
+The pragmatic engineer's order for 7b: measure libqb's tail first, then find the sessions with naval combat,
+then run the check, and build a fix for the filler keys only if the check needs one.
+
+### libqb keeps the tail as the BIOS does
+
+A small program set both bytes to 30, as `BuffClear` does. It then read 17 keys, each given by the screen tool
+at an announced wait, and wrote the head (1050) and the tail (1052) after each. QB64Rust and QB64pe builds gave
+the same: 30 after the clear, then 32, 34, … 60 for keys 1 to 15, 30 for key 16 and 32 for key 17. The head
+followed the tail, because each key was read before the next came. That is the slot sequence of the DOS traces
+(step 7a). QB64Rust's `tests\corpus\screen\k05_bios_keyboard_buffer` already shows the head, the tail and
+`BuffClear`'s `POKE`s, but not the wrap from 60 to 30.
+
+So the four checks give in a QB64 build what they give in DOS, as long as the same number of keys is typed
+between two `BuffClear`s. The game needs no change for the QB64 builds.
+
+### Which sessions fight at sea
+
+In the strategic game, `BuffClear` runs only in naval combat (`WON2.BM` lines 985 and 1019). So the sessions
+whose slot sequence starts again at 30 between keys are those that fight at sea: 1, 4, 5, 6 and 14. Session 9's
+reset comes from the tactical game, which has no `PEEK(1052)` check.
+
+### What this means for a scripted run
+
+Every shot of a naval combat runs one of the checked `TICK`s: line 1024 when the sound is on, line 1091 in
+`showhit` when it is off. In a combat where DOS typed no key, every check was true. Under a script, the first
+such `TICK` reads its filler key, which moves the tail to 32. The next check is then false and skips a `TICK`
+that DOS ran. From there each `prompt` of the keys file answers the wait after the one it was written for. So
+sessions 1, 4, 5, 6 and 14 will go out of step in their first naval combat, and the check does not need to run to
+show it.
+
+`scripttick` cannot simply put the head and the tail back after each key. In DOS a `TICK` also reads a real key
+that was typed during the pause, and that key moved the tail there too. Only a filler key that `scripttick` can
+tell apart from a real one can be taken back without a trace, as the step 7a review proposed.
+
+### The fix: F12 as the filler (the user chose it, 2026-11-09)
+
+- `sessions.py` writes `key f12` for a pause that read no key in DOS, in place of `key space`. The game reads
+  F12 nowhere. The 15 keys files were written again from the traces of step 7a: 299 lines changed, each a
+  `key space` filler that became `key f12`. The spaces the player typed stay. No keys file has a finding, so
+  every filler answers a `TICK`.
+- `scripttick` (`SCRIPT.BM`) reads its key, and when it is F12 (`CHR$(0) + CHR$(134)`) it sets the head and the
+  tail back one slot, wrapping from 30 to 60. That is where both were before the screen tool typed it, since
+  the tool types a key only when the buffer is empty. A real key that a `TICK` reads stays counted, as in DOS.
+  The new lines run only when the program is scripted, so trace mode and the recordings it gives are as before.
+
+The checks:
+
+- A small program with the same lines, given F12, F12 and a space at three announced waits, gave head and
+  tail 30 after each F12 and 32 after the space, with QB64Rust and QB64pe builds. `PEEK(1052) = 30` was true
+  after the two F12s and false after the space.
+- `WON.BAS` builds with QB64Rust, QB64pe and, through `pdsbuild.py`, PDS 7.1.
+- The wrap and the F12 lines are now a QB64Rust screen program, `tests\corpus\screen\k06_bios_buffer_wrap`,
+  recorded with QB64pe. After 15 keys the tail is at 60. An F12 wraps it to 30, and is set back to 60.
+
+Left for the check: the four keys that DOS typed before their wait was announced (sessions 4 and 5 have
+naval combat). The filler does not touch them. If one of them came before a checked `TICK` in DOS, the check
+shows it.
+
+### The check (2026-11-09)
+
+`tests\play.py bridge` builds `WON.BAS` with the screen hook and plays each keys file of `tests\sessions\`
+on a hidden desktop. No `SHELL` can run: the run's folder holds no `.EXE` but the build, the history file is
+copied in BASIC, and `WON_OUTCOME` is always set, so no battle starts. Each run is stopped when its last state is
+written. A session takes 2 to 25 seconds, so the 15 take about a minute with four at once.
+
+**The built-in title.** The first run of session 9 went out of step at once. The recordings ran `ARCH2.EXE`,
+whose picture took the first key. The port runs no `ARCH2.EXE`, so `WON.BAS` draws its built-in title, and its
+`TICK 2` is one more wait. `sessions.py` now starts every keys file with a filler for that wait.
+
+**The result.** All 15 sessions ran to their last shot with both builds. Any difference in the count of waits
+would have stopped a run with exit code 124 or 125. The QB64Rust and QB64pe builds gave the same report, line
+for line, so every difference below is between QB64 and DOS, not between the two compilers. Text screens (8)
+are not compared yet.
+
+- **Files.** The recordings hold 35 files that the strategic game wrote (session 9's `OUTCOME.&&&` is given,
+  not written). 32 are equal byte for byte: the saved games, `NWS.CFG`, `NWS.HIS`, `HISCORE.NWS` and
+  `BATTLE.$$$`. The other 3 are `NWS9.SAV` of sessions 4, 5 and 10.
+- **The city markers** (`TODO.md`): 160 to 420 pixels on every map screen. This is the known `CIRCLE`
+  difference.
+- **D12, a SINGLE product stored as an INTEGER**, in four sessions:
+  - Sessions 9 and 10, the attack on Alexander at Innsbruck (`WON1.BM` line 136, `x1 = .7 * x1` with
+    `x1 = 5`). SINGLE rounds 0.7 × 5 to 3.5, and QB64 rounds that to the even 4. The x87 keeps 3.49999994 and
+    stores 3. So the panel shows 4 for Cohesion, Difclt, Fort and Defend, and Odds of 42% against 50%. In
+    session 9 the tactical game fights the battle and the saved game is still equal. In session 10 the
+    strategic game decides it from those odds, so the game takes another course from that battle (shots 5
+    to 26).
+  - Session 5: army 5's supply, from DOS's wait 80 (below). The run announces one wait fewer than DOS before
+    shot `12-turn-end`, so that state already shows the victory box at Salzburg. That screen also shows Base
+    7 against 6 (`WON1.BM` line 111, `INT(.01 * armysize(defend))` with 700), which is display only.
+  - Session 4: three numbers of `NWS9.SAV` differ by one (639 against 640, 258 against 257, 271 against
+    272), with no screen that shows more than the city markers.
+- **The palette after `WIDTH , 60`** (session 1, `12-cities`, 5,629 pixels). `europe` (`WONMENU.BM`
+  line 56) sets palette entry 2 to the darker green 008A00. The City Report starts with `WIDTH , 60`
+  (`WON2.BM` line 1292). PDS kept the palette across it, but QB64 resets entry 2 to 00AA00. This is new to
+  QB64Rust's records.
+- **Drawing**: the ships of naval combat (session 14, 1,700 to 3,150 pixels on 4 screens), and the burning
+  building of session 2's `07-turn-end` (668). The counts, the numbers and the text are the same. Session 14
+  stays in step through its three rounds of naval combat, and its saved game is equal: the F12 filler works.
+
+### Session 5's missing wait (2026-11-09)
+
+A scratch copy of the game, outside the repo, logged what each run did at each wait, with the PDS 7.1 build in
+DOSBox-X and with QB64Rust. Every `RND` was replaced by a function that counted its calls and noted their
+call site. The logs were kept in memory and written once, so that the DOS run still gave the recording.
+
+- **The missing wait** is in the naval combat of DOS waits 307 to 356, which begins with `BuffClear`. QB64's
+  combat ends one shot sooner. Its shots are DOS's, one `RND` ahead: QB64's first shot is DOS's second.
+  The head and the tail of the buffer were 30 at every check, so it is not the F12 filler.
+- **The extra `RND`** is at DOS wait 290, in `WON1.BM` line 1137:
+  `IF supply(active) < 10 THEN supply(active) = supply(active) + 1: IF RND > .8 GOTO horde`. Both runs drew
+  the same numbers. DOS's army reached supply 10 one draw sooner, so the loop drew one `RND` fewer.
+- **The supply** of army 5 first differs at DOS wait 80, 9 in DOS and 10 in QB64, with the same count of
+  `RND` calls in both runs. That is the month's update in `iterate` (`WON2.BM` lines 636 to 640):
+  `IF cash(s) >= .2 * armysize(i) THEN … supply(i) = supply(i) + 1: cash(s) = cash(s) - .2 * armysize(i)`.
+  Army 5 is French, of 75 hundreds; France had 35 before the update. The SINGLE product `.2 * 75` is
+  15.0000002 on the x87, and QB64 rounds it to 15.0. With 15 left when army 5's turn comes, QB64's test is
+  true and DOS's false. The 15 is inferred: the cash at army 5's turn was not logged. The comparison
+  itself is measured: QB64Rust's `verification\qb45\q45_single_compare` gives false for `15 >= .2 * 75` in
+  QB 4.5 and PDS 7.1 and true in QB64pe and QB64Rust, and the same for every multiple of 5 to 1000
+  (`DIVERGENCES-QB45.md` Q-022).
+
+So this is D12's kind too, in a comparison, not a store: a SINGLE expression that the x87 keeps wider than
+QB64 does. A search for (b) would have to take in comparisons as well (`docs\SOMEDAY.md`).
+
+D12 said to bring (b) back to the user if more than two or three sessions meet the rounding. Four do: 4, 5, 9
+and 10. The user kept (a), and (b) is a row of `docs\SOMEDAY.md`.

@@ -1,17 +1,21 @@
 # 01-1796-french: the session of tests/scripts/01-1796-french.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 355 waits; 103 keys typed: 102 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 355 waits in DOS, 356 prompts; 103 keys typed: 102 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 109, read by another program (PSP 43B8h, video mode 69h) before the first wait
 #   shot 01-intro: left out, another program's screen (video mode 69h)
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 # shot 02-start-menu
@@ -132,7 +136,7 @@ key enter
 # waits 34 to 38: pauses that read no key in DOS
 repeat 5
 prompt
-key space
+key f12
 end
 # wait 39, place 3
 prompt
@@ -175,10 +179,10 @@ state
 key enter
 # wait 50, place 3:S
 prompt
-key space
+key f12
 # wait 51, place 3:S
 prompt
-key space
+key f12
 # wait 52, place 2:R
 prompt
 # shot 17-recruited
@@ -197,7 +201,7 @@ state
 key enter
 # wait 56, place 3
 prompt
-key space
+key f12
 # wait 57, place 2:M
 prompt
 # shot 19-moved
@@ -219,7 +223,7 @@ text y
 # waits 61 to 210: pauses that read no key in DOS
 repeat 150
 prompt
-key space
+key f12
 end
 # wait 211, place 3
 prompt
@@ -229,7 +233,7 @@ key space
 # waits 212 to 227: pauses that read no key in DOS
 repeat 16
 prompt
-key space
+key f12
 end
 # wait 228, place 3
 prompt
@@ -239,7 +243,7 @@ key space
 # waits 229 to 252: pauses that read no key in DOS
 repeat 24
 prompt
-key space
+key f12
 end
 # wait 253, place 3
 prompt
@@ -261,7 +265,7 @@ state
 key enter
 # wait 257, place 3:S
 prompt
-key space
+key f12
 # wait 258, place 2:M
 prompt
 # shot 27-fortified
@@ -432,7 +436,7 @@ text y
 # waits 301 to 351: pauses that read no key in DOS
 repeat 51
 prompt
-key space
+key f12
 end
 # wait 352, place 3
 prompt

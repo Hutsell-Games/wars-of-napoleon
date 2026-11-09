@@ -61,7 +61,7 @@ RECORDED = REPO / "tests" / "recorded"
 DATE, TIME = "06/24/1998", "12:00:00"
 
 # Files of the repo's folder that are not the game's: sources, documents, build files.
-NOT_GAME = {".bas", ".bi", ".doc", ".txt", ".pag", ".md", ".lnk", ".py", ".gitattributes", ".gitignore"}
+NOT_GAME = {".bas", ".bi", ".bm", ".doc", ".txt", ".pag", ".md", ".lnk", ".py", ".gitattributes", ".gitignore"}
 NOT_GAME_NAMES = {"license"}
 HARNESS_FILES = {"WONSEED.EXE", "PLAYKEYS.COM", "KEYS.BIN", "IDLE.COM", "RUNDATE.TXT"}
 # The DOS programs with no source, which left the branch qb64rust in its step 5, and the

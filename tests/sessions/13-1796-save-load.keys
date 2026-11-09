@@ -1,17 +1,21 @@
 # 13-1796-save-load: the session of tests/scripts/13-1796-save-load.keys, for the scripted port.
 # Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
-# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
 # seed 1 (WON_SEED)
-# 190 waits; 73 keys typed: 72 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+# 190 waits in DOS, 191 prompts; 73 keys typed: 72 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
 #   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
 #   shot 20-dos: left out, the DOS prompt after Quit
 
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
 # wait 1, place 3
 prompt
-key space
+key f12
 # wait 2, place 3:S
 prompt
-key space
+key f12
 # wait 3, place 2:W
 prompt
 text s
@@ -44,7 +48,7 @@ prompt
 key enter
 # wait 11, place 3
 prompt
-key space
+key f12
 # wait 12, place 2:R
 prompt
 key esc
@@ -72,7 +76,7 @@ text y
 # waits 18 to 65: pauses that read no key in DOS
 repeat 48
 prompt
-key space
+key f12
 end
 # wait 66, place 3
 prompt
@@ -135,7 +139,7 @@ text y
 # waits 84 to 126: pauses that read no key in DOS
 repeat 43
 prompt
-key space
+key f12
 end
 # wait 127, place 3
 prompt
@@ -145,7 +149,7 @@ key esc
 # waits 128 to 149: pauses that read no key in DOS
 repeat 22
 prompt
-key space
+key f12
 end
 # wait 150, place 3
 prompt
@@ -202,10 +206,10 @@ prompt
 text n
 # wait 167, place 3
 prompt
-key space
+key f12
 # wait 168, place 3:S
 prompt
-key space
+key f12
 # wait 169, place 2:W
 prompt
 # shot 11-start-menu

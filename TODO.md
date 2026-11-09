@@ -16,6 +16,12 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
 
 ## The tests
 
+- **`WIDTH , 60` resets the palette in QB64, and PDS 7.1 kept it.** The City Report (`WON2.BM` line 1292)
+  shows the "(peace)" rows in 00AA00 where DOS showed `europe`'s 008A00 (session 1, `12-cities`). Measure it
+  in QB 4.5 and PDS 7.1 with a `verification\qb45\` program in QB64Rust, give it a `DIVERGENCES-QB45.md` row,
+  then decide whether the port sets entry 2 again after the `WIDTH`.
+- **`tests\play.py` does not compare text screens** (8 of the 305 shots). That is `tests\dosshot.py` of step 8.
+
 - **The city markers are not DOS's pixel for pixel.** `cityicon` (`WON2.BM`) draws each city with `CIRCLE` of
   radius 4 and 3, then `PAINT`. On session 9's first map, 250 spots of 1 to 4 pixels at the top and bottom of
   the markers differ from the DOSBox-X screenshot, about 280 pixels of the screen. Measure QB 4.5's small
