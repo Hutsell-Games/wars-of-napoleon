@@ -29,6 +29,10 @@ With the rewrite, those sessions could be held to their recordings to the end.
 - a form of the line measured in PDS 7.1, QB 4.5, QB64Rust and QB64pe, until QB64 gives the old compilers'
   integers. `.7 * CDBL(x)` is not it: QB64 takes `.7` as the DOUBLE 0.7, not the SINGLE widened;
 - the bridge (`tools\pdsbuild.py`) showing that each edited line is unchanged in PDS;
-- the strategic game first, the tactical game when its references are made.
+- the strategic game first, the tactical game when its references are made;
+- for the tactical game, a logging copy, as for session 5's missing wait, to name the lines that round the
+  losses of battles b2 and b3 differently: 639 against 640, 1,618 against 1,622, 12,591 against 12,590, 5,608
+  against 5,609 (`docs\devnotes.md`, "Step 7b: the tactical references"). It was a `TODO.md` item until step 8,
+  when the pragmatic engineer moved it here: under D12 (a) it only serves this row.
 
 **Status.** The user kept D12 (a) on 2026-11-09, after the check, and asked for this row.

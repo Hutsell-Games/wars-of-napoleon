@@ -615,6 +615,19 @@ changes is either a mistake or is named in the commit message.
    - Unit tests in `tests\rules_test.bas` for SUBs that draw nothing. Candidates, to check one by one: `normal`
      (in both programs), the sort in `WON2.BAS`, `strong`, `Compact`.
    - The generated and hand-written scripts of D10, then `play.py coverage`.
+
+   **Done (2026-11-09), on the pragmatic engineer's review.** `tests\dosshot.py` compares the text screens too,
+   and `tests\known-differences.txt` lists every known difference from DOS, most of them masks of measured
+   pixels where the game's data places the shapes. All 15 sessions, session 9 with its battle and six battles
+   pass against DOS with both compilers. 37 scripts have references of their own, the same in four runs: the
+   sessions, the battles, 14 generated games and a naval invasion. Unit tests cover only what the scripts cannot
+   show (`tests\rules_test.bas`, `tests\battle_test.bas`). Two port bugs came out and are fixed: vertical roads
+   had one set of dots where DOS had two, and a battle whose time ran out with neither side holding the field
+   stopped on "Subscript out of range" (`over(3)`). QB64Rust got `DIVERGENCES-QB45.md` rows Q-035 (the palette
+   after `WIDTH , 60`) and Q-036 (small circles), and Q-024 is corrected. Napoleon's exile and a battle won by
+   wiping out the other side are not reached yet. The user's rulings (2026-11-09): the City Report sets the
+   palette again after `WIDTH , 60`, as PDS 7.1 kept it; drawing the circles and sloped lines with QB 4.5's
+   pixels is put off, outside the port's steps (`TODO.md`). The details are in `docs\devnotes.md`, "Step 8".
 9. **The files.** Remove what the port does not use: `NWS.LNK` and the files of D11. Check before each one that
    neither program needs it to exist. Move `NWS9.SAV`, `HISCORE.NWS` and the shipped `NWS.CFG` to `tests\data\`,
    and ignore the copies that playing makes. Then the folders of D9, and the documents (`WON.DOC`,

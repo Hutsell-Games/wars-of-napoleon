@@ -1102,3 +1102,154 @@ b1 and b5 give their recordings: every shot, and b1's `OUTCOME.&&&`. The others 
 
 By D12's ruling (a), the rounding stays QB64's. The step 8 references of the tactical game are the QB64 builds'
 own, held to these recordings through the list above.
+
+## Step 8: the port's tests (2026-11-09)
+
+Step 8 of `docs\port-study.md`: the comparison with DOSBox-X's screenshots finished, the port's own references,
+the generated and hand-written scripts of D10, unit tests and coverage. It followed the pragmatic engineer's
+review of the plan's next steps (2026-11-09): leave the known differences out of the comparison first, measure
+them in QB64Rust alongside, cut the logging copy of D12's tactical lines (`docs\SOMEDAY.md`), write unit tests
+only for what the scripts cannot show, and decide the game's own oddities after the merge.
+
+### The changes
+
+36. **`tests/dosshot.py`** holds the comparison with a DOSBox-X screenshot, which moved out of `tests/play.py`.
+    It reads a state's displayed page, graphics or text, and compares it with the PNG.
+37. **Text screens are compared** (8 of the 305 shots). `dosshot.py` draws the `SCREEN 0` state as DOSBox-X saves
+    one: 720 × 400, cells 9 pixels wide and 16 high. The glyphs are QB64's 8 × 16 font, which step 3 found to be
+    DOSBox-X's pixel for pixel, dumped by `tests\font12.bas` (`_CONTROLCHR OFF` prints the control characters
+    too). The ninth column repeats the eighth for the characters C0 to DF, as a VGA does. A cell with the blink
+    bit may show its character or only its background, and the cursor's rows 13 to 15 are left out. All 7 text
+    shots that the port can take are equal. The eighth is below (the high score).
+38. **`tests/known-differences.txt`** lists the differences from DOS that are known and explained, one per line,
+    and `bridge` and `tactical` leave them out. A line names its run, its shot (a pattern, or `NAME+` for that
+    shot and every later one) and its kind: a box, a pair of colors, the whole shot, a file, or one of four masks
+    of the map. A run of every script of a command says when a line is no longer met. The four masks are pixel
+    sets measured in QB64Rust (below), placed by the game's own data:
+    - `markers`: the four diagonal pixels of each city's `CIRCLE` of radius 4, at every city of the seven maps;
+    - `ships`: twelve pixels at the ends of each ship's ellipse, at every port, by the port's code in the map's
+      seventh matrix field (96 to 99, as `ships` in `WON2.BM` places it), and at sea;
+    - `raid`: 128 pixels of the "RAID COMMERCE" ellipse, at its one place;
+    - `pointer`: three pixels of an army's arrow pointer, whose one edge with a slope of 2 in 4 QB64 draws with
+      other pixels (Q-025).
+
+    Each mask also stands 16 pixels higher: a `PRINT` on the last row of `SCREEN 12` scrolls the map up one text
+    row, in DOS and in QB64 alike (Utility's Drill screens in session 1).
+39. **`tests/play.py` has the earlier ports' commands**: `record`, `check`, `compare`, `coverage` and `explore`,
+    over four kinds of script: the sessions, session 9 with its battle, the battles and the games. A reference is
+    `<keys>.screen` beside the keys file: each state as its digest, each state of a battle the strategic game
+    started, and the hash of each file the run wrote. `record` runs each script twice with each compiler and
+    writes the reference only when the four runs agree.
+40. **Session 9 with its battle** (`09-1805-tactical-battle`, D4's second run). `play.py` plays session 9's keys
+    file without `WON_OUTCOME`, puts `napoleon.exe` in the run's folder, and gives the battle
+    `tests\battles\b1-innsbruck-retreat.keys`, which plays it as DOS did (F9 and Yes). The battle runs on the
+    same hidden desktop, as step 3 measured, and the session stays in step to its last shot. Its `OUTCOME.&&&` is
+    b1's, `1,0,.57999998703599`: the port's tactical game is another revision than the shipped `NAPOLEON.EXE`,
+    which wrote `.689999984577298`. The strategic screens after the battle are still DOS's.
+41. **`tests/make_scripts.py`** writes 14 generated games, `tests\games\end-<year>-<side>.keys`: each scenario as
+    each side, Tactical off, the player only ending turns until the game ends. A retreat the player is asked to
+    choose (`2:R`) is answered with Esc, which lets the game choose. The games last 2 to 13 turns, and none asks
+    for a name. The tool plays each game once to count its turns.
+42. **Two hand-written scripts.** `tests\games\invasion-1796-french`: the fleet at Bordeaux sails to Amsterdam,
+    a neutral port of a minor nation, and in the next turn the Ships menu offers Invasion, which places Lannes'
+    new army of 4,000 there. `tests\battles\b6-innsbruck-stalemate`: below, item 46. Neither Napoleon's exile nor
+    a battle won by wiping out the other side was reached (`TODO.md`).
+43. **Unit tests**: `tests\rules_test.bas` for the strategic game and `tests\battle_test.bas` for the tactical
+    game, 9 tests. They cover only what the scripts cannot show: `bubble` with equal names and with a list of one
+    or none, `Compact` with a side that has no unit left (which `wipeout` meets) and with a full side, and
+    `normal`'s lean, below.
+44. **`tests/test_play.py`**: 26 tests of `play.py`, `dosshot.py` and `make_scripts.py` that need no build.
+45. **`styledline` starts a vertical line at its first point** (`QB64.BM`). Step 4 read QB64Rust's
+    `q45_line_style` as starting every vertical line at its bottom end, and `styledline` swapped the ends to do
+    so. The record says otherwise (its rows 8 and 9): QB 4.5 and PDS 7.1 start a vertical line where it is
+    written from, as QB64 does. So a road between two cities with the same x, drawn from each city, has two sets
+    of dots in DOS, and the port drew one. The first bridge run of step 8 showed it: Poznen to Breslau at
+    x = 370, and Nantes to Bordeaux at x = 46. `DIVERGENCES-QB45.md` Q-024 is corrected.
+46. **`over(3)` writes 3, as PDS 7.1 did** (`NAP1A.BM`). When the time is up and neither side holds the field
+    (`possess` = 0), `expire` calls `over(3 - possess)`, which is `over(3)`. `over` writes `3 - sidex(flag)`, and
+    `sidex` is dimensioned to 2. QB64 stops there with "Subscript out of range" and leaves `OUTCOME.&&&` empty, so
+    in normal play the strategic game would then stop with "Input past end of file". PDS 7.1 checks no bounds; it
+    read 0 past the array and wrote `3,.239999994635582,3.99999991059303D-02`. The strategic game reads a winner
+    of 3 as the defender's victory (`battle`, `WON1.BM`, `CASE ELSE`). `over` now writes 3 when `flag` is 3. Found
+    by a try at a wipeout battle, which became b6: one French unit of 500 men, the Allies resting. The PDS build
+    in DOSBox-X gives the same file before and after the change, and both QB64 builds now give DOS's screens and
+    `OUTCOME.&&&`. The 0 past the array was measured with the port's PDS build only. What lies there depends
+    on a build's memory layout, and the shipped `NAPOLEON.EXE` was not measured: that would need a battle file
+    that reaches the same stalemate under the shipped game's own random draws. Writing 3 matches the one DOS
+    result there is, and ends the crash either way.
+
+47. **The City Report sets palette entry 2 again after `WIDTH , 60`** (`WON2.BM`; user, 2026-11-09, as it
+    records again only session 1's reference). QB64 resets the palette there and PDS 7.1 kept it (Q-035, below),
+    so the "(peace)" rows showed 00AA00 where DOS showed `europe`'s 008A00. `europe` picks entry 2 by `look`,
+    which nothing sets or shares, so it is always 0 and the color always 256 * 34. The line is
+    `PALETTE 2, 256 * 34`, which PDS 7.1 also compiles and where it changes nothing. Session 1's `12-cities` now
+    equals DOS's with both compilers. The report's closing `WIDTH , 30` needs nothing: `europe` draws the map
+    next and sets the palette itself. Drawing the circles and sloped lines with QB 4.5's pixels was put off, as
+    not part of the port's steps (user, 2026-11-09; `TODO.md`).
+
+### The measurements, in QB64Rust
+
+Each is a `verification\qb45\` program, recorded with QB 4.5 and PDS 7.1 by `tools\qb45\qb45.py` and run with
+QB64Rust and QB64pe, which gave the same output as each other.
+
+- **`q45_width_palette`** (Q-035): `WIDTH , 60` in `SCREEN 12` resets the palette in QB 4.5, QB64pe and QB64Rust,
+  and PDS 7.1 keeps it. The game was built with PDS 7.1, so DOS kept the City Report's green. The VGA's color
+  registers are read back with `INP(&H3C9)`, since QB 4.5 cannot read a palette entry.
+- **`q45_circle_pixels`** (Q-036): which pixels `CIRCLE` lights for radii 1 to 10 in `SCREEN 12` and `SCREEN 9`,
+  and for the game's three ellipses. QB 4.5 and PDS 7.1 give the same pixels; QB64 differs for radii 4, 6 and 9
+  in `SCREEN 12`, for 8 of the 10 in `SCREEN 9`, and for all three ellipses (12, 16 and 128 pixels).
+- **`q45_line_style`**, read again: a vertical line starts its style at its first point (item 45).
+
+### The checks
+
+- **`bridge --compiler both`**: all 16 runs of the sessions pass with both compilers, and the two compilers give
+  the same entries for each. Of the 305 shots, 34 are equal as they are and 270 are equal but for the known
+  differences, nearly all of them the city markers. The last is session 15's `15-new-high-score`, which the port
+  cannot take: DOS took it while the high score's music played after wait 83, and the port has no wait there.
+  Every file of the recordings is equal, or listed: `NWS9.SAV` of sessions 4, 5 and 10 (D12), and the
+  `OUTCOME.&&&` of session 9 with its battle.
+- **`tactical --compiler both`**: all six battles pass with both compilers, and the two give the same entries.
+- **`record`**: the 37 scripts gave the same entries in all four runs.
+- **The unit tests** (`qb64rust test tests`): 9 pass. **`test_play.py`**: 26 pass.
+- **QB64pe crashed once.** In one bridge run of 32 runs four at a time, QB64pe's build of
+  `09-1805-tactical-battle` ended with exit code 3221226356 (0xC0000374, a heap corruption) before its first
+  state. It passed in the five runs after, and in the four of `record` (`TODO.md`).
+
+### Coverage
+
+`play.py coverage` runs every script with a QB64Rust coverage build, and the unit tests with
+`qb64rust test --coverage`. A coverage build writes its counts only when the program ends, and a session's run
+is stopped once its last state is written, so for coverage each session gets one more `prompt`: no wait comes,
+and the screen tool ends the program after 20 seconds. The limit holds for every prompt of the run; with 3
+seconds, session 15 stopped at the name prompt after the high-score music, which only the check of the last
+prompt's line showed. Each program's report takes only its own files.
+
+| Program | Lines with a statement | Run or partly run |
+|---|---|---|
+| `WON.BAS` and its files | 3,279 | 88.2% |
+| `NAPOLEON.BAS` and its files | 2,568 | 73.9% |
+
+The unit tests reach 1 statement that no script reaches. What no script reaches is in `TODO.md`: Napoleon's
+exile (`WON1.BM` lines 1076 to 1088), `newcity` and `roman` in the strategic game, and `help`, `report` and
+most of `order` in the tactical game. Those last are the keys of the player's units, which the battles answer
+only with rest, F9, F10, a step south and Intell.
+
+### Step 8: the known differences
+
+`tests\known-differences.txt` has the lines; this is where each kind comes from.
+
+- **How QB64 draws** (Q-025 and Q-036): the city markers, the ships, the "RAID COMMERCE" mark and an army's
+  pointer on every map; the burning building of session 2's `07-turn-end`; the tombstone of session 4's
+  `27-next-turn` and `28-turn-end`; the ships and the picture of naval combat in session 14; the charging units
+  of battles b3 and b4. Whether the port should draw them with QB 4.5's pixels, as it does the roads, is for the
+  user (`TODO.md`).
+- **D12's rounding** (Q-022): the defender's Base on the battle panel, one off, in sessions 4, 8 and 11; a loss
+  on the status line and in the Battle Summary of session 4; the odds at Innsbruck in session 9; sessions 5 and 10
+  from the shot where the game takes another course; `NWS9.SAV` of sessions 4, 5 and 10; the losses and the
+  Esprit de Corps bar of battles b2 to b4.
+- **A shot the port cannot take**: session 15's `15-new-high-score`.
+- **The port's own tactical game**: the `OUTCOME.&&&` of session 9 with its battle.
+
+The step 7b check named the burning building and the naval combat as drawing differences, and the city
+markers; the ships on the map, the raid mark, the pointer and the tombstone are new. Each is masked by its
+measured pixels where the game's data places it, so a real difference near a city or a port still shows.

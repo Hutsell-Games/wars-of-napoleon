@@ -1289,7 +1289,9 @@ GOTO endrep
 '                               City Report
 '..........................................................................
 cityrep:
-CLS : LOCATE 1, 1: COLOR 14: WIDTH , 60
+' WIDTH , 60 resets the palette in QB64; PDS 7.1 kept europe's green 008A00 in entry 2
+' (QB64Rust's DIVERGENCES-QB45.md, Q-035). europe's look is always 0, so entry 2 is 256 * 34.
+CLS : LOCATE 1, 1: COLOR 14: WIDTH , 60: PALETTE 2, 256 * 34
 PRINT "City Report"; TAB(20); month$(month); ","; year: COLOR 15
 PRINT " #    City       Control   Value"; TAB(41); " #    City       Control   Value"
 FOR i = 1 TO 34: COLOR 7: a$ = nation$(cityo(i)): IF cityp(i) = 1 THEN COLOR 9: a$ = "French"

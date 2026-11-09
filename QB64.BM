@@ -19,13 +19,15 @@ END FUNCTION
 
 ' LINE (xa, ya)-(xb, yb), c, , style& with the pixels PDS 7.1 and QB 4.5 gave.
 ' QB64 starts the style at the first point, and steps to the next row halfway
-' along the line. The old compilers start at the left end (the bottom end of a
-' vertical line) and step earlier, from a first error of 3/4 of the longer
-' side. Measured with QB64Rust's verification\qb45\q45_line_style and
-' q45_line_pixels (DIVERGENCES-QB45.md Q-024 and Q-025).
+' along the line. The old compilers start at the left end and step earlier,
+' from a first error of 3/4 of the longer side. A vertical line has no left
+' end: there they start at the first point, as QB64 does, so a road drawn
+' from each of its cities gets two sets of dots. Measured with QB64Rust's
+' verification\qb45\q45_line_style and q45_line_pixels (DIVERGENCES-QB45.md
+' Q-024 and Q-025).
 SUB styledline (xa, ya, xb, yb, c, style&)
 x = xa: y = ya: x2 = xb: y2 = yb
-IF x > x2 OR (x = x2 AND y < y2) THEN SWAP x, x2: SWAP y, y2
+IF x > x2 THEN SWAP x, x2: SWAP y, y2
 sx = SGN(x2 - x): sy = SGN(y2 - y)
 ax = ABS(x2 - x): ay = ABS(y2 - y)
 IF ax >= ay THEN n = ax: d = ay ELSE n = ay: d = ax
