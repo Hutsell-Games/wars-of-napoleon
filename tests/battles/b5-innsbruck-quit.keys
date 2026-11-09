@@ -1,0 +1,22 @@
+# b5-innsbruck-quit: the battle of session 9 (Innsbruck, 1805), played by the Allies, who
+# defend. At the first order the player takes Intell, then quits with F10 at the map cursor.
+# F10 writes no OUTCOME.&&& (TODO.md, "The game"), so the run must write none, as DOS did.
+# The battle's BATTLE.$$$ is b5-innsbruck-quit.battle.
+# seed 1 (NAP_SEED)
+
+# A TICK of a second or more: any key ends it. A "hit a key" pause: a space.
+rule 3 key f12
+rule 1 key space
+play until 5
+# shot first-order
+state
+text i
+play until 6
+# shot intell
+state
+key f10
+# F10 ends the program by the SYSTEM of NAPOLEON.BAS, after scriptend("Q").
+play until 7:Q
+# shot result
+state
+key f12

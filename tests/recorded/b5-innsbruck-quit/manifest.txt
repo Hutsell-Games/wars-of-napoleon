@@ -1,0 +1,6 @@
+# b5-innsbruck-quit: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 8edfbe8206daf0487eeb7fa803d0a292ba4290c3c028aa9267added7c371f91d
+149d8af6183446cf6d5de95342f840b726708181d0aa8becf83cfd40a681cf81  shots/01-first-order.png
+cd0594633cd2734474e1f5ebc1fa10b87785adf9cf48983d77d93c1bf43300b8  shots/02-intell.png
+0b1000d19df8fbf93f1e7e15a0bdc7fe62f767867d04b0b191b04955c2110877  shots/03-result.png

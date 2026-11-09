@@ -43,6 +43,18 @@ IF sec! >= 1 THEN DO WHILE INKEY$ = "": LOOP
 scripttick% = -1
 END FUNCTION
 
+' Called right before each SYSTEM that ends the battle, once OUTCOME.&&& is
+' written if it is. It announces a wait at place 7, with the letter that
+' says how the battle ended: O by over (time up, or a retreat), W by
+' wipeout with time left, Q by F10. When the program is scripted it waits
+' for a key, so that a script can take the state of the last screen: the
+' PDS 7.1 runtime goes back to text mode at SYSTEM. In normal play it does
+' nothing.
+SUB scriptend (letter$)
+CALL announce(7, letter$)
+IF scripted THEN DO WHILE INKEY$ = "": LOOP
+END SUB
+
 ' Says that the program is about to wait for a key, when it is scripted or
 ' traced. place names the kind of wait (1 to 255) and letter$ narrows it
 ' (its first character, or ""). The places are the strategic game's where
@@ -52,6 +64,7 @@ END FUNCTION
 '   3  TICK of a second or more
 '   5  the command for a unit (order, wait3)
 '   6  the cursor on the map: move, intelligence, inspire (order, wait5)
+'   7  the end of the battle, before SYSTEM (scriptend)
 ' Byte &H4F1 holds the place, &H4F2 the letter, and &H4F0 counts the waits:
 ' QB64Rust's tools\screen\README.md, "Prompts". It leaves DEF SEG at 0, as
 ' BuffClear does.

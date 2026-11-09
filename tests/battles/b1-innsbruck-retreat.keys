@@ -1,0 +1,22 @@
+# b1-innsbruck-retreat: the battle of session 9 (Innsbruck, 1805), played by the Allies, who
+# defend. The player retreats with F9 at the first unit's order and answers Yes.
+# One keys file for the PDS 7.1 build in DOSBox-X (tools/play/play.py --napoleon) and the
+# QB64 builds (tests/play.py tactical). The battle's BATTLE.$$$ is b1-innsbruck-retreat.battle.
+# seed 1 (NAP_SEED)
+
+# A TICK of a second or more: any key ends it. A "hit a key" pause: a space.
+rule 3 key f12
+rule 1 key space
+play until 5
+# shot first-order
+state
+key f9
+play until 2:R
+# shot retreat-ask
+state
+text y
+# over writes OUTCOME.&&& and waits at place 7 before it exits (scriptend).
+play until 7:O
+# shot result
+state
+key f12

@@ -1,0 +1,6 @@
+# b4-innsbruck-advance: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 b0babb211ac948ca620bc6495f73a48d7e9d8056826b8284b507c0f7bf22101f
+a79315470d7ef4dab06256a02ba8af8a78ff7cd9f48e08a3f9427597b43e4888  files/OUTCOME.&&&
+24aea21412d1f0327e4861240c2acf27d900242e2304e2bf1b7f93d9a290a3d6  shots/01-first-order.png
+833afc30fb13159fe95dd1b80506cdc64e5f21c848a3b6ef9182d93f54f95f71  shots/02-result.png

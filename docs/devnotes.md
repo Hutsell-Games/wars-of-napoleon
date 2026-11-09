@@ -1014,3 +1014,91 @@ of step 6 does not arise.
 only logs the waits. A tactical keys file has no recording behind it, so its keys must come at announced waits,
 as the screen tool gives them to the QB64 builds. That needs a mode that holds the next key until the count at
 `0:4F0h` changes. Trace mode already reads that count at every tick, so the new mode is small.
+
+## Step 7b: the tactical references (2026-11-09)
+
+The references of D3: five battles of the tactical game alone. One keys file per battle plays the PDS 7.1 build
+in DOSBox-X and both QB64 builds.
+
+### The changes
+
+30. **`PLAYKEYS.COM` has a hold mode** (`tools/play/playkeys.py`, `build_hold_com`). It plays the steps of
+    QB64Rust's screen tool in DOS: `prompt`, `key`, `text`, `state`, `rule` and `play until`, with the same
+    meaning (QB64Rust's `tools\screen\README.md`, "The keys file"). A key waits until the BIOS buffer is empty. A
+    `prompt` waits for the next announced wait. A `play until` answers each wait by its rule. A `state` is a
+    screenshot, and the next step waits 4 ticks so that it is drawn first. A wait that no rule answers, or a
+    second wait that no step took, fails the script. The program then logs the reason, takes a screenshot and
+    stops the machine. It logs the waits as trace mode does, but does not hook INT 16h. The plain and trace
+    builds are byte for byte as before: the trace mode's routines moved into functions that both builds call.
+31. **`tools/play/play.py --napoleon NAPOLEON.EXE`** plays the keys files of `tests\battles\` with a PDS build
+    of the tactical game, alone. The run's folder gets the battle's `BATTLE.$$$` (`<name>.battle` beside the keys
+    file) and no `OUTCOME.&&&`, so the one at the end is the battle's. The autoexec sets `NAP_SEED`. The harness
+    reads the guest's memory file while DOSBox-X runs, so a failed script ends the run at once with the reason
+    and `shots\fail.png`. After the game, `ENDMARK.COM` announces a wait at place 255, so a script that missed the
+    end fails at once instead of at the run's limit of 900 seconds. `run`, `record` and `check` work as for the
+    strategic game, and recordings go to `tests\recorded\<battle>\`.
+32. **`scriptend`, a hook before each `SYSTEM` of the tactical game** (`NAPSCRIPT.BM`). The PDS runtime goes
+    back to text mode at `SYSTEM`, so DOS's screen at exit is a black text screen, and a script could not take
+    the battle's last screen. `scriptend` announces a wait at place 7 and, when the program is scripted, waits
+    for a key. Its letter says how the battle ended: `O` in `over` (after `OUTCOME.&&&` is written: the time is
+    up, or a retreat), `W` in `wipeout` with time left, `Q` at F10 (`NAPOLEON.BAS`). In normal play it does
+    nothing. Each battle's script ends with `play until 7`, a `state` and a key.
+33. **`tests/play.py tactical`** builds `NAPOLEON.BAS` with the screen hook, plays each battle with QB64Rust and
+    QB64pe, and holds each run to the DOS recording. With both compilers it also holds the two runs' states to
+    each other.
+34. **The text of `SCREEN 9` is compared by character.** QB64 has no 8 × 14 font (Q-023), so almost every
+    character differs from DOS's by a few pixels. `play.py font` dumps DOSBox-X's 8 × 14 font to
+    `tests\recorded\dosbox-x-font-8x14.bin` with a 40-byte DOS program (`INT 10h AX = 1130h`). `tests\font9.bas`
+    prints every character in `SCREEN 9` under the screen tool, which gives QB64's glyphs. A cell of 8 × 14
+    pixels that differs counts as equal when one character, drawn with each side's glyph in one color, explains
+    every pixel that differs. A row that is one color across and the same on both sides needs no glyph, so text
+    with a line through it, or with a box drawn over its lower part, counts too. A check that swapped two glyphs
+    in QB64's table (A and B, 1 and 7, e and c, O and Q, l and 1) found each swap on the screens that showed them.
+35. **`OUTCOME.&&&` is compared by value.** PDS 7.1 writes a DOUBLE with 15 digits, QB 4.5 and QB64 with 16
+    (Q-021): `.57999998703599` against `.5799999870359898`. A field counts as equal when QB64's number, rounded to
+    15 digits, is DOS's.
+
+### The battles
+
+| Battle | What it plays | Waits in DOS |
+|---|---|---|
+| `b1-innsbruck-retreat` | Session 9's `BATTLE.$$$`, the Allies defending. F9 and Yes at the first order | 5 |
+| `b2-innsbruck-defend` | The same battle. Every Allied unit rests to the time limit; the French attack | 774 |
+| `b3-waterloo-attack` | The `BATTLE.$$$` the game ships (Waterloo, both above 2,000). The French player rests to the time limit | 1,968 |
+| `b4-innsbruck-advance` | Session 9's battle, the French player attacking: each unit steps south, then rests | 2,041 |
+| `b5-innsbruck-quit` | Session 9's battle, the Allies defending. Intell at the first order, then F10 at the map cursor | 4 |
+
+The rules: a `TICK` takes F12, "hit a key" a space, the combat menu Enter (Light Skirmish), and "Limber ?" `y`.
+In b4 a unit's order is Down and two spaces. The two spaces reach the next waits before any rule is looked at,
+so a unit that cannot step south ends its pause and rests, instead of trying the step for ever. A first version
+gave Down, F12 and Space. F12 and Space went to the "Limber ?" menu, which ignores them, and the game looped.
+
+Each battle was recorded twice in DOSBox-X with the same screens and files. b2 to b4 take 37 to 95 seconds each.
+
+### The result
+
+b1 to b4 end in `over` (`scriptend("O")`), and b5 at F10 (`scriptend("Q")`); b5 writes no `OUTCOME.&&&`, in
+DOS and in QB64. No battle reaches `scriptend("W")`, a side wiped out with time left (`TODO.md`).
+
+**All five battles stay in step in both QB64 builds:** every announced wait comes in the same order as in DOS,
+and the runs end at `scriptend` as DOS's did. A difference in the random numbers would have moved the waits.
+So the 29 rewritten conditions (change 28) draw what PDS 7.1 draws. The QB64Rust and QB64pe builds give the same
+states in every battle.
+
+b1 and b5 give their recordings: every shot, and b1's `OUTCOME.&&&`. The others differ in a few places:
+
+- **The losses of b2 and b3**, by a few men. b2: DOS 640 and 1,622, QB64 639 and 1,618. b3: DOS 12,590 and
+  5,609, QB64 12,591 and 5,608. The result screen shows the same numbers. b4's losses are equal. The tactical
+  game computes most losses as an INTEGER set from a SINGLE product, as in `dx = .05 * strength(defend)`
+  (`NAP1.BM` line 65), `rout = 1 + .05 * strength(index)` and `killed = 1 + .02 * strength(index) + rout`
+  (`NAP1A.BM` lines 944 and 993). This is D12's kind (Q-022): the x87 keeps the product wider, and QB64 rounds a
+  half to the even integer. Not measured line by line. A logging copy, as for session 5's missing wait, would
+  show which lines.
+- **The "Esprit de Corps" bar of b4's result**, one character. `expire` sets the INTEGER `x = elan(sidex(1)) * .1`
+  (`NAP1A.BM` lines 384 and 390), the length of the bar. D12's kind again.
+- **The icon of a charging infantry unit** (b3 and b4, 6 to 12 pixels on the first screen). `SHOWUNIT` draws
+  `CIRCLE (x + 6, y + 6), 4, c` over the icon, and QB64 draws a circle of radius 4 with other pixels than DOS.
+  This is the city markers' difference (`TODO.md`).
+
+By D12's ruling (a), the rounding stays QB64's. The step 8 references of the tactical game are the QB64 builds'
+own, held to these recordings through the list above.

@@ -32,6 +32,28 @@ are not compared yet. For each shot that differs, `tests\out\qb64\run\<session>-
 the recorded screen dimmed, with the pixels that differ in magenta. Step 8 adds the port's own references and the
 other commands.
 
+`battles\` holds the tactical game's references (step 7b, D3). Each battle is a keys file in the screen tool's
+format and its `BATTLE.$$$` as `<name>.battle`. The same keys file plays the PDS 7.1 build in DOSBox-X
+(`tools\play\play.py --napoleon`, which records `recorded\<battle>\`) and the QB64 builds:
+
+```
+python -I tests/play.py tactical [--compiler rust|pe|both] [--jobs N] [battle ...]
+```
+
+It holds each run to the DOS recording: the shots, and `OUTCOME.&&&` by value, since PDS 7.1 writes a DOUBLE
+with 15 digits and QB64 with 16. The text of `SCREEN 9` is compared by character, each side drawn with its
+own 8 × 14 font: DOSBox-X's from `recorded\dosbox-x-font-8x14.bin` (`play.py font`), QB64's from
+`font9.bas`. With both compilers it also holds the two runs' states to each other. What still differs from DOS,
+and why, is in `docs\devnotes.md`, "Step 7b: the tactical references".
+
+| Battle | What it plays |
+|---|---|
+| `b1-innsbruck-retreat` | Session 9's battle at Innsbruck, the Allies defending. F9 and Yes at the first order |
+| `b2-innsbruck-defend` | The same battle. Every Allied unit rests to the time limit, while the French attack |
+| `b3-waterloo-attack` | The `BATTLE.$$$` the game ships: Waterloo, the French player resting to the time limit |
+| `b4-innsbruck-advance` | Session 9's battle, the French player attacking: each unit steps south, then rests |
+| `b5-innsbruck-quit` | Session 9's battle, the Allies defending. Intell at the first order, then F10, which quits and writes no `OUTCOME.&&&` |
+
 | Session | What it covers |
 |---|---|
 | `01-1796-french` | 1796 as the French, Tactical off. The intro, the start menu, every menu and page once, Recruit, Moves, Fortify, Files → Save, and two turn ends with the Allies' moves. |

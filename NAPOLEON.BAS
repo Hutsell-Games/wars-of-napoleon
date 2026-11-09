@@ -98,7 +98,7 @@ CALL refresh
     
 nother: CALL order: IF LEN(file$) > 1 GOTO nother
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-IF file$ = "๔" THEN file$ = "": SYSTEM
+IF file$ = "๔" THEN file$ = "": CALL scriptend("Q"): SYSTEM
 IF file$ = "๕" THEN file$ = "": flag = 0: GOTO menu7
 GOTO nother
 'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป

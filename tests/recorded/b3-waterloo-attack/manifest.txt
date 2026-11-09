@@ -1,0 +1,6 @@
+# b3-waterloo-attack: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 430b3e6bbf43d9704c978d0b68bc5d331fd699699986c139d574f474f51dbece
+6b26636815f6d99de2cfe888d29de56bb5e8e27fcd7c7c1346e8d9af9e7ac4db  files/OUTCOME.&&&
+5605f92595d67b5ee26388570406806692caab23fd19f537670225ba2fcbe775  shots/01-first-order.png
+40678ec013926e3cd65a012606bc7319b35274aa0081d6df29a1b7cb26d38efa  shots/02-result.png

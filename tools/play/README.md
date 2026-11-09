@@ -132,6 +132,54 @@ types `key space` for each pause, which DOS never typed, and a key typed ahead i
 make a check skip a `TICK` that DOS ran, so that every later prompt is answered one wait off. Step 7b settles
 this (`docs\devnotes.md`, "Step 7a").
 
+## Hold mode and the battles of the tactical game
+
+This is step 7b of `docs\port-study.md`, the references of D3. The tactical game has no recording from its
+source, so its scripts cannot be timed keys. `--napoleon` plays a PDS 7.1 build of the tactical game
+(`tools\pdsbuild.py --game napoleon`) alone, from the keys files of `tests\battles\`:
+
+```
+python -I tools/pdsbuild.py --game napoleon tests/out/pds-napoleon
+python -I tools/play/play.py record --napoleon tests/out/pds-napoleon/NAPOLEON.EXE tests/battles/*.keys
+python -I tools/play/play.py font      # DOSBox-X's 8 x 14 font, for tests/play.py tactical
+```
+
+A battle's keys file is in the format of QB64Rust's screen tool (`tools\screen\README.md` there, "The keys
+file"), so the same file plays the QB64 builds (`tests\play.py tactical`). `PLAYKEYS.COM` runs in hold mode,
+which plays these steps in DOS:
+
+| Step | In hold mode |
+|---|---|
+| `key NAME`, `text CHARS` | each key waits until the BIOS keyboard buffer is empty |
+| `prompt` | waits until the game announces its next wait |
+| `state` | a screenshot, named by a `# shot NAME` line before it; the next step waits 4 ticks |
+| `rule PLACE[:LETTER] KEYS` | from now on, `play until` answers a wait at that place with these keys |
+| `play until PLACE[:LETTER]` | answers each wait by its rule until one at that place, which counts as a prompt |
+| `repeat N` … `end` | unrolled by the harness |
+
+The first key of a rule answers the wait; its other keys go one by one to the waits that follow, before any rule
+is looked at, as in the screen tool. A wait that no rule answers, or a second wait that no step took, fails the
+script: `PLAYKEYS.COM` logs the reason, takes a screenshot and stops the machine. The harness reads the guest's
+memory file while DOSBox-X runs, so it sees the failure at once and prints the reason, with the screen in
+`shots\fail.png`.
+
+A battle's `BATTLE.$$$` is the file `<name>.battle` beside its keys file, and `# seed N (NAP_SEED)` gives its
+seed. The run's folder has no `OUTCOME.&&&`, so the one at the end is the battle's. Each battle ends at
+`scriptend` (`NAPSCRIPT.BM`): before each `SYSTEM`, the game announces a wait at place 7 and waits for a key.
+The PDS runtime goes back to text mode at `SYSTEM`, so this is where the last screen can be taken. A script
+ends with `play until 7`, a `state` and a key. After the game, `ENDMARK.COM` announces a wait at place 255, so
+a script that missed the end fails at once. A run stops after 900 seconds.
+
+The places of the tactical game's waits are listed in `NAPSCRIPT.BM`.
+
+**`scriptend` waits in every scripted battle, also one that the strategic game starts.** Under a script,
+`scriptbattle` (`SCRIPT.BM`) runs the tactical game with the keys file `<keys>.battle<n>`. That file must end
+with a key at place 7, after `play until 7`. Without it the tactical game waits there for ever. `won.exe`
+waits for it, until its own screen tool gives up after 30 seconds and ends it with exit code 124. Nothing ends
+`napoleon.exe`: it is likely left running on the hidden desktop, where no one sees it. So if `won.exe` ends with
+124 after a battle, look for a `napoleon.exe` in the task list and stop it. D4's second run of session 9 in step
+8 is the first such run.
+
 ## Script format
 
 One command per line. `#` starts a comment, except in a `type` line.
@@ -191,5 +239,5 @@ Learned while writing sessions 3 to 15:
 |---|---|
 | `play.py` | the harness: `run`, `record`, `check` |
 | `wonseed.py` | makes `WONSEED.EXE`; also a command (`wonseed.py WON.EXE OUT.EXE --seed N`) |
-| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file), its trace mode and the key file format |
+| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file), its trace and hold modes and the key file formats, and `FONTDUMP.COM` |
 | `sessions.py` | writes the announce-driven keys files of `tests\sessions\` from the trace runs |

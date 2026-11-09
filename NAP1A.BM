@@ -681,7 +681,7 @@ hundredth! = .01
 WRITE #1, 3 - sidex(flag), hundredth! * CDBL(score&(sidex(1))), hundredth! * CDBL(score&(sidex(2)))    'scale down unit size
 CLOSE #1
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-SYSTEM
+CALL scriptend("O"): SYSTEM
 END SUB
 
 SUB proximity (index, bonus)
@@ -1305,7 +1305,7 @@ IF dx > 0 AND dy > 0 THEN EXIT SUB
 s = 2: IF dx = 0 THEN s = 1
 COLOR 14: CALL clrbot: PRINT sname$(s); " forces ANNIHILATED : Bonus = 250"; : vp&(3 - s) = vp&(3 - s) + 250
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-CALL TICK(99): CALL expire: CALL TICK(99): SYSTEM
+CALL TICK(99): CALL expire: CALL TICK(99): CALL scriptend("W"): SYSTEM
 
 END SUB
 

@@ -595,6 +595,14 @@ changes is either a mistake or is named in the commit message.
      Both programs build with no warning in all three compilers. The game's hooks already announce each wait
      in DOS, so the references need only a mode of `PLAYKEYS.COM` that holds each key until a wait is
      announced (`docs\devnotes.md`, "Step 7b: the tactical game's conditions").
+     **The tactical references are made (2026-11-09).** `PLAYKEYS.COM`'s hold mode plays the screen tool's
+     steps in DOS, so one keys file of `tests\battles\` plays the PDS build and both QB64 builds. Five battles
+     are recorded: an F9 retreat, the Allies resting to the time limit, Waterloo, the French advancing, and an
+     F10 quit. A new hook, `scriptend`, waits before each `SYSTEM`, so that a script can take the battle's last
+     screen. All five battles stay in step in both QB64 builds, so the rewritten conditions draw what PDS 7.1 draws. What
+     differs: a few men of the losses in two battles and one bar, by D12's rounding, and the circle of a
+     charging unit's icon. `SCREEN 9` text is compared by character with each side's 8 × 14 font
+     (`docs\devnotes.md`, "Step 7b: the tactical references"). That ends step 7.
 
    While the bridge is used, every edit of the port must also compile with PDS 7.1, so a QB64-only statement
    goes into `QB64.BM` with its PDS form in `PDS.BM`. The bridge is kept until the first refactoring of the

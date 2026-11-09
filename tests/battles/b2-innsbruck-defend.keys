@@ -1,0 +1,21 @@
+# b2-innsbruck-defend: the battle of session 9 (Innsbruck, 1805), played by the Allies, who
+# defend. Every unit of the player rests, each turn, until the time is up; the computer's
+# French attack. The battle's BATTLE.$$$ is b2-innsbruck-defend.battle.
+# seed 1 (NAP_SEED)
+
+# A TICK of a second or more: any key ends it. A "hit a key" pause: a space. A unit's
+# order: a space, which rests it.
+rule 3 key f12
+rule 1 key space
+# The combat menu of a unit of the player that fights: Enter, the first item (Light Skirmish).
+rule 2:C key enter
+play until 5
+# shot first-order
+state
+key space
+rule 5 key space
+# over writes OUTCOME.&&& and waits at place 7 before it exits (scriptend).
+play until 7
+# shot result
+state
+key f12
