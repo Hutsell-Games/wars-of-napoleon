@@ -36,6 +36,9 @@ seeds itself, so it is not patched: the autoexec sets `WON_SEED` (the script's s
 folder also gets `ARCH2.EXE`, `VIC.EXE`, `NAPIC.EXE` and `NAPOLEON.EXE` from git (`7738434`), as the recordings
 had them (`docs\port-study.md`, step 7). So a QB64 build of the port in the repo's folder does not change the run.
 
+With `--port`, `PLAYKEYS.COM` also runs in trace mode (below), and the run's folder gets `trace.json`, its log.
+`sessions.py` turns that log into the keys file of `tests\sessions\` (below).
+
 On the branch `qb64rust`, a build of the port in the repo's folder overwrites `WON.EXE` and `NAPOLEON.EXE`,
 and `ARCH2.EXE`, `VIC.EXE` and `NAPIC.EXE` are not there (`docs\devnotes.md`, step 5). To replay with the
 shipped programs, run the harness in a worktree of `main`, which has all five: `git worktree add
@@ -85,6 +88,49 @@ give the same 49 screens and the same 4 files.
 
 DOSBox-X's own `AUTOTYPE` command was tried first and dropped. DOS cuts a command line at 127 characters,
 which is a dozen keys, and its timing follows the host's clock.
+
+## Trace mode and the announce-driven keys files
+
+This is step 7a of `docs\port-study.md`. The port announces each wait for a key in the BIOS's
+intra-application area: `0:4F0h` counts the waits, and `0:4F1h` and `0:4F2h` hold the place and letter
+(`SCRIPT.BM`, `announce`). In trace mode, `PLAYKEYS.COM` logs three things:
+
+- at each timer tick where the count changed, a sample: the tick, the total of waits so far, the place and
+  the letter. The total is 16 bits. The game can announce up to 8 waits in one tick, so a sample holds only
+  the last of them;
+- each key it types and each screenshot, with the total at that moment;
+- each key a program reads. `PLAYKEYS.COM` also hooks INT 16h, and logs each read (AH = 00h or 10h) after
+  it returns: the key, the buffer slot it came from, and the PSP of the program that read it. DOS reads the
+  keyboard through INT 16h too, so `INKEY$` and `INPUT` both show.
+
+The log is kept in the part of the key buffer that `KEYS.BIN` does not fill. So the program stays resident
+with the same number of paragraphs as the plain `PLAYKEYS.COM`, and the game loads at the same address as in
+the recordings. The plain mode is byte for byte the program that made the recordings. DOSBox-X maps the
+guest's memory to `MEMORY.BIN` in the run's folder (`memory file=`). After the run, `play.py` finds the log
+there by its magic `PKTRACE1`, writes `trace.json`, and deletes the 16 MB file.
+
+`sessions.py` reads `trace.json` and writes `tests\sessions\<name>.keys` in the format of QB64Rust's screen
+tool:
+
+```
+python -I tools/play/play.py check --port <PDS build>\WON.EXE tests/scripts/*.keys
+python -I tools/play/sessions.py tests/scripts/*.keys
+python -I tools/play/sessions.py --check tests/scripts/*.keys    # exit 1 if a file would change
+```
+
+Each wait the strategic game announced becomes a `prompt`. The wait's keys follow it. A pause that read no
+key gets `key space`, which a scripted `TICK` waits for and throws away (D2). Each screenshot becomes a
+`state` after the prompt of the wait at which DOS took it. The file leaves out the keys read by the other
+programs (told apart by their PSP) and their screens (told apart by their video mode). It also leaves out the
+shots named `dos`. The file's header lists all of these. It also lists the keys that were typed before their
+wait was announced, and every finding that step 7b must look at. `sessions.py` prints the same findings.
+
+**Known limit: the four `PEEK(1052) = 30` checks of naval combat** (`WON2.BM` lines 1024 to 1091). Each one
+guards a `TICK`. It reads the buffer's tail, which every key typed moves on and only `BuffClear` sets back to
+30. So it asks whether a key was typed since the last `BuffClear`, not whether one is waiting. A scripted run
+types `key space` for each pause, which DOS never typed, and a key typed ahead in DOS comes later. Either can
+make a check skip a `TICK` that DOS ran, so that every later prompt is answered one wait off. Step 7b settles
+this (`docs\devnotes.md`, "Step 7a").
 
 ## Script format
 
@@ -145,4 +191,5 @@ Learned while writing sessions 3 to 15:
 |---|---|
 | `play.py` | the harness: `run`, `record`, `check` |
 | `wonseed.py` | makes `WONSEED.EXE`; also a command (`wonseed.py WON.EXE OUT.EXE --seed N`) |
-| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file) and the key file format |
+| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file), its trace mode and the key file format |
+| `sessions.py` | writes the announce-driven keys files of `tests\sessions\` from the trace runs |

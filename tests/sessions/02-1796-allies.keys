@@ -1,0 +1,168 @@
+# 02-1796-allies: the session of tests/scripts/02-1796-allies.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 214 waits; 36 keys typed: 35 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+#   shot 13-dos: left out, the DOS prompt after Quit
+
+# wait 1, place 3
+prompt
+key space
+# wait 2, place 3:S
+prompt
+key space
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+key enter
+# wait 5, place 3
+prompt
+# shot 01-objective
+state
+key space
+# wait 6, place 2:M
+prompt
+text u
+# wait 7, place 2:U
+prompt
+text t
+# wait 8, place 2:U
+prompt
+key esc
+# wait 9, place 2:M
+prompt
+# shot 02-main-menu
+state
+text e
+# wait 10, place 2:E
+prompt
+text y
+# waits 11 to 58: pauses that read no key in DOS
+repeat 48
+prompt
+key space
+end
+# wait 59, place 3
+prompt
+# shot 03-turn-end
+state
+key space
+# wait 60, place 2:M
+prompt
+key space
+# wait 61, place 2:M
+prompt
+key space
+# wait 62, place 2:M
+prompt
+key space
+# wait 63, place 2:M
+prompt
+key space
+# wait 64, place 2:M
+prompt
+key space
+# wait 65, place 2:M
+prompt
+# shot 04-next-turn
+state
+text e
+# wait 66, place 2:E
+prompt
+text y
+# waits 67 to 100: pauses that read no key in DOS
+repeat 34
+prompt
+key space
+end
+# wait 101, place 3
+prompt
+# shot 05-turn-end
+state
+key space
+# waits 102 to 130: pauses that read no key in DOS
+repeat 29
+prompt
+key space
+end
+# wait 131, place 3
+prompt
+key space
+# wait 132, place 2:M
+prompt
+key space
+# wait 133, place 2:M
+prompt
+key space
+# wait 134, place 2:M
+prompt
+key space
+# wait 135, place 2:M
+prompt
+key space
+# wait 136, place 2:M
+prompt
+# shot 06-next-turn
+state
+text e
+# wait 137, place 2:E
+prompt
+text y
+# waits 138 to 201: pauses that read no key in DOS
+repeat 64
+prompt
+key space
+end
+# wait 202, place 3
+prompt
+# shot 07-turn-end
+state
+key space
+# wait 203, place 2:E
+prompt
+key space
+# wait 204, place 2:E
+prompt
+key space
+# wait 205, place 2:E
+prompt
+key space
+# wait 206, place 2:E
+prompt
+key space
+# wait 207, place 2:E
+prompt
+key space
+# wait 208, place 2:E
+prompt
+# shot 08-french-win
+state
+text y
+# wait 209, place 3
+prompt
+# shot 09-battle-summary
+state
+key space
+# wait 210, place 3
+prompt
+key space
+# wait 211, place 3
+prompt
+# shot 10-hall-of-fame
+state
+key space
+# wait 212, place 3
+prompt
+# shot 11-game-over
+state
+key space
+# wait 213, place 3:S
+prompt
+key space
+# wait 214, place 2:W
+prompt
+# shot 12-start-menu
+state

@@ -1,0 +1,231 @@
+# 03-1805-two-players: the session of tests/scripts/03-1805-two-players.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 101 waits; 45 keys typed: 44 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+
+# wait 1, place 3
+prompt
+key space
+# wait 2, place 3:S
+prompt
+key space
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+key down
+# wait 5, place 2:S
+prompt
+# shot 01-start-year
+state
+key enter
+# wait 6, place 3
+prompt
+# shot 02-objective
+state
+key space
+# wait 7, place 2:M
+prompt
+# shot 03-main-menu
+state
+text u
+# wait 8, place 2:U
+prompt
+text a
+# wait 9, place 2:U
+prompt
+text 1
+# wait 10, place 2:U
+prompt
+text t
+# wait 11, place 2:U
+prompt
+# shot 04-utility
+state
+key esc
+# wait 12, place 2:M
+prompt
+# shot 05-french-turn
+state
+text m
+# wait 13, place 2:F
+prompt
+# shot 06-french-moves
+state
+text s
+# wait 14, place 2:T
+prompt
+# shot 07-french-move-to
+state
+key enter
+# wait 15, place 3
+prompt
+key space
+# wait 16, place 2:M
+prompt
+# shot 08-french-moved
+state
+text e
+# wait 17, place 2:E
+prompt
+text y
+# wait 18, place 1
+prompt
+# shot 09-allies-player-turn
+state
+key space
+# wait 19, place 2:M
+prompt
+# shot 10-allies-menu
+state
+text r
+# wait 20, place 2:R
+prompt
+# shot 11-allies-recruit
+state
+key enter
+# wait 21, place 3
+prompt
+key space
+# wait 22, place 2:R
+prompt
+# shot 12-allies-recruited
+state
+key esc
+# wait 23, place 2:M
+prompt
+text m
+# wait 24, place 2:F
+prompt
+# shot 13-allies-moves
+state
+text i
+# wait 25, place 2:T
+prompt
+# shot 14-allies-move-to
+state
+key enter
+# wait 26, place 3
+prompt
+key space
+# wait 27, place 2:M
+prompt
+# shot 15-allies-moved
+state
+text e
+# wait 28, place 2:E
+prompt
+text y
+# waits 29 to 57: pauses that read no key in DOS
+repeat 29
+prompt
+key space
+end
+# wait 58, place 3
+prompt
+# shot 16-month-end
+state
+key space
+# wait 59, place 3:S
+prompt
+key space
+# wait 60, place 3
+prompt
+# shot 17-events-a
+state
+key space
+# wait 61, place 3
+prompt
+key space
+# wait 62, place 2:R
+prompt
+# shot 18-retreat
+state
+text t
+# waits 63 to 78: pauses that read no key in DOS
+repeat 16
+prompt
+key space
+end
+# wait 79, place 3
+prompt
+# shot 19-end-date
+state
+key space
+# wait 80, place 3
+prompt
+# shot 20-press-a-key
+state
+key space
+# wait 81, place 1
+prompt
+# shot 21-french-player-turn
+state
+key space
+# wait 82, place 2:M
+prompt
+# shot 22-french-menu-july
+state
+text e
+# wait 83, place 2:E
+prompt
+text y
+# wait 84, place 1
+prompt
+# shot 23-allies-player-turn-july
+state
+key space
+# wait 85, place 2:M
+prompt
+text i
+# wait 86, place 2:I
+prompt
+key down
+# wait 87, place 2:I
+prompt
+key enter
+# wait 88, place 3
+prompt
+# shot 24-allied-armies
+state
+key space
+# wait 89, place 2:M
+prompt
+text u
+# wait 90, place 2:U
+prompt
+# shot 25-allies-utility
+state
+key esc
+# wait 91, place 2:M
+prompt
+text e
+# wait 92, place 2:E
+prompt
+text y
+# waits 93 to 96: pauses that read no key in DOS
+repeat 4
+prompt
+key space
+end
+# wait 97, place 1
+prompt
+# shot 26-month-end-july
+state
+key space
+# wait 98, place 2:M
+prompt
+key space
+# wait 99, place 2:M
+prompt
+key space
+# wait 100, place 2:M
+prompt
+key space
+# wait 101, place 2:M
+prompt
+# shot 27-september
+state

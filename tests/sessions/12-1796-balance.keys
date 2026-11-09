@@ -1,0 +1,384 @@
+# 12-1796-balance: the session of tests/scripts/12-1796-balance.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. Each prompt is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 334 waits; 100 keys typed: 99 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+
+# wait 1, place 3
+prompt
+key space
+# wait 2, place 3:S
+prompt
+key space
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+# shot 01-start-year
+state
+key enter
+# wait 5, place 3
+prompt
+# shot 02-objective
+state
+key space
+# wait 6, place 2:M
+prompt
+text u
+# wait 7, place 2:U
+prompt
+text t
+# wait 8, place 2:U
+prompt
+text b
+# wait 9, place 2:B
+prompt
+# shot 03-balance-menu
+state
+key down
+# wait 10, place 2:B
+prompt
+key down
+# wait 11, place 2:B
+prompt
+key enter
+# wait 12, place 2:U
+prompt
+# shot 04-french-plus-plus
+state
+key esc
+# wait 13, place 2:M
+prompt
+text r
+# wait 14, place 2:R
+prompt
+# shot 05-recruit-funds
+state
+key esc
+# wait 15, place 2:M
+prompt
+text e
+# wait 16, place 2:E
+prompt
+text y
+# waits 17 to 64: pauses that read no key in DOS
+repeat 48
+prompt
+key space
+end
+# wait 65, place 3
+prompt
+# shot 06-turn-end
+state
+key esc
+# wait 66, place 2:M
+prompt
+key esc
+# wait 67, place 2:M
+prompt
+key esc
+# wait 68, place 2:M
+prompt
+key esc
+# wait 69, place 2:M
+prompt
+key esc
+# wait 70, place 2:M
+prompt
+key esc
+# wait 71, place 2:M
+prompt
+key esc
+# wait 72, place 2:M
+prompt
+key esc
+# wait 73, place 2:M
+prompt
+key esc
+# wait 74, place 2:M
+prompt
+key esc
+# wait 75, place 2:M
+prompt
+key esc
+# wait 76, place 2:M
+prompt
+key esc
+# wait 77, place 2:M
+prompt
+key esc
+# wait 78, place 2:M
+prompt
+key esc
+# wait 79, place 2:M
+prompt
+key esc
+# wait 80, place 2:M
+prompt
+key esc
+# wait 81, place 2:M
+prompt
+# shot 07-next-turn
+state
+text e
+# wait 82, place 2:E
+prompt
+text y
+# waits 83 to 125: pauses that read no key in DOS
+repeat 43
+prompt
+key space
+end
+# wait 126, place 3
+prompt
+# shot 08-turn-end
+state
+key esc
+# waits 127 to 148: pauses that read no key in DOS
+repeat 22
+prompt
+key space
+end
+# wait 149, place 3
+prompt
+key esc
+# wait 150, place 2:M
+prompt
+key esc
+# wait 151, place 2:M
+prompt
+key esc
+# wait 152, place 2:M
+prompt
+key esc
+# wait 153, place 2:M
+prompt
+key esc
+# wait 154, place 2:M
+prompt
+key esc
+# wait 155, place 2:M
+prompt
+key esc
+# wait 156, place 2:M
+prompt
+key esc
+# wait 157, place 2:M
+prompt
+key esc
+# wait 158, place 2:M
+prompt
+key esc
+# wait 159, place 2:M
+prompt
+key esc
+# wait 160, place 2:M
+prompt
+key esc
+# wait 161, place 2:M
+prompt
+key esc
+# wait 162, place 2:M
+prompt
+key esc
+# wait 163, place 2:M
+prompt
+key esc
+# wait 164, place 2:M
+prompt
+# shot 09-next-turn
+state
+text f
+# wait 165, place 2:O
+prompt
+text n
+# wait 166, place 3
+prompt
+key space
+# wait 167, place 3:S
+prompt
+key space
+# wait 168, place 2:W
+prompt
+# shot 10-start-menu
+state
+text s
+# wait 169, place 2:S
+prompt
+key enter
+# wait 170, place 3
+prompt
+# shot 11-objective2
+state
+key space
+# wait 171, place 2:M
+prompt
+text u
+# wait 172, place 2:U
+prompt
+text b
+# wait 173, place 2:B
+prompt
+# shot 12-balance-menu2
+state
+key up
+# wait 174, place 2:B
+prompt
+key up
+# wait 175, place 2:B
+prompt
+key up
+# wait 176, place 2:B
+prompt
+key up
+# wait 177, place 2:B
+prompt
+key enter
+# wait 178, place 2:U
+prompt
+# shot 13-allied-plus-plus
+state
+key esc
+# wait 179, place 2:M
+prompt
+text r
+# wait 180, place 2:R
+prompt
+# shot 14-recruit-funds2
+state
+key esc
+# wait 181, place 2:M
+prompt
+text e
+# wait 182, place 2:E
+prompt
+text y
+# waits 183 to 228: pauses that read no key in DOS
+repeat 46
+prompt
+key space
+end
+# wait 229, place 3
+prompt
+# shot 15-turn-end
+state
+key esc
+# wait 230, place 2:M
+prompt
+key esc
+# wait 231, place 2:M
+prompt
+key esc
+# wait 232, place 2:M
+prompt
+key esc
+# wait 233, place 2:M
+prompt
+key esc
+# wait 234, place 2:M
+prompt
+key esc
+# wait 235, place 2:M
+prompt
+key esc
+# wait 236, place 2:M
+prompt
+key esc
+# wait 237, place 2:M
+prompt
+key esc
+# wait 238, place 2:M
+prompt
+key esc
+# wait 239, place 2:M
+prompt
+key esc
+# wait 240, place 2:M
+prompt
+key esc
+# wait 241, place 2:M
+prompt
+key esc
+# wait 242, place 2:M
+prompt
+key esc
+# wait 243, place 2:M
+prompt
+key esc
+# wait 244, place 2:M
+prompt
+key esc
+# wait 245, place 2:M
+prompt
+# shot 16-next-turn
+state
+text e
+# wait 246, place 2:E
+prompt
+text y
+# waits 247 to 295: pauses that read no key in DOS
+repeat 49
+prompt
+key space
+end
+# wait 296, place 3
+prompt
+# shot 17-turn-end
+state
+key esc
+# waits 297 to 318: pauses that read no key in DOS
+repeat 22
+prompt
+key space
+end
+# wait 319, place 3
+prompt
+key esc
+# wait 320, place 2:M
+prompt
+key esc
+# wait 321, place 2:M
+prompt
+key esc
+# wait 322, place 2:M
+prompt
+key esc
+# wait 323, place 2:M
+prompt
+key esc
+# wait 324, place 2:M
+prompt
+key esc
+# wait 325, place 2:M
+prompt
+key esc
+# wait 326, place 2:M
+prompt
+key esc
+# wait 327, place 2:M
+prompt
+key esc
+# wait 328, place 2:M
+prompt
+key esc
+# wait 329, place 2:M
+prompt
+key esc
+# wait 330, place 2:M
+prompt
+key esc
+# wait 331, place 2:M
+prompt
+key esc
+# wait 332, place 2:M
+prompt
+key esc
+# wait 333, place 2:M
+prompt
+key esc
+# wait 334, place 2:M
+prompt
+# shot 18-next-turn
+state

@@ -14,6 +14,11 @@ python -I tools/play/play.py check tests/scripts/*.keys
 
 `tests\out\` holds what each run writes. Git ignores it.
 
+`sessions\` holds the same 15 sessions as announce-driven keys files, for the scripted port (step 7a of
+`docs\port-study.md`). `tools\play\sessions.py` writes them from the trace runs of the port's PDS 7.1 build. Do
+not edit them by hand. How they are made is in `tools\play\README.md`, "Trace mode and the announce-driven keys
+files".
+
 | Session | What it covers |
 |---|---|
 | `01-1796-french` | 1796 as the French, Tactical off. The intro, the start menu, every menu and page once, Recruit, Moves, Fortify, Files → Save, and two turn ends with the Allies' moves. |

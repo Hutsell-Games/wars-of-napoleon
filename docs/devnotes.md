@@ -137,7 +137,7 @@ What each one did in DOS:
 | The same with `graphic(1)` and `napicon.vga` | `WON.BAS` lines 53 to 55 | The same, for the army and navy icons | As the row above |
 | The same with `Image(1)` and `stdicon.ega`, `alticon.ega`, `terrain.ega`, `misc.ega` | `iconload`, `NAPOLEON.BAS` lines 361 to 363, 378 to 380, 395 to 397, 410 to 412 | The same, for the tactical game's icon sets | Expected to work unchanged: Civil War Battleset loads the same four files |
 | `DEF SEG = 0`, `POKE 1050, 30: POKE 1052, 30` | `BuffClear`: `WON2.BAS` lines 60 and 61, `NAP1A.BAS` lines 66 and 67 | Set the head and the tail of the BIOS keyboard buffer to its start, which threw away the keys typed ahead. It leaves `DEF SEG` at 0 | Kept: libqb emulates the buffer (Civil War Battleset measured it) |
-| `PEEK(1052) = 30` | `navy`, `WON2.BAS` lines 1024, 1034, 1055, 1091 | True when no key was waiting. Then the sea battle played its sound, showed its icon or paused. It reads segment 0 because `BuffClear` runs at line 1019, after the last `europe`, and nothing in between changes `DEF SEG` | Kept. Under a script no key waits at these lines, so they always pause (section 5 of the plan) |
+| `PEEK(1052) = 30` | `navy`, `WON2.BAS` lines 1024, 1034, 1055, 1091 | True when no key has been typed since `BuffClear` (corrected in step 7a: it reads the tail, which a read does not move). Then the sea battle played its sound, showed its icon or paused. It reads segment 0 because `BuffClear` runs at line 1019, after the last `europe`, and nothing in between changes `DEF SEG` | Kept. Under a script the keys typed differ from DOS's, so the checks can differ: "Step 7a" below |
 | `SHELL "arch2.exe"` | `WON.BAS` line 11 | Showed the intro picture, when `ARCH2.EXE` existed and there was no command line | Nothing runs: `ARCH2.EXE` leaves the folder (D6) |
 | `SHELL "rrs.exe"` | `WON.BAS` lines 93 and 609, on quitting | Ran the registration reminder, when `RRS.EXE` existed. It is not in the repo | Nothing runs |
 | `SHELL "copy nws.his oldhist.ory"` | `WON.BAS` line 633 | Kept a copy of the history file | Under a script, copied in BASIC by `scriptshell`; in normal play the `SHELL` as before (row 8) |
@@ -733,3 +733,83 @@ The user chose to rewrite the lines (D13 of `docs\port-study.md`, 2026-11-08).
   `OUTCOME.&&&`, now ends at the Retreat menu with the armies where session 9's `10-retreat` has them, and the
   same losses. 290 pixels of that screen differ from the screenshot, across the map: about the size of the
   city-marker difference of step 4 (`TODO.md`).
+
+## Step 7a: the trace mode and the keys files (2026-11-08)
+
+The rest of 7a: the trace mode of `PLAYKEYS.COM`, `sessions.py`, and the 15 sessions in trace mode.
+
+### The changes
+
+25. **`PLAYKEYS.COM` has a trace mode** (`tools/play/playkeys.py`). `play.py --port` turns it on. It logs three
+    kinds of thing into its own memory:
+    - at each timer tick where the count of waits at `0:4F0h` changed, a sample with the place and the letter.
+      The 8-bit count goes into a 16-bit total;
+    - each key it types and each screenshot, with the total of waits at that moment;
+    - each key a program reads. It hooks INT 16h, passes each read (AH = 00h or 10h) on, and then logs the key,
+      the buffer slot it came from, and the PSP of the program that read it (INT 21h AH = 62h).
+
+    The log fills the part of the key buffer that `KEYS.BIN` leaves free. So the program stays resident with
+    the same 2,037 paragraphs as before, and the game loads at the same address as in the recordings. Without
+    trace mode, `PLAYKEYS.COM` is still the same 326 bytes, byte for byte.
+26. **`play.py` reads the log from DOSBox-X's memory file.** With `--port`, the configuration sets `memory
+    file=` to `MEMORY.BIN` in the run's folder, so the guest's memory is a file on the host. After the run,
+    `play.py` finds the log by its magic, writes `trace.json`, and deletes the 16 MB file. A log in memory needs
+    no file I/O from inside an interrupt handler, and adds only a few instructions per tick and per key.
+27. **`tools/play/sessions.py` writes `tests/sessions/<name>.keys`** from a trace, in the screen tool's format.
+    - Each wait the strategic game announced is a `prompt`, followed by the keys that the wait read in DOS.
+    - A wait that read no key gets `key space`. A scripted `TICK` waits for a key and throws it away (D2).
+    - Each screenshot is a `state` after the prompt of the wait at which DOS took it.
+    - Runs of three or more pauses that read no key are written as a `repeat` block.
+    - Each comment is a line of its own. The screen tool takes `#` only at the start of a line, and a `text`
+      step takes the rest of its line (`screen_state.cpp`, line 346).
+
+    The keys and screens of the other programs are left out, and so are the `dos` shots. The keys are told
+    apart by the PSP that read them, and the screens by the video mode. The other programs are `ARCH2.EXE`,
+    `VIC.EXE`, `NAPIC.EXE` and the shipped `NAPOLEON.EXE`. Session 9's file is for its run with
+    `WON_OUTCOME` (D4), and its header says so.
+
+### The checks
+
+- **All 15 sessions in trace mode give their recordings**, every screen and every file (`play.py check
+  --port`, the PDS build of the branch's last commit). So the INT 16h hook and the log change nothing that
+  the game does.
+- **Every key is accounted for.** 1,587 keys were typed in the 15 sessions. The strategic game read 1,567.
+  The other 20 were read by the other programs. In each session, the first key closes `ARCH2.EXE`'s picture.
+  Session 9 adds `NAPIC.EXE`'s key and the battle's three, and session 15 adds the key that closes `VIC.EXE`'s
+  picture. No key was thrown away by `BuffClear` or a pause, and none was dropped with the buffer full.
+- **Each wait read at most one key**, except the one `INPUT` of the Hall of Fame (place 4) in session 15. It
+  read 11 keys: "Wellington" and Enter. So the 16-Esc tails of ten sessions are no guess: each key belongs to
+  one wait.
+- **The shots:** 305 of the 317 become states, and 12 are left out. These are the 12 of section 5 of
+  `docs\port-study.md`: `01-intro`, `16-vic`, the six `dos` shots, and session 9's `04-tactical-title` and three
+  battle screens. No kept shot was taken after a wait had read its key and before the next wait. The trace
+  cannot show a shot taken after a pause ran out and before the next wait was announced. Such a shot is
+  filed under the pause's wait, and step 7b's comparison would show it.
+- **The waits:** 6,610 in the 15 sessions, from 88 in session 15 to 1,654 in session 4. In some ticks the game
+  announces up to 8 pauses, so a sample misses the place of all but the last. Each of those waits read no key,
+  and every wait but a `TICK` loops until a key comes, so they were pauses. The keys files say "in a tick with
+  others" for them.
+- **Four keys were typed before their wait was announced** and waited in the buffer while the game was busy:
+  session 4 at waits 327 and 1508, session 5 at 138, and session 10 at 724. Under a script each of them is
+  typed later, at its wait.
+
+**Found in the review: the four `PEEK(1052) = 30` checks do not ask whether a key waits.** They are in naval
+combat (`WON2.BM` lines 1024, 1034, 1055 and 1091), right after `BuffClear` (lines 985 and 1019), and each
+guards a `TICK`. They read the buffer's tail. Every key typed moves the tail on, and reading a key moves the
+head, not the tail. Only `BuffClear` sets the tail back to 30. So a check is true only when no key has been
+typed since the last `BuffClear`, or when the tail has wrapped round to 30 again. The traces show it: the
+slots of the keys typed go 30, 32, … 60, 30 and do not come back to 30 when a key is read. Step 2's table
+(above) and row 12 and section 5 of the plan said "when a key waits", which is wrong.
+
+This matters for the keys files. A scripted run types `key space` for each pause that read no key in DOS,
+and it types the four keys above later than DOS did. Either can move the tail where DOS's had not moved. A
+check is then false where it was true in DOS, and it skips a `TICK` that DOS ran. The scripted run announces
+one wait fewer, and every later prompt is answered one wait off. Trace mode types no filler, so it gives the
+recordings, and the converter cannot see the checks. The slot sequence starts again at 30 between keys in
+sessions 1, 4, 5, 6, 9 and 14. In session 9 that comes from the tactical game. Step 7b first finds which of the
+others reach the strategic game's naval combat, and measures whether libqb keeps the tail at `0:41C` as the
+BIOS does. The fix proposed in the review is a filler key of its own, which `scripttick` takes back out of the
+buffer, so that a filler leaves the tail where DOS had it.
+
+The 15 keys files hold 6,638 lines (124 KB). `sessions.py --check` gives exit code 0 with the traces of this
+run.

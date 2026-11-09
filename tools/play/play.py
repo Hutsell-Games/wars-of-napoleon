@@ -39,6 +39,7 @@ A script must end with a shot, with no wait after it: the machine stops at the l
 """
 import argparse
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -270,8 +271,13 @@ def run(script, out, args):
         seeded, _, _ = wonseed.patch(exe, args.timr or wonseed.B_TIMR, args.rnzp or wonseed.B_RNZP, script.seed)
         (game / "WONSEED.EXE").write_bytes(seeded)
         program = "WONSEED.EXE"
-    (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes())
-    (game / "KEYS.BIN").write_bytes(script.keyfile())
+    keys = script.keyfile()
+    # With --port, PLAYKEYS.COM runs in trace mode and logs the waits the port announces,
+    # the keys it reads and the shots (playkeys.py). DOSBox-X maps the guest's memory to
+    # MEMORY.BIN, where the harness reads the log after the run.
+    trace = (len(keys), len(script.ops)) if args.port else None
+    (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes(trace))
+    (game / "KEYS.BIN").write_bytes(keys)
     (game / "IDLE.COM").write_bytes(bytes([0xFB, 0xF4, 0xEB, 0xFD]))  # sti / hlt / jmp hlt
     before = {p.name: sha(p) for p in game.iterdir()}
 
@@ -280,7 +286,8 @@ def run(script, out, args):
     conf.write_text("\n".join([
         "[sdl]", "output=surface", "",
         "[log]", f"logfile={log}", "",
-        "[dosbox]", "mcp_server=0", f"captures={cap}", "synchronize time=false", "",
+        "[dosbox]", "mcp_server=0", f"captures={cap}", "synchronize time=false",
+        *([f"memory file={out / 'MEMORY.BIN'}"] if trace else []), "",
         "[cpu]", "core=normal", "cputype=pentium", f"cycles=fixed {script.cycles}", "turbo=true",
         "stop turbo on key=false", "stop turbo after second=0", "integration device=true", "",
         "[serial]", "serial1=disabled", "serial2=disabled", "",
@@ -323,6 +330,9 @@ def run(script, out, args):
     if got != DATE:
         raise SystemExit(f"  {script.name}: DOS date is {got!r}, not {DATE}; the run is not repeatable")
 
+    if trace:
+        write_trace(out, script)
+
     result = {}
     (out / "shots").mkdir()
     for name, src in zip(script.shots, shots):
@@ -338,6 +348,27 @@ def run(script, out, args):
     print(f"  {script.name}: {len(shots)} of {len(script.shots)} shots, "
           f"{sum(1 for k in result if k.startswith('files/'))} files written, {elapsed:.0f} s")
     return result
+
+
+class RunFailed(Exception):
+    """A run that gave no result; the next script still runs."""
+
+
+def write_trace(out, script):
+    """The trace log of the run, from DOSBox-X's memory file, into out/trace.json."""
+    memory = out / "MEMORY.BIN"
+    try:
+        samples, events, info = playkeys.read_trace(memory.read_bytes())
+    except (OSError, ValueError) as e:
+        raise RunFailed(f"{script.name}: no trace log: {e}") from None
+    memory.unlink()  # 16 MB, and nothing else in it is needed
+    if info["flags"]:
+        print(f"  warning: the trace log was full (flags {info['flags']}); it misses the end of the run")
+    (out / "trace.json").write_text(json.dumps({
+        "script": script.name, "shots": script.shots, "info": info,
+        "samples": [list(s) for s in samples], "events": events}, indent=0), encoding="ascii")
+    reads = sum(1 for e in events if e["type"] == "R")
+    print(f"  trace: {len(samples)} samples, {info['total']} waits announced, {reads} keys read")
 
 
 def manifest_text(script, result, args):
@@ -381,41 +412,49 @@ def main():
     for s in args.scripts:
         script = Script(s)
         print(f"{args.command} {script.name} ({script.seconds():.0f} s of play, {len(script.shots)} shots)")
-        if args.command == "run":
-            run(script, OUT / script.name, args)
-        elif args.command == "record":
-            first = run(script, OUT / script.name / "record-1", args)
-            second = run(script, OUT / script.name / "record-2", args)
-            if len([k for k in first if k.startswith("shots/")]) != len(script.shots):
-                print(f"  NOT RECORDED: missing shots")
-                failed += 1
-                continue
-            if diff(first, second):
-                print(f"  NOT RECORDED: the two runs differ in {diff(first, second)}")
-                failed += 1
-                continue
-            dest = RECORDED / script.name
-            if dest.exists():
-                shutil.rmtree(dest)
-            shutil.copytree(OUT / script.name / "record-1" / "shots", dest / "shots")
-            shutil.copytree(OUT / script.name / "record-1" / "files", dest / "files")
-            (dest / "manifest.txt").write_text(manifest_text(script, first, args))
-            print(f"  recorded in {dest.relative_to(REPO)}")
-        else:
-            manifest = RECORDED / script.name / "manifest.txt"
-            if not manifest.exists():
-                print(f"  NO RECORDING: {manifest.relative_to(REPO)} does not exist; run record first")
-                failed += 1
-                continue
-            expected = read_manifest(manifest)
-            got = run(script, OUT / script.name / "check", args)
-            bad = diff(expected, got)
-            if bad:
-                failed += 1
-                print(f"  DIFFERS: {', '.join(bad)}")
-            else:
-                print("  same as recorded")
+        try:
+            ok = play_one(script, args)
+        except RunFailed as e:
+            print(f"  FAILED: {e}")
+            ok = False
+        failed += 0 if ok else 1
     sys.exit(1 if failed else 0)
+
+
+def play_one(script, args):
+    """Run, record or check one script; True when it went as it should."""
+    if args.command == "run":
+        run(script, OUT / script.name, args)
+        return True
+    if args.command == "record":
+        first = run(script, OUT / script.name / "record-1", args)
+        second = run(script, OUT / script.name / "record-2", args)
+        if len([k for k in first if k.startswith("shots/")]) != len(script.shots):
+            print("  NOT RECORDED: missing shots")
+            return False
+        if diff(first, second):
+            print(f"  NOT RECORDED: the two runs differ in {diff(first, second)}")
+            return False
+        dest = RECORDED / script.name
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(OUT / script.name / "record-1" / "shots", dest / "shots")
+        shutil.copytree(OUT / script.name / "record-1" / "files", dest / "files")
+        (dest / "manifest.txt").write_text(manifest_text(script, first, args))
+        print(f"  recorded in {dest.relative_to(REPO)}")
+        return True
+    manifest = RECORDED / script.name / "manifest.txt"
+    if not manifest.exists():
+        print(f"  NO RECORDING: {manifest.relative_to(REPO)} does not exist; run record first")
+        return False
+    expected = read_manifest(manifest)
+    got = run(script, OUT / script.name / "check", args)
+    bad = diff(expected, got)
+    if bad:
+        print(f"  DIFFERS: {', '.join(bad)}")
+        return False
+    print("  same as recorded")
+    return True
 
 
 if __name__ == "__main__":

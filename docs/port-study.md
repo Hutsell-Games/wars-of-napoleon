@@ -126,7 +126,7 @@ before the game is changed.
 | 9 | The DOS programs with no source | `ARCH2.EXE` (intro), `VIC.EXE` (victory picture), `NAPIC.EXE` (tactical title, not called by the source); `RRS.EXE` is not in the repo | D6. Every `SHELL` of them is guarded by `DIR$`, so once the files are gone no line needs to change |
 | 10 | `GOSUB` routines that may leave their SUB | 107 `GOSUB`s inside SUBs: 34 in the strategic game (8 in `WON`, 19 in `WON2`, 7 in `WONMENU`), 83 in the tactical game (55 in `NAPOLEON`, 18 in `NAP1A`, 10 in `NAP1C`) | Read every routine one by one (step 2). Already seen: `crsr` in both menus leaves by `GOTO called` on Esc or a letter, the bug of the other three games. Whether a `RETURN` then takes the stale entry, and stops the port with "RETURN without GOSUB", is what step 2 finds. The fix is the earlier ports': the routine sets a flag and `RETURN`s, and the line after the `GOSUB` jumps |
 | 11 | `BLOAD` into arrays, then `PUT` | `MTN.VGA` and `NAPICON.VGA` (strategic); `STDICON.EGA`, `ALTICON.EGA`, `TERRAIN.EGA`, `MISC.EGA` (tactical) | Expected to work: Civil War Battleset and Civil War Strategy measured it. Checked against the recorded screens |
-| 12 | The BIOS keyboard buffer | `BuffClear` (in `WON2.BAS` and in `NAP1A.BAS`: `POKE 1050, 30: POKE 1052, 30`); four `PEEK(1052) = 30` checks in `WON2.BAS` (lines 1024, 1034, 1055, 1091) that skip a pause, a sound or an icon when a key waits | Expected to work: libqb keeps the buffer there (Civil War Battleset, step 3). Under a script a key comes only at a wait, so the buffer is always empty at a check. Section 5 says what that changes |
+| 12 | The BIOS keyboard buffer | `BuffClear` (in `WON2.BAS` and in `NAP1A.BAS`: `POKE 1050, 30: POKE 1052, 30`); four `PEEK(1052) = 30` checks in `WON2.BAS` (lines 1024, 1034, 1055, 1091) that skip a pause, a sound or an icon when a key has been typed since the last `BuffClear` (corrected in step 7a: they read the tail, which a read does not move back) | Expected to work: libqb keeps the buffer there (Civil War Battleset, step 3). Under a script the keys typed differ from DOS's, so a check can differ. Section 5 says what that changes |
 | 13 | The clock | `RANDOMIZE TIMER` in both programs; `TICK` (`WON2.BAS` line 1768, `NAP1A.BAS` line 1201); `DATE$` in `NWS.HIS` (`WON.BAS` line 635) | Test hooks (step 6): the seed from an environment variable, the date 06-24-1998, which is the date the DOSBox-X sessions ran with, and `TICK` as D2 says |
 | 14 | The waits for a key | Strategic: the menu's `crsr`, two `DO WHILE INKEY$ = ""` loops, `TICK` and one `INPUT` (the commander's name). Tactical: the menu, two command reads (`NAPOLEON.BAS` lines 744 and 1010), one loop (`NAP1A.BAS` line 841) and `TICK` | Each gets an `announce` call, as in the earlier ports |
 | 15 | `CIRCLE` with an aspect, then `PAINT` inside it | The built-in title: `WON.BAS` lines 17–20 (aspect 0.1, then `PAINT`) | Look at the screen in step 4. QB64 draws such ellipses with other pixels than DOS (`DIVERGENCES-QB45.md` Q-020), and Civil War Strategy's map was flooded by such a leak. No recorded session shows this title: `ARCH2.EXE` ran instead |
@@ -175,8 +175,9 @@ matters:
 - **Many screenshots were taken during a pause.** In session 9, "victorious" and "losses" are messages
   shown for a few seconds with no key. The earlier ports' `TICK` hook returns at once under a script,
   so those screens would never be at a wait.
-- **The four `PEEK(1052)` checks** skip a pause, a sound or an icon when a key is waiting. Under a script none
-  is.
+- **The four `PEEK(1052)` checks** skip a pause, a sound or an icon when a key has been typed since the last
+  `BuffClear`. They read the buffer's tail, which a read does not move back. Under a script other keys are
+  typed, at other moments, so a check can skip a pause that DOS ran (`docs\devnotes.md`, "Step 7a").
 
 ### The bridge: the port's source built with PDS 7.1 (D1)
 
@@ -556,6 +557,13 @@ changes is either a mistake or is named in the commit message.
      PDS 7.1 skips the right side of `AND` and `OR` in conditions, and QB64 does not. That is why the French
      move elsewhere in the QB64 builds. The strategic game's lines and both `TICK`s are rewritten (D13), and
      all 15 sessions with the PDS build still give their recordings (`docs\devnotes.md`, "Step 7").
+     **Done (2026-11-08).** `PLAYKEYS.COM`'s trace mode logs each key read through INT 16h, with the wait
+     that read it and the program's PSP. `sessions.py` wrote the 15 keys files of `tests\sessions\`. All 15
+     sessions in trace mode give their recordings. Every key belongs to one wait, or to one of the other
+     programs, and no key was thrown away. 305 shots become states, and the 12 of section 5 are left out.
+     The review found that the four `PEEK(1052)` checks of naval combat can count the waits differently
+     under a script. The filler keys move the buffer's tail where DOS's did not move. 7b starts with that
+     (`docs\devnotes.md`, "Step 7a").
    - **The check.** Run the converted keys files once with the QB64 builds and compare them straight with the
      recordings. If the only differences are screens of pauses and the four `PEEK(1052)` checks (row 12), the
      scripted reference of 7b is made only for the sessions that need it. Otherwise for all 15.
