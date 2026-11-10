@@ -7,9 +7,9 @@ It also holds the facts the tools found that step 4 (writing the source) needs, 
 The tools are in `tools\recover\`; their `README.md` gives the commands. The scratch files they read and write
 are in `..\won-hutsellgames\work\`, outside the repo.
 
-**The exact build works on `main` and `won-source` only.** On the branch `qb64rust`, the port has moved and
-edited the source files (`docs\devnotes.md`, step 4), so the commands of `docs\won-source-study.md` section 12
-no longer give `WON.EXE` there.
+**The exact build works on `canonical-recovery` only** (named `won-source` until 2026-11-09). On `main` and
+`qb64rust`, the port has moved and edited the source files (`docs\devnotes.md`, step 4), so the commands of
+`docs\won-source-study.md` section 12 no longer give `WON.EXE` there.
 
 ## Summary (2026-11-06)
 
