@@ -42,16 +42,16 @@ navysize(k) = 0: navyloc(k) = 0: navymove(k) = 0: victory(k) = 0
 NEXT k
 
 filel = 1: vicflag(1) = 1
-IF LEN(DIR$("mtn.vga")) > 0 THEN
+IF LEN(DIR$(GFXDIR + "mtn.vga")) > 0 THEN
 	DEF SEG = VARSEG(mtn(1))
-	BLOAD "mtn.vga", VARPTR(mtn(1))
+	BLOAD GFXDIR + "mtn.vga", VARPTR(mtn(1))
 	DEF SEG
 ELSE
 	COLOR 15: BEEP: PRINT "ERROR: Missing File  'MTN.VGA'"
 END IF
 SCREEN 12
 	DEF SEG = VARSEG(graphic(1))
-	BLOAD "napicon.vga", VARPTR(graphic(1))
+	BLOAD GFXDIR + "napicon.vga", VARPTR(graphic(1))
 	DEF SEG
 
 	PUT (100, 100), graphic, PSET

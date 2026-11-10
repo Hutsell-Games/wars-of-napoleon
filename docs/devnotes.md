@@ -1253,3 +1253,51 @@ only with rest, F9, F10, a step south and Intell.
 The step 7b check named the burning building and the naval combat as drawing differences, and the city
 markers; the ships on the map, the raid mark, the pointer and the tombstone are new. Each is masked by its
 measured pixels where the game's data places it, so a real difference near a city or a port still shows.
+
+## Step 9: the files (2026-11-09, started)
+
+Step 9 of `docs\port-study.md`: the data folders of D9, the test data, and the documents. The files of D11 are
+not removed yet.
+
+### The changes
+
+48. **The data folders** (D9 (a)). `graphics\` holds `MTN.VGA`, `NAPICON.VGA` and the four icon sets that
+    `iconload` loads (`STDICON.EGA`, `ALTICON.EGA`, `TERRAIN.EGA`, `MISC.EGA`). `scenarios\` holds
+    `GAMEDATA.INI`, the seven `NWSxxxx.INI`, `EUROxxxx.MAP` and `LEADxxxx.DAT`, and the tactical game's
+    `ALLIES.DAT`, `FRENCH.DAT`, `EQUIP.DAT` and `QUOTES.DAT`. A new `FOLDERS.BI` names them as `GFXDIR` and
+    `SCNDIR`, and `WON.BI` and `NAP10.BI` include it, so that every module has them. 17 lines open a file
+    through them: in `WON.BAS`, `WON1.BM`, `WON2.BM`, `WONMENU.BM`, `NAPOLEON.BAS` and `NAP1.BM`.
+    `DIR$(SCNDIR + "nws*.ini")` gives the names without the folder, in both compilers, so the start-year list
+    is unchanged.
+49. **The PDS build gets the folders' DOS names** (`tools\pdsbuild.py`). DOS takes no `/` in a file's name: the
+    first PDS build stopped on "File not found" at `BLOAD`. It also cuts `scenarios` to `SCENARIO`, which is
+    not the folder: DOSBox-X shows it as `SCENAR~1`, and the build stopped on "Path not found". So the PDS
+    build's copy of `FOLDERS.BI` has `GRAPHICS\` and `SCENARIO\`, and `tools\play\play.py` gives the folders
+    those names in a run of a PDS build. The repo's `FOLDERS.BI` keeps `graphics/` and `scenarios/`, as the
+    other three ports have them.
+50. **The harness copies the folders** (`tools\play\play.py`, `game_files`). The shipped `WON.EXE` gets every
+    file flat beside it, as in DOS. A PDS build gets the folders. A `--port` run gets both, since its battles
+    run the shipped `NAPOLEON.EXE`. `tests\play.py` copies them as folders, and both list only the files at
+    the top of the run's folder as written by the game. `tests\dosshot.py` reads the maps' places from
+    `scenarios\`; without that its masks were empty, which `test_play.py` caught.
+51. **`NWS9.SAV` is test data** (`tests\data\`). Every run gets it beside the game, as the recordings had it.
+    `.gitignore` leaves out the saves and the history files that playing writes at the top.
+    `NWS.CFG` and `HISCORE.NWS` stay at the top, unlike the plan: the game opens both without checking that
+    they exist. `NWS.CFG` at its start (`filer`, `WON1.BM`) and `HISCORE.NWS` at a game's end (`maxx`,
+    `WON2.BM`) would stop on "File not found". Civil War Strategy kept its two for the same reason.
+52. **The documents** `WON.DOC`, `NAPOLEON.DOC`, `NAPOLEON.PAG` and `NAPOLEON.TXT` are in `docs\`. No program
+    opens them.
+53. **`NAP1.EGA` and `NAP2.EGA`** are icon sets of the same kind as the four in use: a `BSAVE` of a `GET` array
+    of 41 × 65 pixels in `SCREEN 9`. No source loads them. `docs\NAP1.EGA.png` and `docs\NAP2.EGA.png` show them
+    at 8 times their size: a wall, two bars, dots, a box, an "R" badge, and yellow and green tiles with arrows.
+    They are cruder than the icons in use and replace none of them, so D11 (a) stands.
+
+### The checks
+
+- **`tests\play.py check`**: the 37 scripts give their references with QB64Rust, so no screen and no file
+  changed.
+- **`bridge` and `tactical`** with QB64Rust: all 16 runs of the sessions and all six battles pass against DOS.
+- **The PDS bridge** (`tools\play\play.py check --port` and `--napoleon`): sessions 1, 9 and 13 and battles b1
+  and b3 give their recordings, every screen and file. Between them they open every moved file: the
+  start-year list, both pictures and the four icon sets, a save and a load, and Waterloo's quotes and names.
+- **The unit tests**: 9 pass. **`test_play.py`**: 26 pass.

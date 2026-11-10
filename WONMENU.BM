@@ -126,7 +126,7 @@ IF look = 2 THEN
 	PAINT (250, 350), 3, 10
 END IF
 DEF SEG = VARSEG(mtn(1))
-BLOAD "mtn.vga", VARPTR(mtn(1))
+BLOAD GFXDIR + "mtn.vga", VARPTR(mtn(1))
 DEF SEG
 FOR k = 1 TO 19
 	PUT (mtnx(k), mtny(k)), mtn, PSET

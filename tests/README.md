@@ -50,7 +50,8 @@ file, at the waits the program announces, and writes the screen out where the fi
 
 A game's `#!` lines set up its run: `#! seed N`, `#! timeout SECONDS`, `#! battle KEYS` (the keys of the next
 battle the strategic game starts; without one, no battle starts) and `#! save FILE AS` (a file of `tests\data\`
-copied into the run's folder). `play.py`'s docstring has the details.
+copied into the run's folder). `play.py`'s docstring has the details. Every run starts with the files of
+`tests\data\` in its folder: `NWS9.SAV`, the saved game that came with the game.
 
 A reference holds one line per entry of the run: each state as its digest, then each state of a battle the
 strategic game started, then `file NAME HASH` for each file the run wrote or changed. `check` fails at the first

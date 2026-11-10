@@ -18,6 +18,8 @@ modules, so this writes the three modules that WON.EXE was built from back into 
   the include of won.bi), then WON2.BM or WONMENU.BM. The bare DIR$ of getlist, which the
   port writes DIR$(""), is DIR$ again.
 - WON.BI without the pictures' line, so that WON2 and WONMENU get no copy of those arrays.
+- FOLDERS.BI with the folders' DOS names: "SCENARIO\" for "scenarios/". The build reads the
+  data folders as the QB64 builds do, and DOS takes no "/" and no name of 9 letters.
 
 It then compiles them with the recovery's switches and links them with WON.LNK and the
 far-string runtime of tools/recover/buildlib.py (docs/won-source-study.md, section 12).
@@ -33,6 +35,7 @@ The tools of tools/recover run DOSBox 0.74-3, hidden, as they do for the recover
 """
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -125,6 +128,11 @@ GAMES = {
 SRC = REPO  # the folder of the port's sources; --src changes it
 
 
+def dos_folder(name):
+    """A folder's name as a DOS program gives it: its first 8 letters, in upper case."""
+    return name[:8].upper()
+
+
 def lines_of(name):
     return (SRC / name).read_bytes().decode("latin1").replace("\r\n", "\n").split("\n")
 
@@ -181,6 +189,20 @@ def write_modules(game, src):
             raise SystemExit(f'WON2.BM: expected one DIR$(""), found {len(bare)}')
         won2[bare[0]] = won2[bare[0]].replace('DIR$("")', "DIR$")
     files.append((game.bi, bi))
+    # The data folders, which the .BI includes (docs/port-study.md, D9), as DOS names them.
+    # DOS takes no "/" in BLOAD's and OPEN's names (the PDS build stopped on "File not found"),
+    # and a name of at most 8 letters: tools/play/play.py gives the PDS runs "scenarios" as
+    # SCENARIO, its DOS name (dos_folder).
+    folders = lines_of("FOLDERS.BI")
+    consts = 0
+    for i, l in enumerate(folders):
+        m = re.match(r'(CONST \w+ = ")([^"/]+)/"(.*)$', l)
+        if m:
+            folders[i] = f'{m[1]}{dos_folder(m[2])}\\"{m[3]}'
+            consts += 1
+    if not consts:
+        raise SystemExit("FOLDERS.BI: no CONST of a folder ending in /")
+    files.append(("FOLDERS.BI", folders))
 
     src.mkdir(parents=True, exist_ok=True)
     for name, text in files:

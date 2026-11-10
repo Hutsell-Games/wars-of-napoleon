@@ -633,6 +633,12 @@ changes is either a mistake or is named in the commit message.
    and ignore the copies that playing makes. Then the folders of D9, and the documents (`WON.DOC`,
    `NAPOLEON.DOC`, `NAPOLEON.PAG`, `NAPOLEON.TXT`) into `docs\`. `play.py check` and a scripted run of the bridge
    show that no screen changed.
+
+   **Started (2026-11-09).** The data folders, `tests\data\NWS9.SAV` and the four documents are moved, and
+   every check passes: the 37 scripts, `bridge` and `tactical` against DOS, and the PDS bridge on sessions 1, 9
+   and 13 and battles b1 and b3. `NWS.CFG` and `HISCORE.NWS` stay beside the programs: the game opens both
+   without checking that they exist. The PDS build names the folders as DOS does, `GRAPHICS\` and `SCENARIO\`.
+   The files of D11 are not removed yet (`docs\devnotes.md`, "Step 9").
 10. **The build on GitHub Actions.** World War 2's `build.yml`, with the artifact `wars-of-napoleon`: `won.exe`,
     `napoleon.exe` and the data folders.
 11. **The documents.**

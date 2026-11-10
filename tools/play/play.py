@@ -66,6 +66,10 @@ DATE, TIME = "06/24/1998", "12:00:00"
 # Files of the repo's folder that are not the game's: sources, documents, build files.
 NOT_GAME = {".bas", ".bi", ".bm", ".doc", ".txt", ".pag", ".md", ".lnk", ".py", ".gitattributes", ".gitignore"}
 NOT_GAME_NAMES = {"license"}
+# The data folders of FOLDERS.BI, and the folder of the files that came with the game but are
+# test data, such as the saved game NWS9.SAV (docs/port-study.md, step 9).
+DATA_FOLDERS = ("graphics", "scenarios")
+TEST_DATA = "tests/data"
 HARNESS_FILES = {"WONSEED.EXE", "PLAYKEYS.COM", "KEYS.BIN", "IDLE.COM", "RUNDATE.TXT"}
 # The DOS programs with no source, which left the branch qb64rust in its step 5, and the
 # commit that still has them. --port takes them from there.
@@ -333,8 +337,11 @@ ENDMARK = bytes([0x31, 0xC0, 0x8E, 0xC0, 0x26, 0xC6, 0x06, 0xF1, 0x04, 0xFF, 0x2
                  0x00, 0x26, 0xFE, 0x06, 0xF0, 0x04, 0xFB, 0xF4, 0xEB, 0xFD])
 
 
-def game_files(replaced=()):
-    """The game's files: the files git tracks in the repo's top folder, without sources and documents.
+def game_files(replaced=(), flat=False):
+    """The game's files as (path, name in the run's folder): the files git tracks in the repo's
+    top folder, without sources and documents, the data folders of FOLDERS.BI, and the files of
+    tests/data, which the shipped game had beside it. The port reads the data folders as
+    folders. The shipped WON.EXE reads every file beside it, so flat puts them all at the top.
     Untracked files (a save left by playing the game in the repo's folder) are not copied: they
     would change the game's menus, and so every screen of a recording. The files named in
     replaced are left out: the run writes them itself."""
@@ -344,19 +351,40 @@ def game_files(replaced=()):
                                   check=True).stdout.splitlines()
         except (OSError, subprocess.CalledProcessError) as e:
             raise SystemExit(f"the harness needs git to list the game's files: {e}") from None
-    names = [n for n in git("ls-files") if "/" not in n]
+    names = [n for n in git("ls-files")
+             if "/" not in n or n.rsplit("/", 1)[0] in DATA_FOLDERS + (TEST_DATA,)]
     changed = {line[3:] for line in git("status", "--porcelain", "--", *names)}
     for name in sorted(names):
         p = REPO / name
-        if p.suffix.lower() in NOT_GAME or name.lower() in NOT_GAME_NAMES or name.startswith("."):
+        folder, _, base = name.rpartition("/")
+        if p.suffix.lower() in NOT_GAME or base.lower() in NOT_GAME_NAMES or base.startswith("."):
             continue
-        if name in replaced:
+        if base in replaced:
             continue
         if not p.exists():
             raise SystemExit(f"missing: {name} is tracked by git but not in the repo's folder")
         if name in changed:
             print(f"  warning: {name} has local changes; the run uses them")
-        yield p
+        yield p, (base if flat or folder == TEST_DATA else name)
+
+
+def copy_game_files(game, replaced=(), flat=False, skip=(), dos=False):
+    """Copy the game's files into the run's folder game; files with a suffix in skip are left out.
+    With dos, a data folder gets the name a DOS program gives it: "scenarios" is SCENARIO, as in
+    the PDS builds' FOLDERS.BI (tools/pdsbuild.py, dos_folder)."""
+    for p, name in game_files(replaced, flat):
+        if p.suffix.lower() in skip:
+            continue
+        if dos and "/" in name:
+            folder, _, base = name.rpartition("/")
+            name = f"{folder[:8].upper()}/{base}"
+        (game / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(p, game / name)
+
+
+def top_files(game):
+    """The files at the top of a run's folder, where the game writes: not the data folders."""
+    return [p for p in game.iterdir() if p.is_file()]
 
 
 def git_show(commit, name):
@@ -395,8 +423,12 @@ def run(script, out, args):
     # A battle gets its own BATTLE.$$$, and no OUTCOME.&&&: the one in the run's folder at the
     # end is the battle's, and a battle that writes none shows as none.
     replaced = ("WON.EXE",) + FROM_GIT + (("BATTLE.$$$", "OUTCOME.&&&") if hold else ())
-    for p in game_files(replaced if args.port or hold else ()):
-        shutil.copy2(p, game / p.name)
+    # The PDS builds read the data folders of FOLDERS.BI; the shipped WON.EXE reads its files flat.
+    copy_game_files(game, replaced if args.port or hold else (), flat=not (args.port or hold),
+                    dos=bool(args.port or hold))
+    if args.port:
+        # With --port the battles run the shipped NAPOLEON.EXE, which reads its files flat.
+        copy_game_files(game, replaced, flat=True)
     if hold:
         # A PDS 7.1 build of the tactical game (tools/pdsbuild.py --game napoleon), alone.
         # NAP_SEED makes it scripted, as under QB64's screen tool (NAPSCRIPT.BM).
@@ -426,7 +458,7 @@ def run(script, out, args):
     (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes(trace, hold=hold))
     (game / "KEYS.BIN").write_bytes(keys)
     (game / "IDLE.COM").write_bytes(ENDMARK if hold else bytes([0xFB, 0xF4, 0xEB, 0xFD]))  # sti / hlt / jmp hlt
-    before = {p.name: sha(p) for p in game.iterdir()}
+    before = {p.name: sha(p) for p in top_files(game)}
 
     log = out / "dosbox.log"
     conf = out / "run.conf"
@@ -511,7 +543,7 @@ def run(script, out, args):
         shutil.copy2(src, dest)
         result[f"shots/{name}.png"] = sha(dest)
     (out / "files").mkdir()
-    for p in sorted(game.iterdir()):
+    for p in sorted(top_files(game)):
         if p.name in HARNESS_FILES or before.get(p.name) == sha(p):
             continue
         shutil.copy2(p, out / "files" / p.name)

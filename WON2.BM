@@ -589,7 +589,7 @@ END SUB
 
 SUB init
 mtx$(0) = "Start Year"
-f$ = DIR$("nws*.ini")
+f$ = DIR$(SCNDIR + "nws*.ini")
 colour = 3
 GOSUB getlist
 IF choose = -1 THEN EXIT SUB

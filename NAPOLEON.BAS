@@ -19,7 +19,7 @@ CALL napstart: CLS
 
 choose = 22: GOSUB lodecfg
 mdly! = mdsp: IF mdsp = 5 THEN mdly! = 10
-OPEN "I", 1, "equip.dat"
+OPEN "I", 1, SCNDIR + "equip.dat"
 	FOR k = 0 TO 5: INPUT #1, equip$(k): NEXT k
 CLOSE #1
 CALL iconload

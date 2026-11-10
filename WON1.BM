@@ -375,7 +375,7 @@ END SUB
 SUB filer (switch)
 SELECT CASE switch
 	CASE -1
-	OPEN "I", 1, "gamedata.ini"
+	OPEN "I", 1, SCNDIR + "gamedata.ini"
 	FOR i = 0 TO 2: INPUT #1, force$(i): NEXT i
 	FOR i = 1 TO 12: INPUT #1, nation$(i): NEXT i
 	FOR i = 1 TO 12: INPUT #1, month$(i): NEXT i
@@ -391,7 +391,7 @@ SELECT CASE switch
 
 	CASE 1
 	GOSUB lead
-	f$ = "nws" + scenario$ + ".ini"
+	f$ = SCNDIR + "nws" + scenario$ + ".ini"
 	OPEN "I", 1, f$
 	INPUT #1, month, year
 '               set end game conditions
@@ -503,11 +503,11 @@ END SELECT
 EXIT SUB
 
 lead:
-	OPEN "I", 1, "lead" + scenario$ + ".dat"
+	OPEN "I", 1, SCNDIR + "lead" + scenario$ + ".dat"
 	FOR i = 1 TO 25: INPUT #1, lname$(i), rating(i): homenat(i) = 1: NEXT i
 	FOR i = 26 TO 50: INPUT #1, homenat(i), lname$(i), rating(i): NEXT i
 	CLOSE #1
-	OPEN "I", 1, "euro" + scenario$ + ".map"
+	OPEN "I", 1, SCNDIR + "euro" + scenario$ + ".map"
 	FOR i = 1 TO cities
 		INPUT #1, a, city$(i), cityx(i), cityy(i), cityo(i), cityv(i)
 		vptotal = vptotal + cityv(i)

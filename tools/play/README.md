@@ -56,7 +56,10 @@ with the computer awake.
 1. A new folder, `tests\out\<name>\game\`, gets the game's files from the repo's folder: every file git
    tracks there, except the sources, documents and build files. Untracked files are left out. A save left by
    playing the game in the repo's folder would otherwise enable the start menu's Load, and change every
-   screen after it. A tracked file with local changes is used as it is, with a warning.
+   screen after it. A tracked file with local changes is used as it is, with a warning. The folder also
+   gets the data folders `graphics\` and `scenarios\` and the saved game of `tests\data\`. The shipped
+   `WON.EXE` gets them all beside it, as in DOS. A PDS build reads the folders, as the port does. A
+   `--port` run gets both, since its battles run the shipped `NAPOLEON.EXE`.
 2. `wonseed.py` writes `WONSEED.EXE`: the unpacked `WON.EXE`, with `RANDOMIZE TIMER` (`WON.BAS` line 78)
    replaced by `RANDOMIZE <seed>`. It changes 20 bytes of code and removes one relocation entry, and checks
    that nothing else changed. So the computer player and the random events are the same in every run.

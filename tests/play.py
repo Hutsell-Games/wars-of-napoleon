@@ -388,14 +388,12 @@ def run_script(script: Script, compiler: str, exes: dict[tuple[str, str], Path],
     game = folder / "game"
     game.mkdir(parents=True)
     replaced = ("BATTLE.$$$", "OUTCOME.&&&") if script.program == "napoleon" else ()
-    for p in harness.game_files(replaced):
-        if p.suffix.lower() != ".exe":
-            shutil.copy2(p, game / p.name)
+    harness.copy_game_files(game, replaced, skip={".exe"})
     if script.battle_file:
         shutil.copy2(script.battle_file, game / "BATTLE.$$$")
     for path, name in script.saves:
         shutil.copy2(path, game / name)
-    before = {p.name: harness.sha(p) for p in game.iterdir()}
+    before = {p.name: harness.sha(p) for p in harness.top_files(game)}
     exe = game / f"{script.program}.exe"
     shutil.copy2(exes[compiler, script.program], exe)
     if script.battles:
@@ -453,7 +451,7 @@ def run_script(script: Script, compiler: str, exes: dict[tuple[str, str], Path],
             problem = f"battle {n}: " + (battle[-1].decode(errors="replace") if battle else "no state written")
         battle_states.append(battle)
     files = []
-    for p in sorted(game.iterdir(), key=lambda p: p.name.upper()):
+    for p in sorted(harness.top_files(game), key=lambda p: p.name.upper()):
         if p.suffix.lower() != ".exe" and before.get(p.name) != harness.sha(p):
             files.append(p)
     return Run(script, compiler, tag, folder, problem, time.monotonic() - start, found, battle_states, files)

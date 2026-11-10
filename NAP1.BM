@@ -228,7 +228,7 @@ LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
 '                            UNIT Icons
 '----------------------------------------------------------------------------
 	DEF SEG = VARSEG(Image(1))
-	BLOAD "stdicon.ega", VARPTR(Image(1))
+	BLOAD GFXDIR + "stdicon.ega", VARPTR(Image(1))
 	DEF SEG
 
 	PUT (100, 100), Image, PSET
@@ -245,7 +245,7 @@ LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
 '                            UNIT Icons..... ALTICON
 '----------------------------------------------------------------------------
 	DEF SEG = VARSEG(Image(1))
-	BLOAD "alticon.ega", VARPTR(Image(1))
+	BLOAD GFXDIR + "alticon.ega", VARPTR(Image(1))
 	DEF SEG
 
 	PUT (100, 100), Image, PSET
@@ -262,7 +262,7 @@ LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
 '                            Terrain Icons
 '----------------------------------------------------------------------------
 	DEF SEG = VARSEG(Image(1))
-	BLOAD "terrain.ega", VARPTR(Image(1))
+	BLOAD GFXDIR + "terrain.ega", VARPTR(Image(1))
 	DEF SEG
 	PUT (200, 100), Image, PSET
 	GET (200, 101)-(215, 114), Cterr
@@ -277,7 +277,7 @@ LOCATE 1, 1: COLOR 11: PRINT "Loading Icons"
 '                         Miscellaneous Icons
 '----------------------------------------------------------------------------
 	DEF SEG = VARSEG(Image(1))
-	BLOAD "misc.ega", VARPTR(Image(1))
+	BLOAD GFXDIR + "misc.ega", VARPTR(Image(1))
 	DEF SEG
 	PUT (300, 100), Image, PSET
 	GET (300, 101)-(315, 114), Wterr
@@ -1470,7 +1470,7 @@ END SUB
 
 SUB randarm (s)
 who = sidex(s)
-dx = 41: file$ = "french.dat": IF who = 1 THEN file$ = "allies.dat": dx = 1
+dx = 41: file$ = SCNDIR + "french.dat": IF who = 1 THEN file$ = SCNDIR + "allies.dat": dx = 1
 
 COLOR 4: LOCATE 23, 1: PRINT "Placing armies ... "
 CALL arrange(who, xloc, yloc)
@@ -1592,8 +1592,8 @@ CIRCLE (320, 165), 300, 14, , , .1
 PAINT (320, 172), 0, 14
 a$ = "Setting Up Battle of " + SCENARIO$: LOCATE 11, 40 - .5 * LEN(a$): PRINT a$
 a$ = commander$(sidex(1)) + " is attacking " + commander$(sidex(2)): LOCATE 13, 40 - .5 * LEN(a$): PRINT a$
-IF LEN(DIR$("quotes.dat")) > 0 THEN
-	OPEN "I", 1, "quotes.dat"
+IF LEN(DIR$(SCNDIR + "quotes.dat")) > 0 THEN
+	OPEN "I", 1, SCNDIR + "quotes.dat"
 	INPUT #1, n
 	a = 1 + INT(RND * n)
 	FOR k = 1 TO a

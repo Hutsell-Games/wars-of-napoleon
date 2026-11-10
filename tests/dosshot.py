@@ -216,7 +216,7 @@ def read_known(path: Path = KNOWN_FILE) -> list[Known]:
 def city_centers(repo: Path = REPO) -> set[tuple[int, int]]:
     """The centers of the cities of every scenario's map (EURO<year>.MAP: number, name, x, y, ...)."""
     centers = set()
-    for path in repo.glob("EURO*.MAP"):
+    for path in repo.glob("scenarios/EURO*.MAP"):
         for line in path.read_text(encoding="latin-1").splitlines():
             parts = line.split(",")
             if len(parts) >= 6:
@@ -258,7 +258,7 @@ PORT_OFFSETS = {96: (50, 10), 97: (-15, 10), 98: (25, -10), 99: (5, 30)}
 def ship_centers(repo: Path = REPO) -> set[tuple[int, int]]:
     """The centers of the ships' ellipses at every port of every scenario's map, and at sea."""
     centers = {(140, 410)}
-    for path in repo.glob("EURO*.MAP"):
+    for path in repo.glob("scenarios/EURO*.MAP"):
         for line in path.read_text(encoding="latin-1").splitlines():
             parts = line.split(",")
             if len(parts) < 13:

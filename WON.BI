@@ -1,4 +1,5 @@
 DEFINT A-Z
+' $INCLUDE: 'folders.bi'
 DECLARE SUB animate (index%, flag%)
 DECLARE SUB armies ()
 DECLARE SUB armystat (index%)

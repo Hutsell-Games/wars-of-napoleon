@@ -1,3 +1,14 @@
 *.pyc
 # What the play harness writes on each run (tools\play\play.py).
 tests/out/
+
+# Saved games, written by playing (Files, Save). The one that came with the game is test data
+# (tests/data/NWS9.SAV), which every test run starts with.
+/*.sav
+/*.SAV
+
+# The history of a game and the one before it, written by playing.
+/nws.his
+/NWS.HIS
+/oldhist.ory
+/OLDHIST.ORY
