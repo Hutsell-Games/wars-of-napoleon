@@ -1,0 +1,323 @@
+# 15-1815-high-score: the session of tests/scripts/15-1815-high-score.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 88 waits in DOS, 89 prompts; 90 keys typed: 88 read by the strategic game, 2 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+#   left out: space at tick 4756, read by another program (PSP 4D43h, video mode 6Bh) during wait 83
+#   shot 16-vic: left out, another program's screen (video mode 6Bh)
+#   shot 20-dos: left out, the DOS prompt after Quit
+
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
+# wait 1, place 3
+prompt
+key f12
+# wait 2, place 3:S
+prompt
+key f12
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+key down
+# wait 5, place 2:S
+prompt
+key down
+# wait 6, place 2:S
+prompt
+key down
+# wait 7, place 2:S
+prompt
+key down
+# wait 8, place 2:S
+prompt
+key down
+# wait 9, place 2:S
+prompt
+key down
+# wait 10, place 2:S
+prompt
+key enter
+# wait 11, place 3
+prompt
+# shot 01-objective
+state
+key space
+# wait 12, place 2:M
+prompt
+text u
+# wait 13, place 2:U
+prompt
+text a
+# wait 14, place 2:U
+prompt
+text 1
+# wait 15, place 2:U
+prompt
+text t
+# wait 16, place 2:U
+prompt
+# shot 02-utility
+state
+key esc
+# wait 17, place 2:M
+prompt
+text e
+# wait 18, place 2:E
+prompt
+text y
+# wait 19, place 1
+prompt
+key esc
+# wait 20, place 2:M
+prompt
+text e
+# wait 21, place 2:E
+prompt
+text y
+# wait 22, place 3
+prompt
+key f12
+# wait 23, place 3
+prompt
+# shot 03-month-end
+state
+key esc
+# wait 24, place 3
+prompt
+key esc
+# wait 25, place 1
+prompt
+key esc
+# wait 26, place 2:M
+prompt
+key esc
+# wait 27, place 2:M
+prompt
+key esc
+# wait 28, place 2:M
+prompt
+key esc
+# wait 29, place 2:M
+prompt
+key esc
+# wait 30, place 2:M
+prompt
+key esc
+# wait 31, place 2:M
+prompt
+key esc
+# wait 32, place 2:M
+prompt
+key esc
+# wait 33, place 2:M
+prompt
+# shot 04-next-month
+state
+text e
+# wait 34, place 2:E
+prompt
+text y
+# wait 35, place 1
+prompt
+key esc
+# wait 36, place 2:M
+prompt
+text e
+# wait 37, place 2:E
+prompt
+text y
+# wait 38, place 3
+prompt
+key f12
+# wait 39, place 3
+prompt
+# shot 05-month-end
+state
+key esc
+# wait 40, place 3
+prompt
+key esc
+# wait 41, place 1
+prompt
+key esc
+# wait 42, place 3
+prompt
+key esc
+# wait 43, place 2:M
+prompt
+key esc
+# wait 44, place 2:M
+prompt
+key esc
+# wait 45, place 2:M
+prompt
+key esc
+# wait 46, place 2:M
+prompt
+key esc
+# wait 47, place 2:M
+prompt
+key esc
+# wait 48, place 2:M
+prompt
+key esc
+# wait 49, place 2:M
+prompt
+# shot 06-next-month
+state
+text e
+# wait 50, place 2:E
+prompt
+text y
+# wait 51, place 1
+prompt
+key esc
+# wait 52, place 2:M
+prompt
+text e
+# wait 53, place 2:E
+prompt
+text y
+# wait 54, place 3
+prompt
+key f12
+# wait 55, place 3
+prompt
+# shot 07-month-end
+state
+key esc
+# wait 56, place 3
+prompt
+key esc
+# wait 57, place 1
+prompt
+key esc
+# wait 58, place 3
+prompt
+key esc
+# wait 59, place 2:E
+prompt
+# shot 08-end-game
+state
+text n
+# wait 60, place 2:M
+prompt
+key esc
+# wait 61, place 2:M
+prompt
+key esc
+# wait 62, place 2:M
+prompt
+key esc
+# wait 63, place 2:M
+prompt
+key esc
+# wait 64, place 2:M
+prompt
+key esc
+# wait 65, place 2:M
+prompt
+key esc
+# wait 66, place 2:M
+prompt
+# shot 09-overridden
+state
+text u
+# wait 67, place 2:U
+prompt
+text e
+# wait 68, place 2:V
+prompt
+# shot 10-end-cond
+state
+key enter
+# wait 69, place 2:V
+prompt
+# shot 11-time-on
+state
+key esc
+# wait 70, place 2:U
+prompt
+key esc
+# wait 71, place 2:M
+prompt
+text e
+# wait 72, place 2:E
+prompt
+text y
+# wait 73, place 1
+prompt
+key esc
+# wait 74, place 2:M
+prompt
+text e
+# wait 75, place 2:E
+prompt
+text y
+# wait 76, place 3
+prompt
+key f12
+# wait 77, place 3
+prompt
+# shot 12-month-end
+state
+key esc
+# wait 78, place 3
+prompt
+key esc
+# wait 79, place 1
+prompt
+key esc
+# wait 80, place 3
+prompt
+key esc
+# wait 81, place 2:E
+prompt
+# shot 13-end-game2
+state
+text y
+# wait 82, place 3
+prompt
+# shot 14-battle-summary
+state
+key space
+# wait 83, place 3
+prompt
+# shot 15-new-high-score
+state
+key f12
+# wait 84, place 4
+prompt
+# shot 17-name-prompt
+state
+text W
+text e
+text l
+text l
+text i
+text n
+text g
+text t
+text o
+text n
+key enter
+# wait 85, place 3
+prompt
+key f12
+# wait 86, place 3
+prompt
+# shot 18-hall-of-fame
+state
+key f12
+# wait 87, place 3:S
+prompt
+key f12
+# wait 88, place 2:W
+prompt
+# shot 19-start-menu
+state

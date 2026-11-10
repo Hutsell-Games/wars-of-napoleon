@@ -1,0 +1,459 @@
+# 01-1796-french: the session of tests/scripts/01-1796-french.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 355 waits in DOS, 356 prompts; 103 keys typed: 102 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 109, read by another program (PSP 43B8h, video mode 69h) before the first wait
+#   shot 01-intro: left out, another program's screen (video mode 69h)
+
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
+# wait 1, place 3
+prompt
+key f12
+# wait 2, place 3:S
+prompt
+key f12
+# wait 3, place 2:W
+prompt
+# shot 02-start-menu
+state
+text s
+# wait 4, place 2:S
+prompt
+# shot 03-start-year
+state
+key enter
+# wait 5, place 3
+prompt
+# shot 04-objective
+state
+key space
+# wait 6, place 2:M
+prompt
+# shot 05-main-menu
+state
+text u
+# wait 7, place 2:U
+prompt
+# shot 06-utility
+state
+text a
+# wait 8, place 2:U
+prompt
+# shot 07-french
+state
+text t
+# wait 9, place 2:U
+prompt
+# shot 08-tactical-off
+state
+key esc
+# wait 10, place 2:M
+prompt
+text i
+# wait 11, place 2:I
+prompt
+# shot 09-inform-menu
+state
+key enter
+# wait 12, place 3
+prompt
+# shot 10-french-armies
+state
+key space
+# wait 13, place 2:M
+prompt
+text i
+# wait 14, place 2:I
+prompt
+key down
+# wait 15, place 2:I
+prompt
+key enter
+# wait 16, place 3
+prompt
+# shot 11-allied-armies
+state
+key space
+# wait 17, place 2:M
+prompt
+text i
+# wait 18, place 2:I
+prompt
+key down
+# wait 19, place 2:I
+prompt
+key down
+# wait 20, place 2:I
+prompt
+key enter
+# wait 21, place 3
+prompt
+# shot 12-cities
+state
+key space
+# wait 22, place 2:M
+prompt
+text i
+# wait 23, place 2:I
+prompt
+key down
+# wait 24, place 2:I
+prompt
+key down
+# wait 25, place 2:I
+prompt
+key down
+# wait 26, place 2:I
+prompt
+key enter
+# wait 27, place 3
+prompt
+# shot 13-force-summary
+state
+key space
+# wait 28, place 2:M
+prompt
+text i
+# wait 29, place 2:I
+prompt
+key down
+# wait 30, place 2:I
+prompt
+key down
+# wait 31, place 2:I
+prompt
+key down
+# wait 32, place 2:I
+prompt
+key down
+# wait 33, place 2:I
+prompt
+key enter
+# waits 34 to 38: pauses that read no key in DOS
+repeat 5
+prompt
+key f12
+end
+# wait 39, place 3
+prompt
+# shot 14-intelligence
+state
+key space
+# wait 40, place 2:M
+prompt
+text i
+# wait 41, place 2:I
+prompt
+key down
+# wait 42, place 2:I
+prompt
+key down
+# wait 43, place 2:I
+prompt
+key down
+# wait 44, place 2:I
+prompt
+key down
+# wait 45, place 2:I
+prompt
+key down
+# wait 46, place 2:I
+prompt
+key enter
+# wait 47, place 3
+prompt
+# shot 15-battles
+state
+key space
+# wait 48, place 2:M
+prompt
+text r
+# wait 49, place 2:R
+prompt
+# shot 16-recruit
+state
+key enter
+# wait 50, place 3:S
+prompt
+key f12
+# wait 51, place 3:S
+prompt
+key f12
+# wait 52, place 2:R
+prompt
+# shot 17-recruited
+state
+key esc
+# wait 53, place 2:M
+prompt
+text m
+# wait 54, place 2:F
+prompt
+text p
+# wait 55, place 2:T
+prompt
+# shot 18-move-to
+state
+key enter
+# wait 56, place 3
+prompt
+key f12
+# wait 57, place 2:M
+prompt
+# shot 19-moved
+state
+text s
+# wait 58, place 2:S
+prompt
+# shot 20-ships
+state
+key esc
+# wait 59, place 2:M
+prompt
+text e
+# wait 60, place 2:E
+prompt
+# shot 21-end-turn
+state
+text y
+# waits 61 to 210: pauses that read no key in DOS
+repeat 150
+prompt
+key f12
+end
+# wait 211, place 3
+prompt
+# shot 22-allies-moved
+state
+key space
+# waits 212 to 227: pauses that read no key in DOS
+repeat 16
+prompt
+key f12
+end
+# wait 228, place 3
+prompt
+# shot 23-invaded
+state
+key space
+# waits 229 to 252: pauses that read no key in DOS
+repeat 24
+prompt
+key f12
+end
+# wait 253, place 3
+prompt
+# shot 24-events
+state
+key space
+# wait 254, place 2:M
+prompt
+# shot 25-may-1796
+state
+text c
+# wait 255, place 2:C
+prompt
+text f
+# wait 256, place 2:F
+prompt
+# shot 26-fortify
+state
+key enter
+# wait 257, place 3:S
+prompt
+key f12
+# wait 258, place 2:M
+prompt
+# shot 27-fortified
+state
+text c
+# wait 259, place 2:C
+prompt
+text j
+# wait 260, place 2:J
+prompt
+# shot 28-join
+state
+key esc
+# wait 261, place 2:C
+prompt
+text c
+# wait 262, place 2:C
+prompt
+text s
+# wait 263, place 2:M
+prompt
+# shot 29-supply
+state
+text c
+# wait 264, place 2:C
+prompt
+text d
+# wait 265, place 2:F
+prompt
+# shot 30-detach
+state
+key esc
+# wait 266, place 2:M
+prompt
+text c
+# wait 267, place 2:C
+prompt
+text r
+# wait 268, place 2:R
+prompt
+# shot 31-relieve
+state
+key esc
+# wait 269, place 2:C
+prompt
+text c
+# wait 270, place 2:C
+prompt
+text a
+# wait 271, place 2:F
+prompt
+# shot 32-drill
+state
+key esc
+# wait 272, place 2:M
+prompt
+# shot 33-drill-esc
+state
+text u
+# wait 273, place 2:U
+prompt
+text n
+# wait 274, place 2:S
+prompt
+# shot 34-noise
+state
+key esc
+# wait 275, place 2:M
+prompt
+text u
+# wait 276, place 2:U
+prompt
+text d
+# wait 277, place 2:D
+prompt
+# shot 35-display
+state
+key esc
+# wait 278, place 2:U
+prompt
+text u
+# wait 279, place 2:U
+prompt
+text b
+# wait 280, place 2:B
+prompt
+# shot 36-balance
+state
+key esc
+# wait 281, place 2:M
+prompt
+text u
+# wait 282, place 2:U
+prompt
+text e
+# wait 283, place 2:V
+prompt
+# shot 37-end-cond
+state
+key esc
+# wait 284, place 2:U
+prompt
+text u
+# wait 285, place 2:U
+prompt
+text r
+# wait 286, place 2:R
+prompt
+# shot 38-random-events
+state
+key esc
+# wait 287, place 1
+prompt
+text u
+# wait 288, place 2:U
+prompt
+text v
+# wait 289, place 2:U
+prompt
+# shot 39-vary-start
+state
+key esc
+# wait 290, place 2:M
+prompt
+text u
+# wait 291, place 2:U
+prompt
+text h
+# wait 292, place 2:U
+prompt
+# shot 40-history
+state
+key esc
+# wait 293, place 2:M
+prompt
+text u
+# wait 294, place 2:U
+prompt
+text a
+# wait 295, place 2:U
+prompt
+# shot 41-aggress
+state
+key esc
+# wait 296, place 2:M
+prompt
+# shot 42-utility-done
+state
+text f
+# wait 297, place 2:O
+prompt
+# shot 43-files
+state
+text s
+# wait 298, place 2:S
+prompt
+# shot 44-save-slots
+state
+key enter
+# wait 299, place 2:M
+prompt
+# shot 45-saved
+state
+text e
+# wait 300, place 2:E
+prompt
+text y
+# waits 301 to 351: pauses that read no key in DOS
+repeat 51
+prompt
+key f12
+end
+# wait 352, place 3
+prompt
+# shot 46-allies-moved2
+state
+key space
+# wait 353, place 2:M
+prompt
+# shot 47-events2a
+state
+key space
+# wait 354, place 2:M
+prompt
+# shot 48-events2b
+state
+key space
+# wait 355, place 2:M
+prompt
+# shot 49-events2c
+state

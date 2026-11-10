@@ -1,0 +1,70 @@
+# invasion-1796-french: 1796 as the French, one player, Tactical off. The fleet at Bordeaux sails
+# to Amsterdam, a neutral port of a minor nation. In the next turn the Ships menu offers Invasion
+# (navy, WON2.BM: two or more ships at a neutral port whose owner is above 6), and the invasion
+# places a new army there. The player then only ends turns until the game ends, as the generated
+# games do. No session reaches an invasion (tests/README.md). Written by hand.
+#! seed 1
+
+# A TICK: any key ends it. A pause that waits for a key: a space. The End Turn question and
+# the End Game question: Yes. A retreat the player is asked to choose: Esc.
+rule 3 key f12
+rule 1 key space
+rule 2:E text y
+rule 2:R key esc
+
+# The built-in title, then the start menu: Start NEW Game, 1796.
+play until 2:W
+text s
+prompt
+key enter
+
+# Utility: swap to the French, Tactical off.
+play until 2:M
+digest
+text u
+prompt
+text a
+prompt
+text t
+prompt
+key esc
+
+# Ships, Sail, Amsterdam (the first port of the list), then End Turn.
+play until 2:M
+text s
+prompt
+text s
+prompt
+# shot sail-to
+state
+key enter
+play until 2:M
+digest
+text e
+
+# The next turn: Ships offers Invasion; it places a new army in Amsterdam.
+play until 2:M
+digest
+text s
+prompt
+# shot ships-invasion
+state
+text i
+prompt
+# shot invaded
+state
+key space
+
+# Each of the 9 turns left: a digest at the main menu, then End Turn.
+repeat 9
+play until 2:M
+digest
+text e
+end
+
+# The game ends: the Battle Summary, the Hall of Fame and Game Over. The start menu: Quit to
+# DOS, and a key for END's "Press any key to continue".
+play until 2:W
+digest
+text q
+repeat space

@@ -1,0 +1,7 @@
+# b1-innsbruck-retreat: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 cf3fa691d1da005fb10696d78337fb1a029a724ab20439f0b69d4cc9b1e737a4
+97a9895c28b8e9db8e376fbd7f1198d624c9801daf7408b26c46187c5397149a  files/OUTCOME.&&&
+149d8af6183446cf6d5de95342f840b726708181d0aa8becf83cfd40a681cf81  shots/01-first-order.png
+2e0fb9333fb129dc01c5ebdc02c91ae9c3163d3204f6825063895d13f3cf3452  shots/02-retreat-ask.png
+149d8af6183446cf6d5de95342f840b726708181d0aa8becf83cfd40a681cf81  shots/03-result.png

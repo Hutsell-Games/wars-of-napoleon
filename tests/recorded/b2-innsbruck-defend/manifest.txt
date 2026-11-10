@@ -1,0 +1,6 @@
+# b2-innsbruck-defend: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 1.0, cycles fixed 20000
+# script SHA-256 0e0ecef1eacd0685ceeb0a695b1d2c469031b093b6482204ac6ce79983ca3e13
+4b5652a2bf5b2f14df577a6387e56f24826cd437f55464a2a4b8bdd7c20a8a89  files/OUTCOME.&&&
+149d8af6183446cf6d5de95342f840b726708181d0aa8becf83cfd40a681cf81  shots/01-first-order.png
+3ccb24e5038d61cb7b43fea6d5141116c40a65bb0da0a564dd24ac45905eec76  shots/02-result.png

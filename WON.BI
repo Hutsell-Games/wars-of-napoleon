@@ -1,4 +1,5 @@
 DEFINT A-Z
+' $INCLUDE: 'folders.bi'
 DECLARE SUB animate (index%, flag%)
 DECLARE SUB armies ()
 DECLARE SUB armystat (index%)
@@ -76,6 +77,8 @@ DECLARE SUB usamap ()
 DECLARE SUB victor ()
 DECLARE SUB void (a%, y%)
 DECLARE SUB war ()
+DECLARE FUNCTION scriptdate$ ()
+DECLARE FUNCTION scripttick% (sec!)
 '==========================================================================
 ' Recovered from WON.EXE (docs\recovery.md). The names of the variables
 ' that Civil War Strategy does not have were chosen in 2026; spare() is
@@ -94,6 +97,9 @@ COMMON SHARED victory(), noise, capcity(), difficult, usadv, rescue
 COMMON SHARED font$(), brray(), randbal, casualty&()
 COMMON SHARED rflag, navyto, pcode, history, thrill, commerce, raider, grudge
 COMMON SHARED mtnx(), mtny(), cities, nation$(), spare(), attitude(), tactical
+' The modes of the test hooks (script.bm), in COMMON so that every module
+' of the PDS 7.1 build sees them.
+COMMON SHARED scripted, traced
 cities = 67
 DIM SHARED cityx(cities), cityy(cities), cityv(cities), cityp(cities), city$(cities), lname$(50), rcity(12)
 DIM SHARED cash(2), control(2), matrix(cities, 7), income(2), anima(300), rating(50)
@@ -105,3 +111,5 @@ DIM SHARED victory(2), capcity(2), price(3), armynat(50)
 DIM SHARED font$(36), brray(cities), casualty&(2), batwon(2), cityo(cities)
 DIM SHARED mtnx(19), mtny(19), nation$(12), spare(2)
 DIM SHARED homenat(50)
+' The pictures' arrays, declared in WON.BAS for DOS.
+DIM SHARED graphic(1 TO 2000), fren(1 TO 90), nat2(1 TO 90), nat3(1 TO 90), nat4(1 TO 90), nat5(1 TO 90), nat6(1 TO 90), nap(1 TO 90)

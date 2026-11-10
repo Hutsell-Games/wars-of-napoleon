@@ -1,0 +1,79 @@
+' ===========================================================================
+' NAPSCRIPT.BM - the test hooks of the tactical game. Included at the end of
+' NAPOLEON.BAS. Written in BASIC that both QB64 and BASIC PDS 7.1 compile.
+' SCRIPT.BM holds the same hooks for the strategic game, and its scriptbattle
+' sets NAP_SEED for each battle a script plays.
+'
+' Two environment variables choose how the program runs:
+'   NAP_SEED   RANDOMIZE takes this number instead of TIMER. Alone, it makes
+'              the program "scripted" (scripted = 1): each wait for a key is
+'              announced, and TICK waits for a key where it read one. A TICK
+'              shorter than a second reads no key, in DOS either, so under a
+'              script it returns at once.
+'   NAP_TRACE  Trace mode (traced = 1), for the PDS 7.1 build in DOSBox-X: the
+'              waits are announced and nothing else changes. NAP_SEED may be
+'              set too, for the seed alone.
+' A program started with neither plays as before.
+' ===========================================================================
+
+' Chooses the mode and seeds the random numbers. It stands where
+' NAPOLEON.BAS had RANDOMIZE TIMER, its first statement.
+SUB napstart
+seed$ = ENVIRON$("NAP_SEED")
+IF ENVIRON$("NAP_TRACE") <> "" THEN
+	traced = 1
+ELSEIF seed$ <> "" THEN
+	scripted = 1
+END IF
+IF seed$ = "" THEN RANDOMIZE TIMER ELSE RANDOMIZE VAL(seed$)
+END SUB
+
+' Called in TICK once sec! is positive. A pause of a second or more reads
+' keys, so it is announced as a wait at place 3; when the program is
+' scripted, it waits for a key and gives -1, and TICK returns. A shorter
+' pause reads no key and is not announced; when the program is scripted it
+' gives -1, and TICK returns at once. Otherwise it gives 0, and TICK pauses
+' as before.
+FUNCTION scripttick% (sec!)
+scripttick% = 0
+IF scripted = 0 AND traced = 0 THEN EXIT FUNCTION
+IF sec! >= 1 THEN CALL announce(3, "")
+IF scripted = 0 THEN EXIT FUNCTION
+IF sec! >= 1 THEN DO WHILE INKEY$ = "": LOOP
+scripttick% = -1
+END FUNCTION
+
+' Called right before each SYSTEM that ends the battle, once OUTCOME.&&& is
+' written if it is. It announces a wait at place 7, with the letter that
+' says how the battle ended: O by over (time up, or a retreat), W by
+' wipeout with time left, Q by F10. When the program is scripted it waits
+' for a key, so that a script can take the state of the last screen: the
+' PDS 7.1 runtime goes back to text mode at SYSTEM. In normal play it does
+' nothing.
+SUB scriptend (letter$)
+CALL announce(7, letter$)
+IF scripted THEN DO WHILE INKEY$ = "": LOOP
+END SUB
+
+' Says that the program is about to wait for a key, when it is scripted or
+' traced. place names the kind of wait (1 to 255) and letter$ narrows it
+' (its first character, or ""). The places are the strategic game's where
+' the two games share a kind of wait:
+'   1  a pause that any key ends ("hit a key")
+'   2  a menu; letter$ is the first letter of the menu's title
+'   3  TICK of a second or more
+'   5  the command for a unit (order, wait3)
+'   6  the cursor on the map: move, intelligence, inspire (order, wait5)
+'   7  the end of the battle, before SYSTEM (scriptend)
+' Byte &H4F1 holds the place, &H4F2 the letter, and &H4F0 counts the waits:
+' QB64Rust's tools\screen\README.md, "Prompts". It leaves DEF SEG at 0, as
+' BuffClear does.
+SUB announce (place, letter$)
+IF scripted = 0 AND traced = 0 THEN EXIT SUB
+code = 0
+IF letter$ <> "" THEN code = ASC(UCASE$(letter$))
+DEF SEG = 0
+POKE &H4F1, place
+POKE &H4F2, code
+POKE &H4F0, (PEEK(&H4F0) + 1) AND 255
+END SUB

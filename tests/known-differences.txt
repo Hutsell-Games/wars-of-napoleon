@@ -1,0 +1,62 @@
+# The differences between the QB64 builds and the DOSBox-X recordings that are known and
+# explained. tests/play.py bridge and tactical leave them out (tests/dosshot.py), and say
+# when a line is no longer met, so that the list stays true. docs/devnotes.md, "Step 8: the
+# known differences", says where each comes from.
+#
+# One per line:  <run> <shot> <kind> [args] -- <why>
+#   <run>   a session or battle, or a pattern: [01]* is every session, b* every battle
+#   <shot>  a shot, a pattern, or NAME+ for that shot and every later one
+#   <kind>  markers          the four pixels at the diagonals of each city marker
+#           pointer          the three pixels of an army's arrow pointer at its sloped edge
+#           ships            the twelve pixels at the sides of each ship's ellipse, at each port
+#           raid             the 128 pixels where the "RAID COMMERCE" ellipse differs
+#           box x0 y0 x1 y1  every pixel in that box (inclusive)
+#           color AAAAAA BBBBBB   every pixel that is AAAAAA in QB64 and BBBBBB in DOS
+#           any              the whole shot
+#           file NAME        (with shot *) a file of the recording that the run writes otherwise
+# QB64Rust's DIVERGENCES-QB45.md has the rows named Q-0nn.
+
+# --- How QB64 draws: on every map
+[01]* * markers -- CIRCLE of radius 4 lights one pixel at each diagonal in QB64, two in QB 4.5 (Q-036)
+[01]* * pointer -- a solid LINE with a slope of 2 in 4 lights other pixels (Q-025)
+[01]* * ships -- CIRCLE of radius 18 with aspect .4 lights six pixels fewer at each end (Q-036)
+[01]* * raid -- CIRCLE of radius 70 with aspect .25 puts its top and bottom one row from QB 4.5's (Q-036)
+
+# --- How QB64 draws: single screens
+02-1796-allies 07-turn-end box 530 95 639 380 -- the burning building, drawn with sloped LINEs and PAINT (Q-025)
+04-1807 27-next-turn box 300 50 330 62 -- the tombstone's top, CIRCLE of radius 8 with aspect .4 (Q-036)
+04-1807 28-turn-end box 300 50 330 62 -- the tombstone's top, as above
+14-1796-naval 0[6-9]-* box 0 80 345 100 -- the French ships of naval combat, small ellipses (Q-036)
+14-1796-naval 0[6-9]-* box 0 180 345 200 -- the English ships, as above
+14-1796-naval 0[6-9]-* box 0 240 639 479 -- the picture of a ship, sloped LINEs and PAINT (Q-025)
+b3-waterloo-attack first-order box 240 140 252 150 -- a charging unit's CIRCLE of radius 4 in SCREEN 9 (Q-036)
+b4-innsbruck-advance first-order box 240 84 300 150 -- the charging units' CIRCLEs, as above
+
+# --- D12: a SINGLE expression stored as an INTEGER, or compared, rounds otherwise (Q-022)
+04-1807 1[48]-turn-end box 368 448 412 463 -- a loss on the status line, one off
+04-1807 21-turn-end box 600 256 625 270 -- the defender's Base, INT(.01 * armysize(defend)) (WON1.BM line 111)
+04-1807 27-next-turn box 150 448 230 463 -- a loss on the status line, one off
+04-1807 32-battle-summary box 305 255 325 270 -- the men lost, one off
+04-1807 * file NWS9.SAV -- three numbers one off
+05-1808 12-turn-end+ any -- army 5's supply, .2 * armysize (WON2.BM line 636): one RND fewer, and the game goes on otherwise
+05-1808 * file NWS9.SAV -- as above
+08-1815 06-turn-end box 600 256 625 270 -- the defender's Base, as in session 4
+09-1805-tactical 03-attack box 585 330 625 430 -- the odds panel at Innsbruck, x1 = .7 * x1 (WON1.BM line 136)
+09-1805-tactical-battle 03-attack box 585 330 625 430 -- as above
+10-1805-events-vary 05-turn-end+ any -- the odds at Innsbruck decide the battle, and the game goes on otherwise
+10-1805-events-vary * file NWS9.SAV -- as above
+11-1812-aggression 13-turn-end box 600 256 625 270 -- the defender's Base, as in session 4
+b2-innsbruck-defend result box 240 150 390 195 -- the losses, a few men off
+b2-innsbruck-defend * file OUTCOME.&&& -- the same losses
+b3-waterloo-attack result box 260 150 285 195 -- the losses, a few men off
+b3-waterloo-attack * file OUTCOME.&&& -- the same losses
+b4-innsbruck-advance result box 370 178 388 198 -- the Esprit de Corps bar, x = elan * .1 (NAP1A.BM lines 384 and 390)
+
+# --- Where a script cannot take DOS's shot
+15-1815-high-score 15-new-high-score any -- DOS took it while the high score's music played after wait 83; the port has no wait there
+
+# --- The port's fixes of the game
+01-1796-french 3[2-7]-* any -- DOS scrolls the screen up one row at Army Drill (PRINT "DRILL ARMY" on row 29, WON.BAS line 324); the port does not, until the map is drawn again
+
+# --- The port's own tactical game (D3 and D4)
+09-1805-tactical-battle * file OUTCOME.&&& -- the port's tactical game is another revision than the shipped NAPOLEON.EXE, and gives b1's outcome

@@ -1,0 +1,28 @@
+# b4-innsbruck-advance: the battle of session 9 (Innsbruck, 1805), played by the French, who
+# attack. Each unit of the player moves south, toward the Allies, as far as it can each turn,
+# so that the player's units fight. The battle's BATTLE.$$$ is b4-innsbruck-advance.battle.
+# seed 1 (NAP_SEED)
+
+# A TICK of a second or more: any key ends it. A "hit a key" pause: a space.
+rule 3 key f12
+rule 1 key space
+# The combat menu of a unit of the player that fights: Enter, the first item (Light Skirmish).
+rule 2:C key enter
+# "Limber ?" before an artillery unit moves: Yes, which limbers it and ends its turn.
+rule 2:L text y
+play until 5
+# shot first-order
+state
+# A unit's order: Down moves it a step south (curser picks south-west or south-east by RND),
+# and the two waits after it get a space each, before any rule is looked at. A unit that
+# moved and has moves left rests at the first space; the second goes to the next wait. A
+# unit that cannot move pauses at "Cannot move in that direction", which the first space
+# ends, and rests at the second. A menu ignores a space and asks again, and its own rule
+# answers it then. So no unit tries for ever a step it cannot take.
+rule 5 key down key space key space
+key down
+# over writes OUTCOME.&&& and waits at place 7 before it exits (scriptend).
+play until 7
+# shot result
+state
+key f12

@@ -1,0 +1,138 @@
+# 09-1805-tactical: the session of tests/scripts/09-1805-tactical.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# Run with WON_OUTCOME set to tests/recorded/09-1805-tactical/files/OUTCOME.&&& (D4): the battle at wait 91 is left out.
+# 135 waits in DOS, 136 prompts; 28 keys typed: 23 read by the strategic game, 5 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+#   left out: space at tick 1309, read by another program (PSP 6E51h, video mode 69h) during wait 91
+#   left out: space at tick 1436, read by another program (PSP 4467h, video mode 10h) during wait 91
+#   left out: f9 at tick 1527, read by another program (PSP 4467h, video mode 10h) during wait 91
+#   left out: y at tick 1654, read by another program (PSP 4467h, video mode 10h) during wait 91
+#   shot 04-tactical-title: left out, another program's screen (video mode 69h)
+#   shot 05-battle-map: left out, another program's screen (video mode 10h)
+#   shot 06-rested: left out, another program's screen (video mode 10h)
+#   shot 07-retreat-ask: left out, another program's screen (video mode 10h)
+
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
+# wait 1, place 3
+prompt
+key f12
+# wait 2, place 3:S
+prompt
+key f12
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+key down
+# wait 5, place 2:S
+prompt
+key enter
+# wait 6, place 3
+prompt
+# shot 01-objective
+state
+key space
+# wait 7, place 2:M
+prompt
+# shot 02-main-menu
+state
+text e
+# wait 8, place 2:E
+prompt
+text y
+# waits 9 to 89: pauses that read no key in DOS
+repeat 81
+prompt
+key f12
+end
+# wait 90, place 3
+prompt
+# shot 03-attack
+state
+key f12
+# wait 91, place 3
+prompt
+key f12
+# wait 92, place 3
+prompt
+# shot 08-victorious
+state
+key f12
+# wait 93, place 3
+prompt
+# shot 09-losses
+state
+key f12
+# wait 94, place 3
+prompt
+key f12
+# wait 95, place 2:R
+prompt
+# shot 10-retreat
+state
+text v
+# waits 96 to 118: pauses that read no key in DOS
+repeat 23
+prompt
+key f12
+end
+# wait 119, place 3
+prompt
+# shot 11-retreated
+state
+key space
+# wait 120, place 2:M
+prompt
+key space
+# wait 121, place 2:M
+prompt
+key space
+# wait 122, place 2:M
+prompt
+key space
+# wait 123, place 2:M
+prompt
+key space
+# wait 124, place 2:M
+prompt
+key space
+# wait 125, place 2:M
+prompt
+key space
+# wait 126, place 2:M
+prompt
+key space
+# wait 127, place 2:M
+prompt
+key space
+# wait 128, place 2:M
+prompt
+key space
+# wait 129, place 2:M
+prompt
+key space
+# wait 130, place 2:M
+prompt
+key space
+# wait 131, place 2:M
+prompt
+key space
+# wait 132, place 2:M
+prompt
+key space
+# wait 133, place 2:M
+prompt
+key space
+# wait 134, place 2:M
+prompt
+key space
+# wait 135, place 2:M
+prompt
+# shot 12-next-turn
+state

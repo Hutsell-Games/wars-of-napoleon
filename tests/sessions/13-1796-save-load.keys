@@ -1,0 +1,295 @@
+# 13-1796-save-load: the session of tests/scripts/13-1796-save-load.keys, for the scripted port.
+# Written by tools/play/sessions.py from its trace run with the PDS 7.1 build; do not
+# edit, write it again. The first prompt is the port's built-in title; each other prompt
+# is a wait the strategic game announced in DOS.
+# seed 1 (WON_SEED)
+# 190 waits in DOS, 191 prompts; 73 keys typed: 72 read by the strategic game, 1 by other programs, 0 by none, 0 dropped with the buffer full.
+#   left out: space at tick 91, read by another program (PSP 43B8h, video mode 69h) before the first wait
+#   shot 20-dos: left out, the DOS prompt after Quit
+
+# the built-in title's TICK 2: the port runs no ARCH2.EXE (D6)
+prompt
+key f12
+# wait 1, place 3
+prompt
+key f12
+# wait 2, place 3:S
+prompt
+key f12
+# wait 3, place 2:W
+prompt
+text s
+# wait 4, place 2:S
+prompt
+# shot 01-start-year
+state
+key enter
+# wait 5, place 3
+prompt
+# shot 02-objective
+state
+key space
+# wait 6, place 2:M
+prompt
+text u
+# wait 7, place 2:U
+prompt
+text t
+# wait 8, place 2:U
+prompt
+key esc
+# wait 9, place 2:M
+prompt
+# shot 03-main-menu
+state
+text r
+# wait 10, place 2:R
+prompt
+key enter
+# wait 11, place 3
+prompt
+key f12
+# wait 12, place 2:R
+prompt
+key esc
+# wait 13, place 2:M
+prompt
+# shot 04-recruited
+state
+text f
+# wait 14, place 2:O
+prompt
+text s
+# wait 15, place 2:S
+prompt
+# shot 05-save-slots
+state
+key enter
+# wait 16, place 2:M
+prompt
+# shot 06-saved
+state
+text e
+# wait 17, place 2:E
+prompt
+text y
+# waits 18 to 65: pauses that read no key in DOS
+repeat 48
+prompt
+key f12
+end
+# wait 66, place 3
+prompt
+# shot 07-turn-end
+state
+key esc
+# wait 67, place 2:M
+prompt
+key esc
+# wait 68, place 2:M
+prompt
+key esc
+# wait 69, place 2:M
+prompt
+key esc
+# wait 70, place 2:M
+prompt
+key esc
+# wait 71, place 2:M
+prompt
+key esc
+# wait 72, place 2:M
+prompt
+key esc
+# wait 73, place 2:M
+prompt
+key esc
+# wait 74, place 2:M
+prompt
+key esc
+# wait 75, place 2:M
+prompt
+key esc
+# wait 76, place 2:M
+prompt
+key esc
+# wait 77, place 2:M
+prompt
+key esc
+# wait 78, place 2:M
+prompt
+key esc
+# wait 79, place 2:M
+prompt
+key esc
+# wait 80, place 2:M
+prompt
+key esc
+# wait 81, place 2:M
+prompt
+key esc
+# wait 82, place 2:M
+prompt
+# shot 08-next-turn
+state
+text e
+# wait 83, place 2:E
+prompt
+text y
+# waits 84 to 126: pauses that read no key in DOS
+repeat 43
+prompt
+key f12
+end
+# wait 127, place 3
+prompt
+# shot 09-turn-end
+state
+key esc
+# waits 128 to 149: pauses that read no key in DOS
+repeat 22
+prompt
+key f12
+end
+# wait 150, place 3
+prompt
+key esc
+# wait 151, place 2:M
+prompt
+key esc
+# wait 152, place 2:M
+prompt
+key esc
+# wait 153, place 2:M
+prompt
+key esc
+# wait 154, place 2:M
+prompt
+key esc
+# wait 155, place 2:M
+prompt
+key esc
+# wait 156, place 2:M
+prompt
+key esc
+# wait 157, place 2:M
+prompt
+key esc
+# wait 158, place 2:M
+prompt
+key esc
+# wait 159, place 2:M
+prompt
+key esc
+# wait 160, place 2:M
+prompt
+key esc
+# wait 161, place 2:M
+prompt
+key esc
+# wait 162, place 2:M
+prompt
+key esc
+# wait 163, place 2:M
+prompt
+key esc
+# wait 164, place 2:M
+prompt
+key esc
+# wait 165, place 2:M
+prompt
+# shot 10-next-turn
+state
+text f
+# wait 166, place 2:O
+prompt
+text n
+# wait 167, place 3
+prompt
+key f12
+# wait 168, place 3:S
+prompt
+key f12
+# wait 169, place 2:W
+prompt
+# shot 11-start-menu
+state
+text r
+# wait 170, place 2:L
+prompt
+# shot 12-load-list
+state
+key enter
+# wait 171, place 3
+prompt
+# shot 13-resumed
+state
+key space
+# wait 172, place 2:M
+prompt
+# shot 14-resumed-menu
+state
+text i
+# wait 173, place 2:I
+prompt
+key down
+# wait 174, place 2:I
+prompt
+key down
+# wait 175, place 2:I
+prompt
+key down
+# wait 176, place 2:I
+prompt
+key enter
+# wait 177, place 3
+prompt
+# shot 15-resumed-forces
+state
+key space
+# wait 178, place 2:M
+prompt
+text f
+# wait 179, place 2:O
+prompt
+text l
+# wait 180, place 2:L
+prompt
+# shot 16-load-list2
+state
+key down
+# wait 181, place 2:L
+prompt
+key enter
+# wait 182, place 2:M
+prompt
+# shot 17-loaded
+state
+text i
+# wait 183, place 2:I
+prompt
+key down
+# wait 184, place 2:I
+prompt
+key down
+# wait 185, place 2:I
+prompt
+key down
+# wait 186, place 2:I
+prompt
+key enter
+# wait 187, place 3
+prompt
+# shot 18-loaded-forces
+state
+key space
+# wait 188, place 2:M
+prompt
+text f
+# wait 189, place 2:O
+prompt
+text q
+# wait 190, place 2:Q
+prompt
+# shot 19-quit
+state

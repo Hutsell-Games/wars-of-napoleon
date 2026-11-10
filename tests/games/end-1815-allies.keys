@@ -1,0 +1,54 @@
+# end-1815-allies: 1815 as the Allies, one player, Tactical off. The player only ends turns;
+# the computer plays the French. A digest at the main menu of each of its 3 turns.
+# Written by tests/make_scripts.py.
+#! seed 47199
+
+# A TICK: any key ends it. A pause that waits for a key: a space. The End Turn
+# question and the End Game question: Yes. A retreat the player is asked to choose:
+# Esc, which lets the game choose.
+rule 3 key f12
+rule 1 key space
+rule 2:E text y
+rule 2:R key esc
+
+# The built-in title, then the start menu: Start NEW Game, the year.
+play until 2:W
+text s
+prompt
+key down
+prompt
+key down
+prompt
+key down
+prompt
+key down
+prompt
+key down
+prompt
+key down
+prompt
+key enter
+
+# The main menu. Utility: Tactical off.
+play until 2:M
+digest
+text u
+prompt
+text t
+prompt
+key esc
+
+# Each turn: a digest at the main menu, then End Turn.
+repeat 3
+play until 2:M
+digest
+text e
+end
+
+# The game ends: the Battle Summary, the Hall of Fame and Game Over.
+
+# The start menu: Quit to DOS, and a key for END's "Press any key to continue".
+play until 2:W
+digest
+text q
+repeat space

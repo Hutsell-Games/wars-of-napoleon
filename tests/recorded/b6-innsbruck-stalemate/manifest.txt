@@ -1,0 +1,6 @@
+# b6-innsbruck-stalemate: recorded by tools/play/play.py
+# DOSBox-X 2026.10.01, dosbox-x.exe SHA-256 5534a75e0bcb9c72, seed 2.0, cycles fixed 20000
+# script SHA-256 e8e4e61fdc74dcf596b12b6e48dc3fe7946e32f4e15cbdf01bb370919c818942
+1aef4edaeec7b99eff1d013af52b2850510bf751dc18a7b371636a8626e28620  files/OUTCOME.&&&
+b39b1771f82c5c2b7b487777ec111955687b7d12ace035304b814c5282099f9f  shots/01-first-order.png
+304f82f2b61d06825fc9e508fd3c9f9dc97e9806229f990cd869884344429adc  shots/02-result.png
