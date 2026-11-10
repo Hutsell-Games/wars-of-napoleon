@@ -55,5 +55,8 @@ b4-innsbruck-advance result box 370 178 388 198 -- the Esprit de Corps bar, x = 
 # --- Where a script cannot take DOS's shot
 15-1815-high-score 15-new-high-score any -- DOS took it while the high score's music played after wait 83; the port has no wait there
 
+# --- The port's fixes of the game
+01-1796-french 3[2-7]-* any -- DOS scrolls the screen up one row at Army Drill (PRINT "DRILL ARMY" on row 29, WON.BAS line 324); the port does not, until the map is drawn again
+
 # --- The port's own tactical game (D3 and D4)
 09-1805-tactical-battle * file OUTCOME.&&& -- the port's tactical game is another revision than the shipped NAPOLEON.EXE, and gives b1's outcome

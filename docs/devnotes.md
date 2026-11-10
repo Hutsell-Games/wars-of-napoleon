@@ -1249,6 +1249,8 @@ only with rest, F9, F10, a step south and Intell.
   Esprit de Corps bar of battles b2 to b4.
 - **A shot the port cannot take**: session 15's `15-new-high-score`.
 - **The port's own tactical game**: the `OUTCOME.&&&` of session 9 with its battle.
+- **The port's fixes of the game**: session 1's shots `32-drill` to `37-end-cond`, where DOS has the map
+  scrolled up one row by Army Drill (item 57).
 
 The step 7b check named the burning building and the naval combat as drawing differences, and the city
 markers; the ships on the map, the raid mark, the pointer and the tombstone are new. Each is masked by its
@@ -1326,3 +1328,13 @@ Step 9 of `docs\port-study.md`: the data folders of D9, the test data, the docum
 The check: the workflow's two build steps and its copy step, run by hand on a `git archive` of the branch with
 QB64Rust's release build, built both programs and gave the folder above, 48 files. The workflow itself first
 runs on GitHub at the next push.
+
+## Fixes of the game (2026-11-09)
+
+57. **Army Drill no longer scrolls the map** (user, 2026-11-09: "fix it"). `WON.BAS` line 324 printed
+    `"DRILL ARMY"` on row 29 without a closing `;`. The newline went past the last row of the text window,
+    which scrolled the whole screen up 16 pixels, in DOS and in QB64 alike. The map then stayed shifted until it
+    was drawn again. Armies and their pointers were drawn at the right places over the shifted map, so they
+    showed twice and the pointers looked wrong. The line now ends with `;`, as Detach's and every other
+    heading's does. Session 1's reference is recorded again, and `known-differences.txt` leaves out its six
+    shots where DOS shows the scroll.

@@ -321,7 +321,7 @@ alone:
 '                               Drill
 '-------------------------------------------------------------------------
 		CASE 6
-	COLOR 14: CALL clrbot: PRINT "DRILL ARMY"
+	COLOR 14: CALL clrbot: PRINT "DRILL ARMY";
 	CALL movefrom(index, target)
 	IF target < 1 OR index < 1 THEN COLOR 11: CALL clrbot: PRINT "No armies remain eligible for drills in "; month$(month); : GOTO menu0
 	IF armyexper(index) > 5 OR armyexper(index) >= armylead(index) THEN COLOR 12: CALL clrbot: PRINT armyname$(index); ": Army has reached maximum improvement through drilling"; : GOTO optmen

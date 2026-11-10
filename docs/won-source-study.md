@@ -594,7 +594,8 @@ quitting, part of session 15's purpose.
 - The shipped `NWS.CFG` plays the Allies, with Tactical on, sound on, aggression NORMAL and random events
   favoring the Allies (`2,2,3,3,1,1,3,0,1`). So the French sessions first swap sides in the UTILITY menu.
 - After Army Drill is left with Esc, the screen scrolls up one text row and stays so until the map is drawn
-  again. This is the shipped program's own behavior; the recording keeps it.
+  again. This is the shipped program's own behavior; the recording keeps it. The port fixes it
+  (`docs\devnotes.md` item 57).
 - Each recorded screenshot is about 20 KB, so session 1 is 1.2 MB of PNGs.
 
 **Sessions 3 to 15 are recorded (2026-11-07).** `tests\README.md` lists what each one covers and what was
