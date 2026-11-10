@@ -638,9 +638,16 @@ changes is either a mistake or is named in the commit message.
    every check passes: the 37 scripts, `bridge` and `tactical` against DOS, and the PDS bridge on sessions 1, 9
    and 13 and battles b1 and b3. `NWS.CFG` and `HISCORE.NWS` stay beside the programs: the game opens both
    without checking that they exist. The PDS build names the folders as DOS does, `GRAPHICS\` and `SCENARIO\`.
-   The files of D11 are not removed yet (`docs\devnotes.md`, "Step 9").
+   **Done (2026-11-09).** The seven files of D11 left the branch with the folders. A PDS bridge run of
+   sessions 1, 9 and 13 and battles b1 and b3 without them still gives the recordings. `BATTLE.$$$`, `OUTCOME.&&&` and `BATTSUMM` stay
+   beside the programs, since git cannot ignore a tracked file and `WON1.BM` opens `OUTCOME.&&&` without
+   checking that it exists (`docs\devnotes.md`, "Step 9").
 10. **The build on GitHub Actions.** World War 2's `build.yml`, with the artifact `wars-of-napoleon`: `won.exe`,
     `napoleon.exe` and the data folders.
+
+    **Done (2026-11-09).** It runs on each push to `main` or `qb64rust`, as Civil War Battleset's does. Its
+    steps were run by hand on a copy of the branch; GitHub runs it first at the next push (`docs\devnotes.md`,
+    "Step 10").
 11. **The documents.**
     - In this repo: `README.md` (a section for the branch, as World War 2's), `docs\devnotes.md` (the numbered
       changes, what was checked, what it found), `tests\README.md`, `tools\play\README.md`, `TODO.md`, and this
@@ -648,6 +655,13 @@ changes is either a mistake or is named in the commit message.
     - In QB64Rust: what the port found goes into `PORTING-PDS.md` (sections 0 and 3 to 5: two programs that
       start each other, `END` in a program run by `SHELL`, the bridge through the old compiler), divergence rows
       and verification programs, and `DECISIONS.md` rows where the user decides something about QB64Rust.
+
+    **Done (2026-11-09).** `README.md` has a section for the branch. `tests\README.md` and `tools\play\README.md`
+    already described the folders of step 9. QB64Rust's `PORTING-PDS.md` has six more lessons in section 3
+    (`AND` and `OR` in PDS 7.1, SINGLE products, `SYSTEM` in a program run by `SHELL`, `SHELL` and `SHELL
+    _HIDE`, `ENVIRON` in DOS, the palette after `WIDTH`), the bridge in section 4, and the port's divergence
+    rows in section 5. The rows and verification programs were added in the steps that measured them. The user
+    decided nothing about QB64Rust itself, so `DECISIONS.md` has no new row.
 
 Not in the plan: any refactoring, reformatting, a fix to how the game plays, the tactical source matched to
 the shipped `NAPOLEON.EXE` (a `SOMEDAY.md` row of `study\45`), and joining the two programs into one. Each of

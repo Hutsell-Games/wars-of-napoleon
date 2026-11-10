@@ -1,0 +1,87 @@
+# Builds the strategic game (WON.BAS) and the tactical game (NAPOLEON.BAS) with QB64Rust on
+# Windows. The result is an artifact named wars-of-napoleon: won.exe and napoleon.exe with the
+# files and data folders they read, ready to unzip and play.
+name: Build
+
+# When something reaches main or qb64rust (a merge or a push), or by hand with "Run workflow".
+on:
+  push:
+    branches: [main, qb64rust]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The QB64Rust commit the game is built with. Change it to take a newer compiler.
+  QB64RUST_REF: main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      # Keep the files' bytes as committed: the runner's default would turn LF into CR LF.
+      - run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v7
+        with:
+          path: game
+
+      - uses: actions/checkout@v7
+        with:
+          repository: davidshq/QB64Rust
+          ref: ${{ env.QB64RUST_REF }}
+          path: qb64rust
+
+      # Installs the Rust toolchain named in QB64Rust's rust-toolchain.toml.
+      - run: rustup toolchain install
+        working-directory: qb64rust
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: qb64rust
+
+      - run: cargo build --release --locked
+        working-directory: qb64rust
+
+      # The C++ toolchain qb64rust builds with (llvm-mingw, a 190 MB download). Its version is
+      # pinned in toolchain.rs, so the cache is kept until that file changes.
+      - uses: actions/cache@v6
+        with:
+          path: ~\AppData\Local\qb64rust\toolchain
+          key: qb64rust-toolchain-${{ hashFiles('qb64rust/crates/driver/src/toolchain.rs') }}
+
+      - run: qb64rust\target\release\qb64rust.exe toolchain install
+
+      # The names matter: the strategic game runs each battle as napoleon.exe. The builds
+      # overwrite the shipped DOS programs WON.EXE and NAPOLEON.EXE in this checkout, which
+      # Windows does not tell from won.exe and napoleon.exe (D7 of docs/port-study.md).
+      - name: Build the two programs
+        working-directory: game
+        run: |
+          ..\qb64rust\target\release\qb64rust.exe -x WON.BAS -o won.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ..\qb64rust\target\release\qb64rust.exe -x NAPOLEON.BAS -o napoleon.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # The two programs, the files beside them that the game reads, the data folders
+      # (FOLDERS.BI), the saved game that came with it (NWS9.SAV), and the game's own documents.
+      # NWS.CFG and HISCORE.NWS must be there: the game opens them without checking. The names
+      # with $ and & are given literally, so that PowerShell does not read them.
+      - name: Put the playable folder together
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item game\won.exe, game\napoleon.exe, game\NWS.CFG, game\HISCORE.NWS,
+                    game\tests\data\NWS9.SAV, game\LICENSE, game\README.md -Destination dist
+          Copy-Item -LiteralPath 'game\BATTLE.$$$', 'game\OUTCOME.&&&' -Destination dist
+          Copy-Item game\graphics, game\scenarios -Destination dist -Recurse
+          New-Item -ItemType Directory dist\docs | Out-Null
+          Copy-Item game\docs\WON.DOC, game\docs\NAPOLEON.DOC, game\docs\NAPOLEON.PAG,
+                    game\docs\NAPOLEON.TXT -Destination dist\docs
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wars-of-napoleon
+          path: dist
+          if-no-files-found: error

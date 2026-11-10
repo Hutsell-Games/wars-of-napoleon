@@ -1254,10 +1254,9 @@ The step 7b check named the burning building and the naval combat as drawing dif
 markers; the ships on the map, the raid mark, the pointer and the tombstone are new. Each is masked by its
 measured pixels where the game's data places it, so a real difference near a city or a port still shows.
 
-## Step 9: the files (2026-11-09, started)
+## Step 9: the files (2026-11-09)
 
-Step 9 of `docs\port-study.md`: the data folders of D9, the test data, and the documents. The files of D11 are
-not removed yet.
+Step 9 of `docs\port-study.md`: the data folders of D9, the test data, the documents, and the files of D11.
 
 ### The changes
 
@@ -1291,6 +1290,15 @@ not removed yet.
     of 41 × 65 pixels in `SCREEN 9`. No source loads them. `docs\NAP1.EGA.png` and `docs\NAP2.EGA.png` show them
     at 8 times their size: a wall, two bars, dots, a box, an "R" badge, and yellow and green tiles with arrows.
     They are cruder than the icons in use and replace none of them, so D11 (a) stands.
+54. **The seven files of D11 are removed** (D11 (a)): `NAP1.EGA`, `NAP2.EGA`, `PREFER.CFG`, `GENERALZ`,
+    `MAXSKORS`, `SETUP.INI` and `NWS.LNK`. They stay on `main`. No source of either program and no harness
+    script names them. The harness copies only the files git tracks, so every run since has gone without them.
+55. **The three battle files stay beside the programs.** `BATTLE.$$$` and `OUTCOME.&&&` pass a battle between
+    the two programs, and `BATTSUMM` is the battle summary that `report` (`WON2.BM`) writes when History is on. Playing rewrites all
+    three, but git cannot ignore a tracked file. `OUTCOME.&&&` must exist: a battle won by wiping out the other
+    side writes none (`TODO.md`), and `WON1.BM` then opens it for input. `BATTLE.$$$` lets `napoleon.exe` run
+    alone with the last battle. `BATTSUMM` is never read; it stays because it came with the game and removing
+    it changes nothing that a player sees.
 
 ### The checks
 
@@ -1301,3 +1309,20 @@ not removed yet.
   and b3 give their recordings, every screen and file. Between them they open every moved file: the
   start-year list, both pictures and the four icon sets, a save and a load, and Waterloo's quotes and names.
 - **The unit tests**: 9 pass. **`test_play.py`**: 26 pass.
+- **Without the files of D11** (after commit `3d21b78`): the PDS bridge again gives the recordings of sessions
+  1, 9 and 13 (49 of 49, 12 of 12 and 20 of 20 shots) and of battles b1 and b3. Session 9's battle runs the
+  shipped `NAPOLEON.EXE`, so the shipped tactical game does not need them either.
+
+## Step 10: the build on GitHub Actions (2026-11-09)
+
+56. **`.github\workflows\build.yml`** builds `won.exe` and `napoleon.exe` with QB64Rust on Windows, on each push
+    to `main` or `qb64rust` and by hand. It is World War 2's workflow, as Civil War Battleset has it. The
+    artifact `wars-of-napoleon` holds the two programs, `NWS.CFG`, `HISCORE.NWS`, `BATTLE.$$$`, `OUTCOME.&&&`,
+    the saved game `NWS9.SAV` from `tests\data\`, `LICENSE`, `README.md`, the folders `graphics\` and
+    `scenarios\`, and the four documents in `docs\`. `BATTSUMM` is left out: the game writes it and never reads
+    it. The two names with `$` and `&` are copied with `-LiteralPath` in single quotes, so that PowerShell does
+    not read them as a variable and an operator.
+
+The check: the workflow's two build steps and its copy step, run by hand on a `git archive` of the branch with
+QB64Rust's release build, built both programs and gave the folder above, 48 files. The workflow itself first
+runs on GitHub at the next push.
