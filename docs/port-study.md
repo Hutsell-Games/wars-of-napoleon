@@ -38,9 +38,9 @@ The tactical game is ported from the source in the repo, not matched to the ship
 2026-11-06; `study\45`, "Decisions recorded in QB64Rust"). The recorded sessions therefore check the strategic
 game. Only session 9 runs the tactical game, and it ran the shipped one.
 
-The recovered source keeps its exact build on `main` and on `won-source`. The port moves and edits the files on
-`qb64rust`, so the commands of `study\45` section 12 do not rebuild `WON.EXE` there. `docs\recovery.md` gets a
-line that says so.
+The recovered source keeps its exact build on `canonical-recovery` (named `won-source` until 2026-11-09). The
+port moves and edits the files on `qb64rust`, merged into `main` on 2026-11-09, so the commands of `study\45`
+section 12 do not rebuild `WON.EXE` there. `docs\recovery.md` gets a line that says so.
 
 ### The battle files
 
