@@ -3,7 +3,7 @@
 tests/out/
 
 # Saved games, written by playing (Files, Save). The one that came with the game is test data
-# (tests/data/NWS9.SAV), which every test run starts with.
+# (tests/data/nws9.sav), which every test run starts with.
 /*.sav
 /*.SAV
 

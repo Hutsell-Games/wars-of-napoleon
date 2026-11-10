@@ -43,7 +43,7 @@ file, at the waits the program announces, and writes the screen out where the fi
 
 | Folder | What a script plays | Its run ends |
 |---|---|---|
-| `sessions\` | One of the 15 sessions, as an announce-driven keys file (step 7a of `docs\port-study.md`). `tools\play\sessions.py` writes them from the trace runs of the port's PDS 7.1 build; do not edit them by hand | When the state of its last shot is written: the run is stopped there |
+| `sessions\` | One of the 15 sessions, as an announce-driven keys file (step 7a of `docs\port-study.md`). `tools\play\sessions.py` wrote them from the trace runs of the port's PDS 7.1 build, both now retired (`docs\devnotes.md`, item 60) | When the state of its last shot is written: the run is stopped there |
 | `sessions\`, `09-1805-tactical-battle` | Session 9 once more, with the port's tactical game (D4 of the plan): the strategic game starts `napoleon.exe`, which plays `battles\b1-innsbruck-retreat.keys`. It has no keys file of its own; `play.py` makes it from session 9's | As the session |
 | `battles\` | The tactical game alone, from `<name>.battle` as its `BATTLE.$$$` | When the game exits |
 | `games\` | The strategic game from its start to its end: the generated games and the hand-written ones | When the game exits |
@@ -93,6 +93,7 @@ to change how its games go, then record.
 |---|---|
 | `games\invasion-1796-french` | 1796 as the French. The fleet sails to Amsterdam, a neutral port of a minor nation; in the next turn the Ships menu offers Invasion, which places a new army there. Then the player only ends turns to the game's end |
 | `battles\b6-innsbruck-stalemate` | Session 9's battle with the French cut to one unit of 500 men. The time runs out while neither side holds the field, so `expire` calls `over(3)`. DOS wrote 3 as the winner, which gives the battle to the defender, and the port now does too (`docs\devnotes.md`, step 8) |
+| `battles\b7-innsbruck-small-army` | Session 9's battle with the French cut to 3,000 men: the only battle that reaches the fix of `randarm`'s cavalry (`docs\devnotes.md`, item 61) |
 
 **Not reached by any script yet:** Napoleon's exile, and a battle won by wiping out the other side
 (`scriptend("W")`). `TODO.md` says what each needs.
@@ -112,8 +113,9 @@ standard deviation above the mean.
 | `b2-innsbruck-defend` | The same battle. Every Allied unit rests to the time limit, while the French attack |
 | `b3-waterloo-attack` | The `BATTLE.$$$` the game ships: Waterloo, the French player resting to the time limit |
 | `b4-innsbruck-advance` | Session 9's battle, the French player attacking: each unit steps south, then rests |
-| `b5-innsbruck-quit` | Session 9's battle, the Allies defending. Intell at the first order, then F10, which quits and writes no `OUTCOME.&&&` |
+| `b5-innsbruck-quit` | Session 9's battle, the Allies defending. Intell at the first order, then F10, which quits. It now writes `OUTCOME.&&&` as a retreat does; DOS wrote none (`docs\devnotes.md`, item 61) |
 | `b6-innsbruck-stalemate` | Session 9's battle with one French unit of 500 men. Every Allied unit rests until the time is up, with neither side holding the field: `over(3)` |
+| `b7-innsbruck-small-army` | Session 9's battle with the French cut to 3,000 men, 10 units, so that a unit drawn as cavalry becomes infantry half the time (`randarm`, item 61). Every Allied unit rests until the battle ends; the defender wins. No DOS recording |
 
 ## The sessions
 

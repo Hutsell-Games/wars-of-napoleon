@@ -1,0 +1,26 @@
+# b7-innsbruck-small-army: the battle of session 9 (Innsbruck, 1805), with the French army cut to
+# 3,000 men (its VP field 30, which NAPOLEON.BAS multiplies by 100), and Alexander's own rating of 6
+# (docs\devnotes.md, item 61). randarm gives the French 10 units, fewer than 11, so a unit drawn as
+# cavalry becomes infantry half the time: the fix of randarm (NAP1.BM), which no other battle reaches.
+# The strategic game sends such an army only when a supply or cohesion penalty has cut it below a
+# third of the other. The Allies defend and every unit of the player rests, each turn. No DOS
+# recording: the bridge was retired before this battle was written. The battle's BATTLE.$$$ is
+# b7-innsbruck-small-army.battle.
+# seed 1 (NAP_SEED)
+
+# A TICK of a second or more: any key ends it. A "hit a key" pause: a space. A unit's
+# order: a space, which rests it.
+rule 3 key f12
+rule 1 key space
+# The combat menu of a unit of the player that fights: Enter, the first item (Light Skirmish).
+rule 2:C key enter
+play until 5
+# shot first-order
+state
+key space
+rule 5 key space
+# The battle ends at place 7 (scriptend): by over when the time is up, or by wipeout.
+play until 7
+# shot result
+state
+key f12

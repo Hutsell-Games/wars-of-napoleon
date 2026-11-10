@@ -673,6 +673,17 @@ result = xbar + pct! * SQR(vary)
 END SUB
 
 SUB over (flag)
+CALL writeoutcome(flag)
+' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
+CALL scriptend("O"): SYSTEM
+END SUB
+
+' Writes OUTCOME.&&&, the result that won.exe reads back: the winner (1 the
+' attacker, else the defender) and each side's losses. flag is the side that
+' lost, or 3 when neither holds the field (below). Called by over, and by
+' wipeout and the F10 quit, which wrote nothing in DOS, so that won.exe read
+' the result of the battle before (docs\devnotes.md, item 61).
+SUB writeoutcome (flag)
 OPEN "O", 1, "outcome.&&&"
 ' A SINGLE variable times a DOUBLE gives the value DOS wrote, which won.exe reads as
 ' the same INTEGER. In QB64, .01 times a LONG is a SINGLE: one score in 200 then
@@ -685,8 +696,6 @@ hundredth! = .01
 IF flag = 3 THEN w = 3 ELSE w = 3 - sidex(flag)
 WRITE #1, w, hundredth! * CDBL(score&(sidex(1))), hundredth! * CDBL(score&(sidex(2)))    'scale down unit size
 CLOSE #1
-' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-CALL scriptend("O"): SYSTEM
 END SUB
 
 SUB proximity (index, bonus)
@@ -1310,7 +1319,8 @@ IF dx > 0 AND dy > 0 THEN EXIT SUB
 s = 2: IF dx = 0 THEN s = 1
 COLOR 14: CALL clrbot: PRINT sname$(s); " forces ANNIHILATED : Bonus = 250"; : vp&(3 - s) = vp&(3 - s) + 250
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-CALL TICK(99): CALL expire: CALL TICK(99): CALL scriptend("W"): SYSTEM
+' The annihilated side s lost. expire calls over itself when the time is up.
+CALL TICK(99): CALL expire: CALL TICK(99): CALL writeoutcome(s): CALL scriptend("W"): SYSTEM
 
 END SUB
 

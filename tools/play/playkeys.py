@@ -29,31 +29,6 @@ still saved.
 Key file (KEYS.BIN), all words little-endian:
     first_delay:u16  { op:u8  [key:u16 if op = 1]  delay:u16 }*  0:u8
 op 1 = key, op 2 = screenshot, op 0 = end.
-
-Trace mode (com_bytes(trace=...), step 7a of docs/port-study.md). The port's
-hooks announce each wait for a key: byte 0:4F0h counts the waits, 0:4F1h holds
-the place and 0:4F2h the letter (SCRIPT.BM, announce). In trace mode
-PLAYKEYS.COM writes a log of the run into its own memory, which the harness
-reads from DOSBox-X's memory file after the run (read_trace):
-
-- At each tick it adds the change of the count to a 16-bit total of waits.
-  When the count changed, it logs a sample: the tick, the total, the place and
-  the letter.
-- At each key and screenshot of the key file it logs an event (K or S).
-- It also hooks INT 16h. A call that reads a key (AH = 00h or 10h) is passed
-  on, and then logged as an event R with the key read and the buffer slot it
-  came from. DOS reads the keyboard through INT 16h too, so INKEY$ and INPUT
-  are seen. A key that leaves the buffer with no R was thrown away (BuffClear
-  sets the buffer's head and tail).
-
-An event holds the type, the place and letter, the buffer slot, the total of
-waits, the key, the tick, the video mode (0:449h) and, for K, 1 when the
-buffer was full and the key was dropped. An R event also holds the PSP of the
-program that read the key (INT 21h AH = 62h), which tells the strategic game's
-reads from those of the programs it starts. The log lives in the part of the key
-buffer that the key file does not fill, so the program stays resident with
-the same number of paragraphs as without trace mode, and the game loads at
-the same address as in the recordings.
 """
 import struct
 
@@ -140,8 +115,8 @@ def out_byte(a, port, val):
     a.b(0xEE)  # out dx, al
 
 
-def build_com(trace=None):
-    """The program. trace is None, or (key area size, number of events) for trace mode."""
+def build_com():
+    """The program."""
     a = Asm()
     a.jnear("install")
 
@@ -154,29 +129,18 @@ def build_com(trace=None):
     a.b(0, 0)
     a.label("done")
     a.b(1)  # set to 0 by the installer once the key file is read
-    if trace:
-        _emit_trace_header(a)
 
     a.label("handler")
-    if trace:
-        a.b(0x50, 0x53, 0x51, 0x52, 0x56, 0x57, 0x1E, 0x06)  # push ax bx cx dx si di ds es
-    else:
-        a.b(0x50, 0x53, 0x52, 0x56, 0x1E, 0x06)  # push ax bx dx si ds es
+    a.b(0x50, 0x53, 0x52, 0x56, 0x1E, 0x06)  # push ax bx dx si ds es
     a.b(0x0E, 0x1F)  # push cs / pop ds
     a.b(0xFC)  # cld
     a.addr([0x80, 0x3E], "done", [0x00])  # cmp byte [done], 0
     a.jshort(0x75, "chain")  # jne chain
-    if trace:
-        a.call("sync")
-        a.addr([0xFF, 0x06], "tick")  # inc word [tick]
     a.addr([0xFF, 0x0E], "count")  # dec word [count]
     a.jshort(0x74, "next")  # jz next
 
     a.label("chain")
-    if trace:
-        a.b(0x07, 0x1F, 0x5F, 0x5E, 0x5A, 0x59, 0x5B, 0x58)  # pop es ds di si dx cx bx ax
-    else:
-        a.b(0x07, 0x1F, 0x5E, 0x5A, 0x5B, 0x58)  # pop es ds si dx bx ax
+    a.b(0x07, 0x1F, 0x5E, 0x5A, 0x5B, 0x58)  # pop es ds si dx bx ax
     a.addr([0x2E, 0xFF, 0x2E], "old")  # jmp far cs:[old]
 
     a.label("next")
@@ -204,19 +168,10 @@ def build_com(trace=None):
     a.jshort(0x72, "nowrap")  # jb nowrap
     a.b(0x26, 0x8B, 0x16, 0x80, 0x00)  # mov dx, es:[80h] (buffer start)
     a.label("nowrap")
-    if trace:
-        a.b(0xB5, 0x01)  # mov ch, 1 (dropped, unless stored below)
     a.b(0x26, 0x3B, 0x16, 0x1A, 0x00)  # cmp dx, es:[1Ah] (head): full?
-    a.jshort(0x74, "keylog" if trace else "after")  # je: drop the key
+    a.jshort(0x74, "after")  # je: drop the key
     a.b(0x26, 0x89, 0x07)  # mov es:[bx], ax
     a.b(0x26, 0x89, 0x16, 0x1C, 0x00)  # mov es:[1Ch], dx
-    if trace:
-        a.b(0xB5, 0x00)  # mov ch, 0
-        a.label("keylog")
-        a.b(0x88, 0xD9)  # mov cl, bl (the slot)
-        a.b(0x89, 0xC2)  # mov dx, ax (the key)
-        a.b(0xB0, ord("K"))  # mov al, 'K'
-        a.call("event")
     a.jshort(0xEB, "after")
 
     a.label("shot")
@@ -226,11 +181,6 @@ def build_com(trace=None):
     out_byte(a, 0x2A, 0)
     for x in struct.pack("<I", 1):
         out_byte(a, 0x29, x)
-    if trace:
-        a.b(0x31, 0xC9)  # xor cx, cx
-        a.b(0x31, 0xD2)  # xor dx, dx
-        a.b(0xB0, ord("S"))  # mov al, 'S'
-        a.call("event")
 
     a.label("after")
     a.b(0xAD)  # lodsw (delay to the next op)
@@ -242,152 +192,12 @@ def build_com(trace=None):
     a.label("again")
     a.jnear("next")
 
-    if trace:
-        _emit_sync_event(a)
-
-        # The INT 16h hook. A read (AH = 00h or 10h) is passed on as an interrupt, and
-        # the key it gives is then logged with the slot it came from. The rest go on
-        # unchanged. sti first, so that the flags pushed for the call, and so those the
-        # caller gets back, have interrupts on, as the caller had them.
-        a.label("kbd")
-        a.b(0xFB)  # sti
-        a.b(0x80, 0xFC, 0x00)  # cmp ah, 0
-        a.jshort(0x74, "kread")
-        a.b(0x80, 0xFC, 0x10)  # cmp ah, 10h
-        a.jshort(0x74, "kread")
-        a.addr([0x2E, 0xFF, 0x2E], "old16")  # jmp far cs:[old16]
-        a.label("kread")
-        a.b(0x53, 0x06)  # push bx / push es
-        a.b(0x31, 0xDB, 0x8E, 0xC3)  # xor bx, bx / mov es, bx
-        a.b(0x26, 0x8A, 0x1E, 0x1A, 0x04)  # mov bl, es:[41Ah] (head: the slot read next)
-        a.addr([0x2E, 0x88, 0x1E], "kslot")  # mov cs:[kslot], bl
-        a.b(0x07, 0x5B)  # pop es / pop bx
-        a.b(0x9C)  # pushf
-        a.addr([0x2E, 0xFF, 0x1E], "old16")  # call far cs:[old16]
-        a.b(0x9C, 0xFA)  # pushf / cli
-        a.b(0x50, 0x53, 0x51, 0x52, 0x57, 0x1E, 0x06)  # push ax bx cx dx di ds es
-        a.b(0x0E, 0x1F)  # push cs / pop ds
-        a.b(0x89, 0xC2)  # mov dx, ax (the key)
-        # INT 21h with interrupts off, maybe from inside DOS's own read of the console. That
-        # is safe in DOSBox-X, whose DOS is code of the host and gives the PSP at once. It
-        # would not be on a real DOS, where INT 21h is not reentrant.
-        a.b(0xB4, 0x62, 0xCD, 0x21)  # mov ah, 62h / int 21h (bx = the current PSP)
-        a.addr([0x89, 0x1E], "kpsp")  # mov [kpsp], bx
-        a.call("sync")
-        a.addr([0x8A, 0x0E], "kslot")  # mov cl, [kslot]
-        a.b(0xB5, 0x00)  # mov ch, 0
-        a.b(0xB0, ord("R"))  # mov al, 'R'
-        a.call("event")
-        a.b(0x07, 0x1F, 0x5F, 0x5A, 0x59, 0x5B, 0x58)  # pop es ds di dx cx bx ax
-        a.b(0x9D)  # popf
-        a.b(0xCA, 0x02, 0x00)  # retf 2
-
-    _emit_install(a, trace, hook16=True)
+    _emit_install(a)
     return a
 
 
-def _emit_trace_header(a):
-    """The trace header, at a place read_trace finds by its magic. The first byte is "X" in
-    the file and becomes "P" when the installer runs, so that only the resident copy matches.
-    The four offsets after the pointers are constants of this build."""
-    a.label("magic")
-    a.raw(b"XKTRACE1")
-    a.addr([], "magic")  # its own offset: the segment is where the magic is, less this
-    a.label("sptr")
-    a.b(0, 0)
-    a.label("eptr")
-    a.b(0, 0)
-    a.label("tick")
-    a.b(0, 0)
-    a.label("total")
-    a.b(0, 0)
-    a.label("lastc")
-    a.b(0)
-    a.label("flags")
-    # bit 0: the samples were full; bit 1: the events were full. Hold mode also sets
-    # bit 2: the script failed (FAIL_* below says why); bit 3: a key was dropped, the
-    # buffer being full.
-    a.b(0)
-    a.label("kslot")
-    a.b(0, 0)  # the slot of the key read; in hold mode, its low byte is why the script failed
-    a.addr([], "estart_v")
-    a.addr([], "eend_v")
-    a.addr([], "sstart_v")
-    a.addr([], "send_v")
-    a.label("old16")
-    a.b(0, 0, 0, 0)
-    a.label("kpsp")
-    a.b(0, 0)  # the PSP of the program that read the key, for the next event
-
-
-def _emit_sync_event(a):
-    """The two routines of trace mode that log: sync (the samples) and event."""
-    # sync: add the change of the count at 0:4F0h to the total, and log a sample
-    # (tick, total, place, letter) when it changed. ds = cs; uses ax, bx, di, es (left 0).
-    a.label("sync")
-    a.b(0x31, 0xDB, 0x8E, 0xC3)  # xor bx, bx / mov es, bx
-    a.b(0x26, 0xA0, 0xF0, 0x04)  # mov al, es:[4F0h]
-    a.b(0x88, 0xC4)  # mov ah, al
-    a.addr([0x2A, 0x06], "lastc")  # sub al, [lastc]
-    a.jshort(0x74, "syncret")  # jz: no new wait
-    a.addr([0x88, 0x26], "lastc")  # mov [lastc], ah
-    a.b(0x30, 0xE4)  # xor ah, ah
-    a.addr([0x01, 0x06], "total")  # add [total], ax
-    a.addr([0x8B, 0x3E], "sptr")  # mov di, [sptr]
-    a.addr([0x81, 0xFF], "send_v")  # cmp di, send
-    a.jshort(0x73, "sfull")  # jae sfull
-    a.addr([0xA1], "tick")  # mov ax, [tick]
-    a.b(0x89, 0x05)  # mov [di], ax
-    a.addr([0xA1], "total")  # mov ax, [total]
-    a.b(0x89, 0x45, 0x02)  # mov [di+2], ax
-    a.b(0x26, 0xA0, 0xF1, 0x04)  # mov al, es:[4F1h] (place)
-    a.b(0x88, 0x45, 0x04)  # mov [di+4], al
-    a.b(0x26, 0xA0, 0xF2, 0x04)  # mov al, es:[4F2h] (letter)
-    a.b(0x88, 0x45, 0x05)  # mov [di+5], al
-    a.b(0x83, 0xC7, 0x06)  # add di, 6
-    a.addr([0x89, 0x3E], "sptr")  # mov [sptr], di
-    a.b(0xC3)  # ret
-    a.label("sfull")
-    a.addr([0x80, 0x0E], "flags", [0x01])  # or byte [flags], 1
-    a.label("syncret")
-    a.b(0xC3)  # ret
-
-    # event: log al (the type), cl (the slot), dx (the key), ch (dropped), with the
-    # place, letter, total, tick and video mode. ds = cs; uses ax, bx, di, es (left 0).
-    a.label("event")
-    a.b(0x31, 0xDB, 0x8E, 0xC3)  # xor bx, bx / mov es, bx
-    a.addr([0x8B, 0x3E], "eptr")  # mov di, [eptr]
-    a.addr([0x81, 0xFF], "eend_v")  # cmp di, eend
-    a.jshort(0x73, "efull")  # jae efull
-    a.b(0x88, 0x05)  # mov [di], al
-    a.b(0x26, 0xA0, 0xF1, 0x04)  # mov al, es:[4F1h]
-    a.b(0x88, 0x45, 0x01)  # mov [di+1], al
-    a.b(0x26, 0xA0, 0xF2, 0x04)  # mov al, es:[4F2h]
-    a.b(0x88, 0x45, 0x02)  # mov [di+2], al
-    a.b(0x88, 0x4D, 0x03)  # mov [di+3], cl
-    a.addr([0xA1], "total")  # mov ax, [total]
-    a.b(0x89, 0x45, 0x04)  # mov [di+4], ax
-    a.b(0x89, 0x55, 0x06)  # mov [di+6], dx
-    a.addr([0xA1], "tick")  # mov ax, [tick]
-    a.b(0x89, 0x45, 0x08)  # mov [di+8], ax
-    a.b(0x26, 0xA0, 0x49, 0x04)  # mov al, es:[449h] (video mode)
-    a.b(0x88, 0x45, 0x0A)  # mov [di+10], al
-    a.b(0x88, 0x6D, 0x0B)  # mov [di+11], ch
-    a.addr([0xA1], "kpsp")  # mov ax, [kpsp]
-    a.b(0x89, 0x45, 0x0C)  # mov [di+12], ax
-    a.b(0x31, 0xC0)  # xor ax, ax
-    a.addr([0xA3], "kpsp")  # mov [kpsp], ax
-    a.b(0x83, 0xC7, 0x0E)  # add di, 14
-    a.addr([0x89, 0x3E], "eptr")  # mov [eptr], di
-    a.b(0xC3)  # ret
-    a.label("efull")
-    a.addr([0x80, 0x0E], "flags", [0x02])  # or byte [flags], 2
-    a.b(0xC3)  # ret
-
-
-def _emit_install(a, trace, hook16):
-    """The installer: read the key file, hook the interrupts and stay resident. trace
-    sets up the log; hook16 also hooks INT 16h (trace mode, not hold mode)."""
+def _emit_install(a):
+    """The installer: read the key file, hook the timer interrupt and stay resident."""
     a.label("install")
     a.b(0xFC)  # cld
     a.b(0xBE, 0x81, 0x00)  # mov si, 81h (command tail)
@@ -413,26 +223,6 @@ def _emit_install(a, trace, hook16):
     a.addr([0xA3], "count")  # mov [count], ax
     a.addr([0xC7, 0x06], "ptr")  # mov word [ptr], imm16 ...
     a.addr([], "keys2")  # ... where imm16 is the address of keys + 2
-    if trace:
-        a.addr([0xC7, 0x06], "sptr")  # mov word [sptr], sstart
-        a.addr([], "sstart_v")
-        a.addr([0xC7, 0x06], "eptr")  # mov word [eptr], estart
-        a.addr([], "estart_v")
-        a.b(0x31, 0xC0)  # xor ax, ax
-        a.addr([0xA3], "tick")  # mov [tick], ax
-        a.addr([0xA3], "total")  # mov [total], ax
-        a.addr([0xA2], "flags")  # mov [flags], al
-        a.b(0x06, 0x8E, 0xC0)  # push es / mov es, ax
-        a.b(0x26, 0xA0, 0xF0, 0x04)  # mov al, es:[4F0h]
-        a.b(0x07)  # pop es
-        a.addr([0xA2], "lastc")  # mov [lastc], al
-        a.addr([0xC6, 0x06], "magic", [ord("P")])  # mov byte [magic], 'P'
-    if trace and hook16:
-        a.b(0xB8, 0x16, 0x35, 0xCD, 0x21)  # mov ax, 3516h / int 21h (es:bx = old INT 16h)
-        a.addr([0x89, 0x1E], "old16")  # mov [old16], bx
-        a.addr([0x8C, 0x06], "old16b")  # mov [old16+2], es
-        a.addr([0xBA], "kbd")  # mov dx, kbd
-        a.b(0xB8, 0x16, 0x25, 0xCD, 0x21)  # mov ax, 2516h / int 21h
     a.b(0xB8, 0x08, 0x35, 0xCD, 0x21)  # mov ax, 3508h / int 21h (es:bx = old INT 8)
     a.addr([0x89, 0x1E], "old")  # mov [old], bx
     a.addr([0x8C, 0x06], "old2")  # mov [old+2], es
@@ -449,293 +239,6 @@ def _emit_install(a, trace, hook16):
     a.label("msg")
     a.raw(b"PLAYKEYS: cannot read the key file\r\n$")
     a.label("keys")
-
-
-# Hold mode: the steps of QB64Rust's screen tool (tools/screen/README.md, "The keys file"),
-# played in DOS. Each op of the key file waits for what it needs, not for a number of ticks.
-HOLD_KEY, HOLD_SHOT, HOLD_PROMPT, HOLD_RULE, HOLD_UNTIL = 1, 2, 3, 4, 5
-HOLD_SHOT_GAP = 4  # ticks after a screenshot before the next op, so that it is drawn first
-MAX_RULES = 32
-# Why a hold-mode script failed: the low byte of kslot in the trace header.
-FAIL_MISSED, FAIL_NO_RULE, FAIL_RULES_FULL = 1, 2, 3
-FAIL_TEXT = {FAIL_MISSED: "the program announced a wait that no step answered",
-             FAIL_NO_RULE: "no rule answers the wait",
-             FAIL_RULES_FULL: f"more than {MAX_RULES} rules"}
-
-
-def build_hold_com():
-    """PLAYKEYS.COM in hold mode. Like trace mode it logs the samples, the shots and the
-    keys of key ops into its memory, but it does not hook INT 16h. The ops:
-
-    - key: waits until the BIOS keyboard buffer is empty, then types the key. The screen
-      tool gives a key when the program's INKEY$ buffer is empty, the same.
-    - shot: a screenshot, then HOLD_SHOT_GAP ticks before the next op.
-    - prompt: waits until the program announces its next wait. If it has announced more
-      than one since the last step that took one, the script fails, as the screen tool's
-      exit code 125.
-    - rule place letter keys: from now on, a wait at that place and letter that "until"
-      meets is answered by these keys. Letter 0 is any letter. It replaces an earlier
-      rule for the same place and letter.
-    - until place letter: answers each announced wait by its rule, until one at that place
-      (and letter, unless 0). That one counts as a prompt. The first key of a rule answers
-      the wait; its other keys go one by one to the waits that follow, before any rule is
-      looked at or the place checked again. A wait with no rule fails the script.
-
-    The tool's `play until` behaves the same way (README, "Places and rules"). A failure sets
-    bit 2 of the flags and the reason in kslot, takes a screenshot, and stops the machine."""
-    a = Asm()
-    a.jnear("install")
-
-    # ---- resident part ----
-    a.label("old")
-    a.b(0, 0, 0, 0)
-    a.label("count")
-    a.b(0, 0)
-    a.label("ptr")
-    a.b(0, 0)
-    a.label("done")
-    a.b(1)
-    _emit_trace_header(a)
-    a.label("seen")
-    a.b(0, 0)  # the waits that a prompt or an until has taken, of the total announced
-    a.label("logk")
-    a.b(0)  # 1: putkey logs the key as an event K
-    a.label("pcount")
-    a.b(0)  # the keys of the last rule still to give
-    a.label("pptr")
-    a.b(0, 0)  # where they are
-    a.label("nrules")
-    a.b(0)
-    a.label("rules")
-    a.raw(bytes(4 * MAX_RULES))  # place, letter, the address of the rule's count of keys
-
-    a.label("handler")
-    a.b(0x50, 0x53, 0x51, 0x52, 0x56, 0x57, 0x1E, 0x06)  # push ax bx cx dx si di ds es
-    a.b(0x0E, 0x1F)  # push cs / pop ds
-    a.b(0xFC)  # cld
-    a.addr([0x80, 0x3E], "done", [0x00])  # cmp byte [done], 0
-    a.jshort(0x75, "chain")  # jne chain
-    a.call("sync")
-    a.addr([0xFF, 0x06], "tick")  # inc word [tick]
-    a.addr([0x83, 0x3E], "count", [0x00])  # cmp word [count], 0
-    a.jshort(0x74, "hnext")  # je hnext
-    a.addr([0xFF, 0x0E], "count")  # dec word [count]
-    a.label("chain")
-    a.b(0x07, 0x1F, 0x5F, 0x5E, 0x5A, 0x59, 0x5B, 0x58)  # pop es ds di si dx cx bx ax
-    a.addr([0x2E, 0xFF, 0x2E], "old")  # jmp far cs:[old]
-
-    # The ops. An op that must wait jumps to chain and leaves [ptr] at itself, so it runs
-    # again at the next tick. An op that is done stores [ptr] past itself.
-    a.label("hnext")
-    a.addr([0x8B, 0x36], "ptr")  # mov si, [ptr]
-    a.label("hloop")
-    a.b(0xAC)  # lodsb (op)
-    for op, target in ((HOLD_KEY, "hkey"), (HOLD_SHOT, "hshot"), (HOLD_PROMPT, "hprompt"),
-                       (HOLD_RULE, "hrule"), (HOLD_UNTIL, "huntil")):
-        a.b(0x3C, op)  # cmp al, op
-        a.jshort(0x75, f"not{op}")  # jne
-        a.jnear(target)
-        a.label(f"not{op}")
-    a.label("finish")  # op 0, the end: stop the machine for good
-    a.b(0xFA)  # cli
-    a.label("frozen")
-    a.b(0xF4)  # hlt
-    a.jshort(0xEB, "frozen")
-
-    # hfail: al = why. Log it, take a screenshot of the screen as it is, and stop.
-    a.label("hfail")
-    a.addr([0xA2], "kslot")  # mov [kslot], al
-    a.addr([0x80, 0x0E], "flags", [0x04])  # or byte [flags], 4
-    a.call("snap")
-    a.jnear("finish")
-
-    a.label("hkey")
-    a.call("bufempty")
-    a.jshort(0x74, "hkey1")  # je: empty
-    a.jnear("chain")
-    a.label("hkey1")
-    a.b(0xAD)  # lodsw (the key)
-    a.addr([0x89, 0x36], "ptr")  # mov [ptr], si
-    a.addr([0xC6, 0x06], "logk", [0x01])  # mov byte [logk], 1
-    a.call("putkey")
-    a.addr([0x8B, 0x36], "ptr")  # mov si, [ptr]
-    a.jnear("hloop")
-
-    a.label("hshot")
-    a.addr([0x89, 0x36], "ptr")  # mov [ptr], si
-    a.call("snap")
-    a.b(0x31, 0xC9)  # xor cx, cx
-    a.b(0x31, 0xD2)  # xor dx, dx
-    a.b(0xB0, ord("S"))  # mov al, 'S'
-    a.call("event")
-    a.addr([0xC7, 0x06], "count", struct.pack("<H", HOLD_SHOT_GAP))  # mov word [count], gap
-    a.jnear("chain")
-
-    a.label("hprompt")
-    a.call("newwait")
-    a.jshort(0x74, "hprompt1")  # je: one new wait
-    a.jnear("chain")
-    a.label("hprompt1")
-    a.addr([0x89, 0x36], "ptr")  # mov [ptr], si
-    a.jnear("hloop")
-
-    a.label("hrule")
-    a.b(0xAD)  # lodsw: al = place, ah = letter
-    a.b(0x89, 0xC2)  # mov dx, ax
-    a.b(0x89, 0xF3)  # mov bx, si (the rule's count of keys)
-    a.b(0xAC)  # lodsb (the count)
-    a.b(0x30, 0xE4)  # xor ah, ah
-    a.b(0x01, 0xC0)  # add ax, ax
-    a.b(0x01, 0xC6)  # add si, ax (past the keys)
-    a.addr([0x89, 0x36], "ptr")  # mov [ptr], si
-    a.call("findrule")
-    a.jshort(0x74, "hrule2")  # je: replace it
-    a.addr([0x80, 0x3E], "nrules", [MAX_RULES])  # cmp byte [nrules], MAX_RULES
-    a.jshort(0x72, "hrule1")  # jb
-    a.b(0xB0, FAIL_RULES_FULL)  # mov al, FAIL_RULES_FULL
-    a.jnear("hfail")
-    a.label("hrule1")
-    a.addr([0xFE, 0x06], "nrules")  # inc byte [nrules] (di is past the last rule)
-    a.label("hrule2")
-    a.b(0x89, 0x15)  # mov [di], dx
-    a.b(0x89, 0x5D, 0x02)  # mov [di+2], bx
-    a.addr([0x8B, 0x36], "ptr")  # mov si, [ptr]
-    a.jnear("hloop")
-
-    a.label("huntil")
-    a.call("newwait")
-    a.jshort(0x74, "huntil1")  # je: one new wait
-    a.jnear("chain")
-    a.label("huntil1")
-    a.addr([0xC6, 0x06], "logk", [0x00])  # mov byte [logk], 0
-    a.addr([0x80, 0x3E], "pcount", [0x00])  # cmp byte [pcount], 0
-    a.jshort(0x74, "huntil2")  # je: no key of a rule left
-    a.addr([0x8B, 0x1E], "pptr")  # mov bx, [pptr]
-    a.b(0x8B, 0x07)  # mov ax, [bx]
-    a.addr([0x83, 0x06], "pptr", [0x02])  # add word [pptr], 2
-    a.addr([0xFE, 0x0E], "pcount")  # dec byte [pcount]
-    a.call("putkey")
-    a.jnear("chain")
-    a.label("huntil2")
-    a.b(0x31, 0xDB, 0x8E, 0xC3)  # xor bx, bx / mov es, bx
-    a.b(0x26, 0x8B, 0x16, 0xF1, 0x04)  # mov dx, es:[4F1h] (dl = place, dh = letter)
-    a.b(0xAD)  # lodsw: al = the place to stop at, ah = its letter
-    a.b(0x38, 0xC2)  # cmp dl, al
-    a.jshort(0x75, "huntil4")  # jne: answer it by a rule
-    a.b(0x08, 0xE4)  # or ah, ah
-    a.jshort(0x74, "huntil3")  # jz: any letter
-    a.b(0x38, 0xE6)  # cmp dh, ah
-    a.jshort(0x75, "huntil4")
-    a.label("huntil3")
-    a.addr([0x89, 0x36], "ptr")  # mov [ptr], si: the wait counts as a prompt
-    a.jnear("hloop")
-    a.label("huntil4")
-    a.call("findrule")  # the rule for the place and letter
-    a.jshort(0x74, "huntil5")
-    a.b(0x30, 0xF6)  # xor dh, dh
-    a.call("findrule")  # else the rule for the place
-    a.jshort(0x74, "huntil5")
-    a.b(0xB0, FAIL_NO_RULE)  # mov al, FAIL_NO_RULE
-    a.jnear("hfail")
-    a.label("huntil5")
-    a.b(0x8B, 0x5D, 0x02)  # mov bx, [di+2]
-    a.b(0x8A, 0x0F)  # mov cl, [bx] (the count of keys, 1 or more)
-    a.b(0x43)  # inc bx
-    a.b(0x8B, 0x07)  # mov ax, [bx] (the first key)
-    a.b(0x43, 0x43)  # inc bx / inc bx
-    a.b(0xFE, 0xC9)  # dec cl
-    a.addr([0x88, 0x0E], "pcount")  # mov [pcount], cl
-    a.addr([0x89, 0x1E], "pptr")  # mov [pptr], bx
-    a.call("putkey")
-    a.jnear("chain")
-
-    # newwait: ZF = 1 when the program has announced exactly one wait more than [seen]
-    # took, and takes it. No new wait: ZF = 0, and the caller waits. More than one: hfail.
-    a.label("newwait")
-    a.addr([0xA1], "total")  # mov ax, [total]
-    a.addr([0x3B, 0x06], "seen")  # cmp ax, [seen]
-    a.jshort(0x74, "newwait1")  # je: none
-    a.addr([0xFF, 0x06], "seen")  # inc word [seen]
-    a.addr([0x3B, 0x06], "seen")  # cmp ax, [seen]
-    a.jshort(0x75, "newwait2")
-    a.b(0xC3)  # ret (ZF = 1)
-    a.label("newwait1")
-    a.b(0x0C, 0x01)  # or al, 1 (ZF = 0)
-    a.b(0xC3)
-    a.label("newwait2")
-    a.b(0x58)  # pop ax (the return address: hfail does not come back)
-    a.b(0xB0, FAIL_MISSED)  # mov al, FAIL_MISSED
-    a.jnear("hfail")
-
-    # findrule: dx = place and letter. ZF = 1 and di = the rule when there is one; else
-    # ZF = 0 and di is past the last rule. Uses cx.
-    a.label("findrule")
-    a.addr([0xBF], "rules")  # mov di, rules
-    a.addr([0x8A, 0x0E], "nrules")  # mov cl, [nrules]
-    a.b(0x30, 0xED)  # xor ch, ch
-    a.jshort(0xE3, "findrule2")  # jcxz
-    a.label("findrule1")
-    a.b(0x3B, 0x15)  # cmp dx, [di]
-    a.jshort(0x74, "findrule3")  # je: ZF = 1
-    a.b(0x83, 0xC7, 0x04)  # add di, 4
-    a.jshort(0xE2, "findrule1")  # loop
-    a.label("findrule2")
-    a.b(0x83, 0xC9, 0x01)  # or cx, 1 (ZF = 0)
-    a.label("findrule3")
-    a.b(0xC3)
-
-    # bufempty: ZF = 1 when the BIOS keyboard buffer is empty. Uses ax, es.
-    a.label("bufempty")
-    a.b(0xB8, 0x40, 0x00, 0x8E, 0xC0)  # mov ax, 40h / mov es, ax
-    a.b(0x26, 0xA1, 0x1A, 0x00)  # mov ax, es:[1Ah] (head)
-    a.b(0x26, 0x3B, 0x06, 0x1C, 0x00)  # cmp ax, es:[1Ch] (tail)
-    a.b(0xC3)
-
-    # putkey: ax = the key, typed at the tail of the BIOS buffer, and logged as an event K
-    # when [logk] is 1. A key dropped with the buffer full sets bit 3 of the flags. Uses
-    # ax, bx, cx, dx, di, es.
-    a.label("putkey")
-    a.b(0xBB, 0x40, 0x00, 0x8E, 0xC3)  # mov bx, 40h / mov es, bx
-    a.b(0x26, 0x8B, 0x1E, 0x1C, 0x00)  # mov bx, es:[1Ch] (tail)
-    a.b(0x8B, 0xD3)  # mov dx, bx
-    a.b(0x83, 0xC2, 0x02)  # add dx, 2
-    a.b(0x26, 0x3B, 0x16, 0x82, 0x00)  # cmp dx, es:[82h] (buffer end)
-    a.jshort(0x72, "putkey1")  # jb
-    a.b(0x26, 0x8B, 0x16, 0x80, 0x00)  # mov dx, es:[80h] (buffer start)
-    a.label("putkey1")
-    a.b(0xB5, 0x01)  # mov ch, 1 (dropped, unless stored below)
-    a.b(0x26, 0x3B, 0x16, 0x1A, 0x00)  # cmp dx, es:[1Ah] (head): full?
-    a.jshort(0x74, "putkey2")
-    a.b(0x26, 0x89, 0x07)  # mov es:[bx], ax
-    a.b(0x26, 0x89, 0x16, 0x1C, 0x00)  # mov es:[1Ch], dx
-    a.b(0xB5, 0x00)  # mov ch, 0
-    a.label("putkey2")
-    a.b(0x80, 0xFD, 0x00)  # cmp ch, 0
-    a.jshort(0x74, "putkey3")
-    a.addr([0x80, 0x0E], "flags", [0x08])  # or byte [flags], 8
-    a.label("putkey3")
-    a.addr([0x80, 0x3E], "logk", [0x00])  # cmp byte [logk], 0
-    a.jshort(0x74, "putkey4")
-    a.b(0x88, 0xD9)  # mov cl, bl (the slot)
-    a.b(0x89, 0xC2)  # mov dx, ax (the key)
-    a.b(0xB0, ord("K"))  # mov al, 'K'
-    a.call("event")
-    a.label("putkey4")
-    a.b(0xC3)
-
-    # snap: ask DOSBox-X for a screenshot. Uses ax, dx.
-    a.label("snap")
-    out_byte(a, 0x2A, 0)
-    for x in struct.pack("<I", SCREENSHOT_REG):
-        out_byte(a, 0x28, x)
-    out_byte(a, 0x2A, 0)
-    for x in struct.pack("<I", 1):
-        out_byte(a, 0x29, x)
-    a.b(0xC3)
-
-    _emit_sync_event(a)
-    _emit_install(a, trace=True, hook16=False)
-    return a
 
 
 def fontdump_com():
@@ -764,34 +267,7 @@ def fontdump_com():
     return code
 
 
-def hold_keyfile(ops):
-    """The key file of hold mode. ops: (HOLD_KEY, word), (HOLD_SHOT,), (HOLD_PROMPT,),
-    (HOLD_RULE, place, letter, [words]) or (HOLD_UNTIL, place, letter); letter is a
-    character code, 0 for any. The header's first delay is 1 tick."""
-    out = bytearray(struct.pack("<H", 1))
-    for op in ops:
-        out.append(op[0])
-        if op[0] == HOLD_KEY:
-            out += struct.pack("<H", op[1])
-        elif op[0] == HOLD_RULE:
-            _, place, letter, words = op
-            if not 1 <= len(words) <= 255:
-                raise ValueError("a rule needs 1 to 255 keys")
-            out += bytes([place, letter, len(words)])
-            for w in words:
-                out += struct.pack("<H", w)
-        elif op[0] == HOLD_UNTIL:
-            out += bytes([op[1], op[2]])
-        elif op[0] not in (HOLD_SHOT, HOLD_PROMPT):
-            raise ValueError(f"unknown op {op[0]}")
-    out.append(0)
-    if len(out) > MAX_KEYFILE // 2:
-        raise ValueError(f"key file is {len(out)} bytes, more than {MAX_KEYFILE // 2}")
-    return bytes(out)
-
-
-EVENT_SIZE, SAMPLE_SIZE = 14, 6
-VALUE_NAMES = ("old2", "keys2", "paras", "keymax", "old16b", "estart_v", "eend_v", "sstart_v", "send_v")
+VALUE_NAMES = ("old2", "keys2", "paras", "keymax")
 
 
 def _assemble(a, values):
@@ -803,72 +279,20 @@ def _assemble(a, values):
 
 
 def resident_end():
-    """Where the resident part ends without trace mode: the key area is MAX_KEYFILE bytes."""
+    """Where the resident part ends: the key area is MAX_KEYFILE bytes."""
     _, labels = build_com().assemble(dict.fromkeys(VALUE_NAMES, 0))
     return labels["keys"] + MAX_KEYFILE
 
 
-def com_bytes(trace=None, hold=False):
-    """PLAYKEYS.COM. trace is None, or (the key file's length, the number of its ops) for
-    trace mode, whose log fills the key area after the key file, up to the same end. With
-    hold, trace is that of a hold-mode key file (hold_keyfile), and the program is
-    build_hold_com's. It loads no recorded game, so its key area simply follows its code."""
+def com_bytes():
+    """PLAYKEYS.COM."""
     end = resident_end()
     if end > 0xFF00:
         raise ValueError("key buffer does not fit in the segment")
-    if trace:
-        length, nops = trace
-
-        def values(labels):
-            nonlocal end
-            keys = labels["keys"]
-            if hold:
-                end = keys + MAX_KEYFILE
-            estart = keys + (length + 1) // 2 * 2
-            eend = estart + EVENT_SIZE * (3 * nops + 64)
-            sstart = eend
-            send = sstart + (end - sstart) // SAMPLE_SIZE * SAMPLE_SIZE
-            if send - sstart < SAMPLE_SIZE * 1000:
-                raise ValueError("the key file leaves too little room for the trace log")
-            return {"old2": labels["old"] + 2, "keys2": keys + 2, "paras": (end + 15) // 16,
-                    "keymax": length, "old16b": labels["old16"] + 2, "estart_v": estart,
-                    "eend_v": eend, "sstart_v": sstart, "send_v": send}
-        code, _ = _assemble(build_hold_com() if hold else build_com(trace), values)
-    elif hold:
-        raise ValueError("hold mode needs the key file's length and number of ops")
-    else:
-        code, _ = _assemble(build_com(), lambda labels: {
-            "old2": labels["old"] + 2, "keys2": labels["keys"] + 2, "paras": (end + 15) // 16,
-            "keymax": MAX_KEYFILE})
+    code, _ = _assemble(build_com(), lambda labels: {
+        "old2": labels["old"] + 2, "keys2": labels["keys"] + 2, "paras": (end + 15) // 16,
+        "keymax": MAX_KEYFILE})
     return code
-
-
-def read_trace(memory):
-    """The log of a trace-mode run, from the guest's memory (DOSBox-X's memory file).
-    Returns (samples, events, info): samples as (tick, total, place, letter), events as
-    dicts. The memory holds the magic once, in the resident copy."""
-    first_mb = memory[:0x100000]
-    at = first_mb.find(b"PKTRACE1")
-    if at < 0:
-        raise ValueError("no trace log in the memory file")
-    if first_mb.find(b"PKTRACE1", at + 1) >= 0:
-        raise ValueError("two trace logs in the memory file")
-    (self_off, sptr, eptr, tick, total, _lastc, flags, kslot, _pad,
-     estart, _eend, sstart, _send) = struct.unpack_from("<HHHHHBBBBHHHH", first_mb, at + 8)
-    # Hold mode only: seen follows the header's old16 and kpsp, and why is kslot's low byte.
-    # In trace mode both are meaningless; play.py drops them from a trace-mode run's info.
-    (seen,) = struct.unpack_from("<H", first_mb, at + 8 + 22 + 6)
-    base = at - self_off
-    samples = [struct.unpack_from("<HHBB", first_mb, base + o) for o in range(sstart, sptr, SAMPLE_SIZE)]
-    events = []
-    for o in range(estart, eptr, EVENT_SIZE):
-        kind, place, letter, slot, tot, word, tk, mode, dropped, psp = struct.unpack_from(
-            "<BBBBHHHBBH", first_mb, base + o)
-        events.append({"type": chr(kind), "place": place, "letter": letter, "slot": slot, "total": tot,
-                       "key": word, "tick": tk, "mode": mode, "dropped": dropped, "psp": psp})
-    place, letter = samples[-1][2:] if samples else (0, 0)
-    return samples, events, {"flags": flags, "ticks": tick, "total": total, "seen": seen, "why": kslot,
-                             "place": place, "letter": letter}
 
 
 def keyfile(ops, first_delay):

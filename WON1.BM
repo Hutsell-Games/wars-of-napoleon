@@ -177,7 +177,7 @@ IF armysize(attack) / armysize(defend) > 3 XOR armysize(defend) / armysize(attac
 	IF armynat(defend) <> homenat(defend) THEN x1 = .7 * x1: CALL image2(armyname$(defend) + t$, 4)
 	OPEN "O", 1, "battle.$$$"
 	a = 1: y = 2: IF attack < 25 THEN a = 2: y = 1
-	WRITE #1, city$(armyloc(defend)), 3 - side, a, y, armyname$(attack), x, armylead(attack), armyexper(attack), armyname$(defend), x1, armylead(attack), armyexper(defend), difficult, fort(armyloc(defend)), noise
+	WRITE #1, city$(armyloc(defend)), 3 - side, a, y, armyname$(attack), x, armylead(attack), armyexper(attack), armyname$(defend), x1, armylead(defend), armyexper(defend), difficult, fort(armyloc(defend)), noise
 	CLOSE #1
 	CALL scriptbattle
 	OPEN "I", 1, "outcome.&&&"

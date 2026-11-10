@@ -1507,7 +1507,7 @@ SELECT CASE i
 	CASE IS < .1 * allarm + (2 * RND): armx = 3
 	CASE IS < .3 * allarm + (2 * RND): armx = 1
 	' Nested: PDS 7.1 drew this RND only when the test before it held (docs\devnotes.md, step 7).
-	CASE IS < .5 * allarm + (2 * RND): armx = 2: IF allarm < 11 THEN IF RND > .5 THEN amrx = 4
+	CASE IS < .5 * allarm + (2 * RND): armx = 2: IF allarm < 11 THEN IF RND > .5 THEN armx = 4
 	CASE ELSE: armx = 4
 END SELECT
 	unit$(index) = equip$(armx)

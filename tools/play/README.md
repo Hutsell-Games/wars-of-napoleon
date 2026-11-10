@@ -31,14 +31,6 @@ another build of `WON.EXE`. A build other than the shipped one also needs `--tim
 addresses of `B$TIMR` and `B$RNZP` in its load image, from `tools\recover\runtimemap.py`; the two go
 together.
 
-`--port WON.EXE` plays a PDS 7.1 build of the port, made by `tools\pdsbuild.py`, in its trace mode. The build
-seeds itself, so it is not patched: the autoexec sets `WON_SEED` (the script's seed) and `WON_TRACE=1`. The run's
-folder also gets `ARCH2.EXE`, `VIC.EXE`, `NAPIC.EXE` and `NAPOLEON.EXE` from git (`7738434`), as the recordings
-had them (`docs\port-study.md`, step 7). So a QB64 build of the port in the repo's folder does not change the run.
-
-With `--port`, `PLAYKEYS.COM` also runs in trace mode (below), and the run's folder gets `trace.json`, its log.
-`sessions.py` turns that log into the keys file of `tests\sessions\` (below).
-
 On the branch `qb64rust`, a build of the port in the repo's folder overwrites `WON.EXE` and `NAPOLEON.EXE`,
 and `ARCH2.EXE`, `VIC.EXE` and `NAPIC.EXE` are not there (`docs\devnotes.md`, step 5). To replay with the
 shipped programs, run the harness in a worktree of `main`, which has all five: `git worktree add
@@ -58,8 +50,7 @@ with the computer awake.
    playing the game in the repo's folder would otherwise enable the start menu's Load, and change every
    screen after it. A tracked file with local changes is used as it is, with a warning. The folder also
    gets the data folders `graphics\` and `scenarios\` and the saved game of `tests\data\`. The shipped
-   `WON.EXE` gets them all beside it, as in DOS. A PDS build reads the folders, as the port does. A
-   `--port` run gets both, since its battles run the shipped `NAPOLEON.EXE`.
+   `WON.EXE` gets them all beside it, as in DOS.
 2. `wonseed.py` writes `WONSEED.EXE`: the unpacked `WON.EXE`, with `RANDOMIZE TIMER` (`WON.BAS` line 78)
    replaced by `RANDOMIZE <seed>`. It changes 20 bytes of code and removes one relocation entry, and checks
    that nothing else changed. So the computer player and the random events are the same in every run.
@@ -92,92 +83,27 @@ give the same 49 screens and the same 4 files.
 DOSBox-X's own `AUTOTYPE` command was tried first and dropped. DOS cuts a command line at 127 characters,
 which is a dozen keys, and its timing follows the host's clock.
 
-## Trace mode and the announce-driven keys files
+## The PDS bridge (retired)
 
-This is step 7a of `docs\port-study.md`. The port announces each wait for a key in the BIOS's
-intra-application area: `0:4F0h` counts the waits, and `0:4F1h` and `0:4F2h` hold the place and letter
-(`SCRIPT.BM`, `announce`). In trace mode, `PLAYKEYS.COM` logs three things:
+Until 2026-11-10 the harness also played the port's own source built with PDS 7.1 (`tools\pdsbuild.py`):
+`--port` played the strategic game's build with `PLAYKEYS.COM` in a trace mode, from whose log
+`sessions.py` wrote `tests\sessions\*.keys`, and `--napoleon` played the tactical game's build in a hold mode,
+which made the DOS recordings of the six battles (`tests\recorded\b*`). Both modes, the two options,
+`pdsbuild.py` and `sessions.py` are removed (`docs\port-study.md`, D14). `docs\devnotes.md`, item 60, says how
+to bring them back from git; this file's version of that commit describes them.
 
-- at each timer tick where the count changed, a sample: the tick, the total of waits so far, the place and
-  the letter. The total is 16 bits. The game can announce up to 8 waits in one tick, so a sample holds only
-  the last of them;
-- each key it types and each screenshot, with the total at that moment;
-- each key a program reads. `PLAYKEYS.COM` also hooks INT 16h, and logs each read (AH = 00h or 10h) after
-  it returns: the key, the buffer slot it came from, and the PSP of the program that read it. DOS reads the
-  keyboard through INT 16h too, so `INKEY$` and `INPUT` both show.
-
-The log is kept in the part of the key buffer that `KEYS.BIN` does not fill. So the program stays resident
-with the same number of paragraphs as the plain `PLAYKEYS.COM`, and the game loads at the same address as in
-the recordings. The plain mode is byte for byte the program that made the recordings. DOSBox-X maps the
-guest's memory to `MEMORY.BIN` in the run's folder (`memory file=`). After the run, `play.py` finds the log
-there by its magic `PKTRACE1`, writes `trace.json`, and deletes the 16 MB file.
-
-`sessions.py` reads `trace.json` and writes `tests\sessions\<name>.keys` in the format of QB64Rust's screen
-tool:
+`play.py font` stays: it writes DOSBox-X's 8 x 14 font, which `tests\play.py tactical` needs.
 
 ```
-python -I tools/play/play.py check --port <PDS build>\WON.EXE tests/scripts/*.keys
-python -I tools/play/sessions.py tests/scripts/*.keys
-python -I tools/play/sessions.py --check tests/scripts/*.keys    # exit 1 if a file would change
-```
-
-Each wait the strategic game announced becomes a `prompt`. The wait's keys follow it. A pause that read no
-key gets `key space`, which a scripted `TICK` waits for and throws away (D2). Each screenshot becomes a
-`state` after the prompt of the wait at which DOS took it. The file leaves out the keys read by the other
-programs (told apart by their PSP) and their screens (told apart by their video mode). It also leaves out the
-shots named `dos`. The file's header lists all of these. It also lists the keys that were typed before their
-wait was announced, and every finding that step 7b must look at. `sessions.py` prints the same findings.
-
-**Known limit: the four `PEEK(1052) = 30` checks of naval combat** (`WON2.BM` lines 1024 to 1091). Each one
-guards a `TICK`. It reads the buffer's tail, which every key typed moves on and only `BuffClear` sets back to
-30. So it asks whether a key was typed since the last `BuffClear`, not whether one is waiting. A scripted run
-types `key space` for each pause, which DOS never typed, and a key typed ahead in DOS comes later. Either can
-make a check skip a `TICK` that DOS ran, so that every later prompt is answered one wait off. Step 7b settles
-this (`docs\devnotes.md`, "Step 7a").
-
-## Hold mode and the battles of the tactical game
-
-This is step 7b of `docs\port-study.md`, the references of D3. The tactical game has no recording from its
-source, so its scripts cannot be timed keys. `--napoleon` plays a PDS 7.1 build of the tactical game
-(`tools\pdsbuild.py --game napoleon`) alone, from the keys files of `tests\battles\`:
-
-```
-python -I tools/pdsbuild.py --game napoleon tests/out/pds-napoleon
-python -I tools/play/play.py record --napoleon tests/out/pds-napoleon/NAPOLEON.EXE tests/battles/*.keys
 python -I tools/play/play.py font      # DOSBox-X's 8 x 14 font, for tests/play.py tactical
 ```
 
-A battle's keys file is in the format of QB64Rust's screen tool (`tools\screen\README.md` there, "The keys
-file"), so the same file plays the QB64 builds (`tests\play.py tactical`). `PLAYKEYS.COM` runs in hold mode,
-which plays these steps in DOS:
-
-| Step | In hold mode |
-|---|---|
-| `key NAME`, `text CHARS` | each key waits until the BIOS keyboard buffer is empty |
-| `prompt` | waits until the game announces its next wait |
-| `state` | a screenshot, named by a `# shot NAME` line before it; the next step waits 4 ticks |
-| `rule PLACE[:LETTER] KEYS` | from now on, `play until` answers a wait at that place with these keys |
-| `play until PLACE[:LETTER]` | answers each wait by its rule until one at that place, which counts as a prompt |
-| `repeat N` … `end` | unrolled by the harness |
-
-The first key of a rule answers the wait; its other keys go one by one to the waits that follow, before any rule
-is looked at, as in the screen tool. A wait that no rule answers, or a second wait that no step took, fails the
-script: `PLAYKEYS.COM` logs the reason, takes a screenshot and stops the machine. The harness reads the guest's
-memory file while DOSBox-X runs, so it sees the failure at once and prints the reason, with the screen in
-`shots\fail.png`.
-
-A battle's `BATTLE.$$$` is the file `<name>.battle` beside its keys file, and `# seed N (NAP_SEED)` gives its
-seed. The run's folder has no `OUTCOME.&&&`, so the one at the end is the battle's. Each battle ends at
-`scriptend` (`NAPSCRIPT.BM`): before each `SYSTEM`, the game announces a wait at place 7 and waits for a key.
-The PDS runtime goes back to text mode at `SYSTEM`, so this is where the last screen can be taken. A script
-ends with `play until 7`, a `state` and a key. After the game, `ENDMARK.COM` announces a wait at place 255, so
-a script that missed the end fails at once. A run stops after 900 seconds.
-
 The places of the tactical game's waits are listed in `NAPSCRIPT.BM`.
 
-**`scriptend` waits in every scripted battle, also one that the strategic game starts.** Under a script,
-`scriptbattle` (`SCRIPT.BM`) runs the tactical game with the keys file `<keys>.battle<n>`. That file must end
-with a key at place 7, after `play until 7`. Without it the tactical game waits there for ever. `won.exe`
+**`scriptend` waits in every scripted battle, also one that the strategic game starts.** Each battle ends at
+`scriptend` (`NAPSCRIPT.BM`): before each `SYSTEM`, the game announces a wait at place 7 and waits for a key.
+Under a script, `scriptbattle` (`SCRIPT.BM`) runs the tactical game with the keys file `<keys>.battle<n>`. That
+file must end with a key at place 7, after `play until 7`. Without it the tactical game waits there for ever. `won.exe`
 waits for it, until its own screen tool gives up after 30 seconds and ends it with exit code 124. Nothing ends
 `napoleon.exe`: it is likely left running on the hidden desktop, where no one sees it. So if `won.exe` ends with
 124 after a battle, look for a `napoleon.exe` in the task list and stop it. D4's second run of session 9 in step
@@ -242,5 +168,4 @@ Learned while writing sessions 3 to 15:
 |---|---|
 | `play.py` | the harness: `run`, `record`, `check` |
 | `wonseed.py` | makes `WONSEED.EXE`; also a command (`wonseed.py WON.EXE OUT.EXE --seed N`) |
-| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file), its trace and hold modes and the key file formats, and `FONTDUMP.COM` |
-| `sessions.py` | writes the announce-driven keys files of `tests\sessions\` from the trace runs |
+| `playkeys.py` | `PLAYKEYS.COM` (written by a small assembler in the file), the key file format, and `FONTDUMP.COM` |

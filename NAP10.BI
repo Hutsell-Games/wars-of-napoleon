@@ -1,5 +1,5 @@
 DEFINT A-Z
-REM $INCLUDE: 'folders.bi'
+REM $INCLUDE: 'FOLDERS.BI'
 '============================================================================
 '                Napoleon 1.0 Include File
 '============================================================================
@@ -82,8 +82,8 @@ COMMON SHARED limber, version, lineofsight, artcap, stex$(), highscore(), xper()
 COMMON SHARED startit!, timex, stakk, Mighty, commander$(), setupx, expbase()
 COMMON SHARED morlev$(), xplev$(), ledlev$(), artimp, batint, movesleft, equip$()
 COMMON SHARED sidex(), unitsize&, leadbase(), obstruct, waver()
-' The modes of the test hooks (napscript.bm).
-COMMON SHARED scripted, traced
+' The mode of the test hooks (napscript.bm).
+COMMON SHARED scripted
 
 most = 80: m1 = .5 * most: m2 = .5 * most + 1
 DIM SHARED unitx(most), unity(most), unit$(most), strength(most), Visible(most)

@@ -8,7 +8,7 @@
 ' (docs\port-study.md, step 8). The French units are 1 to m1 (40), the
 ' Allies' m2 (41) to most (80). rules_test.bas holds the strategic game's.
 
-'$INCLUDE: '../nap10.bi'
+'$INCLUDE: '../NAP10.BI'
 
 ' ------------------------------------------------------------------- Compact
 ' Moves the units of one side down over the units with no strength left,
@@ -46,6 +46,22 @@ CALL Compact(2)
 AssertEqualInt most, bigg(2), "every Allied unit"
 END SUB
 
+' -------------------------------------------------------------- writeoutcome
+' Writes OUTCOME.&&&: the winner (1 the attacker, 2 the defender) and each
+' side's losses in hundreds, from the side that lost. wipeout and the F10
+' quit now call it, which no recorded battle reaches by wipeout.
+
+SUB TestWriteOutcomeGivesTheOtherSideTheWin
+sidex(1) = 2: sidex(2) = 1 ' the Allies (side 2) attack the French (side 1)
+score&(1) = 1200: score&(2) = 3400
+CALL writeoutcome(1) ' the French lost
+f = FREEFILE: OPEN "outcome.&&&" FOR INPUT AS #f: INPUT #f, w, killa#, killd#: CLOSE #f
+KILL "outcome.&&&"
+AssertEqualInt 1, w, "the attacker won"
+AssertNear 34, killa#, .001, "the attacker's losses, in hundreds"
+AssertNear 12, killd#, .001, "the defender's losses, in hundreds"
+END SUB
+
 ' -------------------------------------------------------------------- normal
 ' The tactical game's copy of the strategic game's normal (rules_test.bas).
 
@@ -58,8 +74,8 @@ FOR i = 1 TO 4000
 NEXT i
 AssertNear 5, total& / 4000, 1, "the mean of 4000 results, standard deviation 10"
 END SUB
-'$INCLUDE: '../nap1.bm'
-'$INCLUDE: '../nap1a.bm'
-'$INCLUDE: '../nap1c.bm'
-'$INCLUDE: '../qb64.bm'
-'$INCLUDE: '../napscript.bm'
+'$INCLUDE: '../NAP1.BM'
+'$INCLUDE: '../NAP1A.BM'
+'$INCLUDE: '../NAP1C.BM'
+'$INCLUDE: '../QB64.BM'
+'$INCLUDE: '../NAPSCRIPT.BM'

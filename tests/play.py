@@ -15,7 +15,8 @@ Usage (from the repo's folder):
 A script is a keys file of QB64Rust's screen tool (its tools/screen/README.md), of one of four kinds:
 
 - a session, tests/sessions/<name>.keys: one of the 15 sessions recorded in DOSBox-X, written
-  by tools/play/sessions.py. It ends at the wait of its last shot, and the run is stopped once
+  by tools/play/sessions.py from the PDS bridge's runs (both retired: docs/devnotes.md,
+  item 60). It ends at the wait of its last shot, and the run is stopped once
   the state of that shot is written;
 - session 9 with its battle, 09-1805-tactical-battle (D4 of the plan): session 9's keys file
   again, but the strategic game starts the port's tactical game, which plays
@@ -52,7 +53,8 @@ a desktop of its own that is never shown (press_any_key.py --hidden-desktop). Th
 holds no DOS program, so the game's SHELLs of ARCH2.EXE, VIC.EXE and RRS.EXE do not run; under
 a script the copy of the history file is done in BASIC (SCRIPT.BM). A battle that a script
 starts runs napoleon.exe directly, which libqb starts with no console, on the same hidden
-desktop (docs/devnotes.md, "Step 3", item 3).
+desktop (docs/devnotes.md, "Step 3", item 3). Off Windows (Linux under Xvfb, for one) the
+programs run as they are, without .exe, and the game starts ./napoleon (exename$, QB64.BM).
 
 Exit code: 0 when every run passed, 1 when one failed, 2 when a build or the set-up failed.
 """
@@ -96,9 +98,11 @@ TEST_DATA = REPO / "tests" / "data"
 RECORDED = REPO / "tests" / "recorded"
 OUT = REPO / "tests" / "out" / "qb64"
 QB64RUST = Path(os.environ.get("WON_QB64RUST_REPO") or REPO.parent / "QB64Rust")
+# The suffix of a program: .exe on Windows, none elsewhere (exename$, QB64.BM).
+EXE = ".exe" if os.name == "nt" else ""
 COMPILERS = {
-    "rust": Path(os.environ.get("QB64RUST") or QB64RUST / "target" / "release" / "qb64rust.exe"),
-    "pe": Path(os.environ.get("QB64PE") or QB64RUST.parent / "QB64pe" / "qb64pe.exe"),
+    "rust": Path(os.environ.get("QB64RUST") or QB64RUST / "target" / "release" / f"qb64rust{EXE}"),
+    "pe": Path(os.environ.get("QB64PE") or QB64RUST.parent / "QB64pe" / f"qb64pe{EXE}"),
 }
 SCREEN_HOOK = QB64RUST / "tools" / "screen" / "screen_state.cpp"
 PRESS_ANY_KEY = QB64RUST / "tools" / "legacy_tests" / "press_any_key.py"
@@ -114,7 +118,7 @@ TIMEOUT = 900
 # Yes at the first order. Its BATTLE.$$$ is the one the strategic game writes.
 BATTLED_SESSIONS = {"09-1805-tactical-battle": ("09-1805-tactical", BATTLES / "b1-innsbruck-retreat.keys")}
 # The environment variables a run sets itself, cleared first.
-RUN_VARIABLES = ("WON_SEED", "WON_TRACE", "WON_OUTCOME", "NAP_SEED", "NAP_TRACE",
+RUN_VARIABLES = ("WON_SEED", "WON_OUTCOME", "NAP_SEED",
                  "QB64_SCREEN_DIGEST_AS_STATE", "QB64_SCREEN_PROMPT_MS", "QB64RUST_COVERAGE")
 
 
@@ -135,7 +139,7 @@ def build(compiler: str, source: str = "WON.BAS", coverage: bool = False) -> Pat
     stem = Path(source).stem.lower()
     folder = OUT / "build" / (compiler + ("-coverage" if coverage else "")) / stem
     folder.mkdir(parents=True, exist_ok=True)
-    target = folder / (stem + ".exe")
+    target = folder / (stem + EXE)
     h = hashlib.sha256()
     for p in sorted(REPO.iterdir()):
         if p.is_file() and p.suffix.lower() in SOURCES:
@@ -369,8 +373,26 @@ class Run:
 
 
 def kill_tree(proc: subprocess.Popen) -> None:
-    subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        # The run started in a session of its own (run_command), so its group holds the
+        # tactical game that the strategic game started.
+        try:
+            os.killpg(proc.pid, 9)
+        except ProcessLookupError:
+            pass
     proc.wait()
+
+
+def run_command(exe: Path) -> tuple[list[str], dict]:
+    """The command that runs a build, and Popen's arguments for it. On Windows the program runs
+    on a desktop of its own that is never shown, and press_any_key.py gives END its key. Elsewhere
+    it runs as it is, on the display of DISPLAY (Xvfb, for one)."""
+    if os.name == "nt":
+        return ([sys.executable, "-I", str(PRESS_ANY_KEY), "--hidden-desktop", str(exe)],
+                {"creationflags": subprocess.CREATE_NO_WINDOW})
+    return [str(exe)], {"start_new_session": True}
 
 
 def count_states(path: Path) -> int:
@@ -387,17 +409,19 @@ def run_script(script: Script, compiler: str, exes: dict[tuple[str, str], Path],
     shutil.rmtree(folder, ignore_errors=True)
     game = folder / "game"
     game.mkdir(parents=True)
-    replaced = ("BATTLE.$$$", "OUTCOME.&&&") if script.program == "napoleon" else ()
+    replaced = ("battle.$$$", "outcome.&&&") if script.program == "napoleon" else ()
     harness.copy_game_files(game, replaced, skip={".exe"})
     if script.battle_file:
-        shutil.copy2(script.battle_file, game / "BATTLE.$$$")
+        shutil.copy2(script.battle_file, game / "battle.$$$")
     for path, name in script.saves:
         shutil.copy2(path, game / name)
     before = {p.name: harness.sha(p) for p in harness.top_files(game)}
-    exe = game / f"{script.program}.exe"
+    exe = game / f"{script.program}{EXE}"
     shutil.copy2(exes[compiler, script.program], exe)
+    programs = {exe.name}
     if script.battles:
-        shutil.copy2(exes[compiler, "napoleon"], game / "napoleon.exe")
+        shutil.copy2(exes[compiler, "napoleon"], game / f"napoleon{EXE}")
+        programs.add(f"napoleon{EXE}")
     # The keys file, and beside it the keys of each battle, as scriptbattle looks for them.
     run_keys = folder / "keys.keys"
     shutil.copy2(keys or script.keys, run_keys)
@@ -415,11 +439,11 @@ def run_script(script: Script, compiler: str, exes: dict[tuple[str, str], Path],
         if script.outcome is not None:
             env["WON_OUTCOME"] = script.outcome
     env.update(extra_env or {})
-    cmd = [sys.executable, "-I", str(PRESS_ANY_KEY), "--hidden-desktop", str(exe)]
+    cmd, how = run_command(exe)
     problem, start = None, time.monotonic()
     with open(folder / "log.txt", "wb") as log:
         proc = subprocess.Popen(cmd, cwd=game, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+                                stdin=subprocess.DEVNULL, **how)
         while True:
             if script.stop_after is not None and count_states(state) >= script.stop_after:
                 time.sleep(0.5)  # let the files of that moment be closed
@@ -452,7 +476,7 @@ def run_script(script: Script, compiler: str, exes: dict[tuple[str, str], Path],
         battle_states.append(battle)
     files = []
     for p in sorted(harness.top_files(game), key=lambda p: p.name.upper()):
-        if p.suffix.lower() != ".exe" and before.get(p.name) != harness.sha(p):
+        if p.name not in programs and before.get(p.name) != harness.sha(p):
             files.append(p)
     return Run(script, compiler, tag, folder, problem, time.monotonic() - start, found, battle_states, files)
 
@@ -585,9 +609,9 @@ def load_fonts(compiler: str) -> dict[str, dict[int, bytes]]:
         state = folder / "screen.txt"
         env = dict(os.environ, QB64PE_NOPROMPT="y", QB64_SCREEN_STATE=str(state))
         env.pop("QB64_SCREEN_KEYS", None)
-        subprocess.run([sys.executable, "-I", str(PRESS_ANY_KEY), "--hidden-desktop", str(exe)], cwd=folder,
-                       env=env, stdin=subprocess.DEVNULL, capture_output=True, timeout=120, check=False,
-                       creationflags=subprocess.CREATE_NO_WINDOW)
+        cmd, how = run_command(exe)
+        subprocess.run(cmd, cwd=folder, env=env, stdin=subprocess.DEVNULL, capture_output=True, timeout=120,
+                       check=False, **how)
         states = [e for e in entries(state.read_bytes() if state.is_file() else b"") if e.startswith(b"screen-state")]
         if not states:
             raise SetupError(f"{source} wrote no state with {compiler}")
@@ -1058,8 +1082,6 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--unit-tests", action="store_true", help="coverage: run the unit tests when scripts are named")
     ap.add_argument("--wait-ms", type=int, default=5000, help="explore: how long the last prompt waits")
     args = ap.parse_intermixed_args(argv)
-    if os.name != "nt":
-        raise SystemExit("play.py runs on Windows only for now (TODO.md, Linux)")
     if args.compiler == "both" and args.command not in ("bridge", "tactical"):
         raise SystemExit("--compiler both is for bridge and tactical")
     OUT.mkdir(parents=True, exist_ok=True)

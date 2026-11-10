@@ -5,7 +5,7 @@ DECLARE SUB normal (xbar%, vary%, result%)
 DECLARE SUB relieve (who%)
 DECLARE SUB retreat (active%, x%)
 DECLARE SUB stax (who%)
-' $INCLUDE: 'won.bi'
+' $INCLUDE: 'WON.BI'
 
 CALL scriptstart
 IF LEN(DIR$("arch2.exe")) > 0 AND COMMAND$ = "" THEN CLS : SHELL "arch2.exe": GOTO regist
@@ -647,8 +647,8 @@ TICK 1
 RETURN
 '............................................................................
 
-' $INCLUDE: 'won1.bm'
-' $INCLUDE: 'won2.bm'
-' $INCLUDE: 'wonmenu.bm'
-' $INCLUDE: 'qb64.bm'
-' $INCLUDE: 'script.bm'
+' $INCLUDE: 'WON1.BM'
+' $INCLUDE: 'WON2.BM'
+' $INCLUDE: 'WONMENU.BM'
+' $INCLUDE: 'QB64.BM'
+' $INCLUDE: 'SCRIPT.BM'

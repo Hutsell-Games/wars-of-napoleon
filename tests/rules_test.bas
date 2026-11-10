@@ -8,7 +8,7 @@
 ' sessions and the generated games already run these SUBs many times
 ' (docs\port-study.md, step 8). battle_test.bas holds the tactical game's.
 
-'$INCLUDE: '../won.bi'
+'$INCLUDE: '../WON.BI'
 
 ' -------------------------------------------------------------------- bubble
 ' Sorts mtx$(1 TO limit) and keeps array() beside it: the lists of cities
@@ -73,8 +73,33 @@ FOR i = 1 TO 4000
 NEXT i
 AssertNear 5, total& / 4000, 1, "the mean of 4000 results, standard deviation 10"
 END SUB
-'$INCLUDE: '../won1.bm'
-'$INCLUDE: '../won2.bm'
-'$INCLUDE: '../wonmenu.bm'
-'$INCLUDE: '../qb64.bm'
-'$INCLUDE: '../script.bm'
+
+' ---------------------------------------------------------- off Windows
+' The strategic game starts the tactical game as napoleon.exe on Windows.
+' Elsewhere the build has no suffix, and the shell looks for a bare name on
+' the PATH, so it is ./napoleon (exename$, QB64.BM).
+SUB TestExeNameOnThisSystem
+IF onwindows% THEN
+	AssertEqualStr "napoleon.exe", exename$("napoleon"), "on Windows"
+ELSE
+	AssertEqualStr "./napoleon", exename$("napoleon"), "off Windows"
+END IF
+END SUB
+
+' Off Windows, scriptshell copies the file in BASIC even when the game is not
+' scripted, since no other system has cmd's copy. On Windows the test does
+' nothing: there scriptshell runs cmd.exe, whose console window would show.
+SUB TestShellCopiesInBasicOffWindows
+IF onwindows% THEN EXIT SUB
+scripted = 0
+f = FREEFILE: OPEN "shelltest.his" FOR OUTPUT AS #f: PRINT #f, "06-24-1998": CLOSE #f
+CALL scriptshell("copy shelltest.his shelltest.ory")
+f = FREEFILE: OPEN "shelltest.ory" FOR INPUT AS #f: LINE INPUT #f, a$: CLOSE #f
+KILL "shelltest.his": KILL "shelltest.ory"
+AssertEqualStr "06-24-1998", a$, "the copy's first line"
+END SUB
+'$INCLUDE: '../WON1.BM'
+'$INCLUDE: '../WON2.BM'
+'$INCLUDE: '../WONMENU.BM'
+'$INCLUDE: '../QB64.BM'
+'$INCLUDE: '../SCRIPT.BM'

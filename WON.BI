@@ -1,5 +1,5 @@
 DEFINT A-Z
-' $INCLUDE: 'folders.bi'
+' $INCLUDE: 'FOLDERS.BI'
 DECLARE SUB animate (index%, flag%)
 DECLARE SUB armies ()
 DECLARE SUB armystat (index%)
@@ -97,9 +97,8 @@ COMMON SHARED victory(), noise, capcity(), difficult, usadv, rescue
 COMMON SHARED font$(), brray(), randbal, casualty&()
 COMMON SHARED rflag, navyto, pcode, history, thrill, commerce, raider, grudge
 COMMON SHARED mtnx(), mtny(), cities, nation$(), spare(), attitude(), tactical
-' The modes of the test hooks (script.bm), in COMMON so that every module
-' of the PDS 7.1 build sees them.
-COMMON SHARED scripted, traced
+' The mode of the test hooks (script.bm).
+COMMON SHARED scripted
 cities = 67
 DIM SHARED cityx(cities), cityy(cities), cityv(cities), cityp(cities), city$(cities), lname$(50), rcity(12)
 DIM SHARED cash(2), control(2), matrix(cities, 7), income(2), anima(300), rating(50)

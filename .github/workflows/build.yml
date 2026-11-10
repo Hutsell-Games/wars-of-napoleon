@@ -66,15 +66,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # The two programs, the files beside them that the game reads, the data folders
-      # (FOLDERS.BI), the saved game that came with it (NWS9.SAV), and the game's own documents.
-      # NWS.CFG and HISCORE.NWS must be there: the game opens them without checking. The names
+      # (FOLDERS.BI), the saved game that came with it (nws9.sav), and the game's own documents.
+      # nws.cfg and hiscore.nws must be there: the game opens them without checking. The names
       # with $ and & are given literally, so that PowerShell does not read them.
       - name: Put the playable folder together
         run: |
           New-Item -ItemType Directory dist | Out-Null
-          Copy-Item game\won.exe, game\napoleon.exe, game\NWS.CFG, game\HISCORE.NWS,
-                    game\tests\data\NWS9.SAV, game\LICENSE, game\README.md -Destination dist
-          Copy-Item -LiteralPath 'game\BATTLE.$$$', 'game\OUTCOME.&&&' -Destination dist
+          Copy-Item game\won.exe, game\napoleon.exe, game\nws.cfg, game\hiscore.nws,
+                    game\tests\data\nws9.sav, game\LICENSE, game\README.md -Destination dist
+          Copy-Item -LiteralPath 'game\battle.$$$', 'game\outcome.&&&' -Destination dist
           Copy-Item game\graphics, game\scenarios -Destination dist -Recurse
           New-Item -ItemType Directory dist\docs | Out-Null
           Copy-Item game\docs\WON.DOC, game\docs\NAPOLEON.DOC, game\docs\NAPOLEON.PAG,

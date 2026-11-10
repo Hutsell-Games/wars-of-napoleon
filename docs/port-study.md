@@ -460,7 +460,22 @@ unchanged. The compiler engineer notes that this is a rule of the old compiler, 
 `CLAUDE.md` working rule 8 does not apply, and that a QB64Rust change is a separate QB64Rust question. The test
 engineer asks for the 15 sessions with the PDS build after the change. **Recommended: (a).**
 **User (2026-11-08): (a).** Done in the strategic game and in both `TICK`s (`docs\devnotes.md`, change 24).
-The tactical game's other lines are sorted when its PDS build comes (`TODO.md`).
+The tactical game's 29 lines followed with its PDS build (`docs\devnotes.md`, item 28).
+
+**D14. Retire the bridge** (2026-11-10). The fixes of the game in `TODO.md` make the port differ from DOS on
+purpose, so the bridge (D1, D3) would no longer give a reference, only upkeep: a DOS form of every hook in
+`PDS.BM`, and hooks kept to what PDS 7.1 compiles.
+- (a) Retire it: remove `tools\pdsbuild.py`, `PDS.BM`, `tools\play\sessions.py`, the trace and hold modes and
+  the hooks' trace mode. Keep the DOS recordings as they are, and list each fix's difference from them in
+  `tests\known-differences.txt`.
+- (b) Keep it, and record the DOS battles again with the fixed source after each fix.
+
+*Panel:* the pragmatic engineer wants (a): the bridge has done its job. The QB64 engineer agrees: writing every
+hook twice blocks plain QB64 code, as `onwindows%` showed. The test engineer agrees, provided the recordings
+and `known-differences.txt` stay, so each difference from DOS is still named. The compiler engineer would keep
+it until the three fixes are in, in case DOS must settle what the old code did, but finds that unlikely.
+**Recommended: (a).** **User (2026-11-10): (a)**, with a note on how to bring it back
+(`docs\devnotes.md`, item 60).
 
 ## 7. The plan
 

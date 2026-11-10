@@ -1,29 +1,27 @@
 ' ===========================================================================
 ' NAPSCRIPT.BM - the test hooks of the tactical game. Included at the end of
-' NAPOLEON.BAS. Written in BASIC that both QB64 and BASIC PDS 7.1 compile.
-' SCRIPT.BM holds the same hooks for the strategic game, and its scriptbattle
-' sets NAP_SEED for each battle a script plays.
+' NAPOLEON.BAS. SCRIPT.BM holds the same hooks for the strategic game, and its
+' scriptbattle sets NAP_SEED for each battle a script plays. Until 2026-11-10
+' PDS 7.1 compiled them too, for the bridge, now retired (docs\devnotes.md,
+' item 60).
 '
-' Two environment variables choose how the program runs:
-'   NAP_SEED   RANDOMIZE takes this number instead of TIMER. Alone, it makes
-'              the program "scripted" (scripted = 1): each wait for a key is
+' An environment variable chooses how the program runs:
+'   NAP_SEED   RANDOMIZE takes this number instead of TIMER, and the program
+'              is "scripted" (scripted = 1): each wait for a key is
 '              announced, and TICK waits for a key where it read one. A TICK
 '              shorter than a second reads no key, in DOS either, so under a
-'              script it returns at once.
-'   NAP_TRACE  Trace mode (traced = 1), for the PDS 7.1 build in DOSBox-X: the
-'              waits are announced and nothing else changes. NAP_SEED may be
-'              set too, for the seed alone.
-' A program started with neither plays as before.
+'              script it returns at once. PLAY and SOUND are silent
+'              (silence, QB64.BM).
+' A program started without it plays as before.
 ' ===========================================================================
 
 ' Chooses the mode and seeds the random numbers. It stands where
 ' NAPOLEON.BAS had RANDOMIZE TIMER, its first statement.
 SUB napstart
 seed$ = ENVIRON$("NAP_SEED")
-IF ENVIRON$("NAP_TRACE") <> "" THEN
-	traced = 1
-ELSEIF seed$ <> "" THEN
+IF seed$ <> "" THEN
 	scripted = 1
+	CALL silence
 END IF
 IF seed$ = "" THEN RANDOMIZE TIMER ELSE RANDOMIZE VAL(seed$)
 END SUB
@@ -36,9 +34,8 @@ END SUB
 ' as before.
 FUNCTION scripttick% (sec!)
 scripttick% = 0
-IF scripted = 0 AND traced = 0 THEN EXIT FUNCTION
-IF sec! >= 1 THEN CALL announce(3, "")
 IF scripted = 0 THEN EXIT FUNCTION
+IF sec! >= 1 THEN CALL announce(3, "")
 IF sec! >= 1 THEN DO WHILE INKEY$ = "": LOOP
 scripttick% = -1
 END FUNCTION
@@ -55,8 +52,8 @@ CALL announce(7, letter$)
 IF scripted THEN DO WHILE INKEY$ = "": LOOP
 END SUB
 
-' Says that the program is about to wait for a key, when it is scripted or
-' traced. place names the kind of wait (1 to 255) and letter$ narrows it
+' Says that the program is about to wait for a key, when it is scripted.
+' place names the kind of wait (1 to 255) and letter$ narrows it
 ' (its first character, or ""). The places are the strategic game's where
 ' the two games share a kind of wait:
 '   1  a pause that any key ends ("hit a key")
@@ -69,7 +66,7 @@ END SUB
 ' QB64Rust's tools\screen\README.md, "Prompts". It leaves DEF SEG at 0, as
 ' BuffClear does.
 SUB announce (place, letter$)
-IF scripted = 0 AND traced = 0 THEN EXIT SUB
+IF scripted = 0 THEN EXIT SUB
 code = 0
 IF letter$ <> "" THEN code = ASC(UCASE$(letter$))
 DEF SEG = 0

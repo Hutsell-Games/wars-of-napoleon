@@ -6,9 +6,7 @@ Usage (from the repo's folder):
     python -I tools/play/play.py record SCRIPT.keys...   # two runs that must agree; kept in tests/recorded/<name>/
     python -I tools/play/play.py check SCRIPT.keys...    # one run, compared with tests/recorded/<name>/
     python -I tools/play/play.py font                   # DOSBox-X's 8 x 14 font into tests/recorded/
-Options: --napoleon NAPOLEON.EXE (a PDS build of the tactical game, played alone in hold mode from
-         the keys files of tests/battles/: HoldScript, below),
-         --exe WON.EXE (another build to play; default the repo's WON.EXE),
+Options: --exe WON.EXE (another build to play; default the repo's WON.EXE),
          --timr HEX --rnzp HEX (its runtime addresses, for a build other than the shipped one),
          --dosbox PATH (default ../won-hutsellgames/dosbox-x/bin/x64/Release/dosbox-x.exe).
 
@@ -42,7 +40,6 @@ A script must end with a shot, with no wait after it: the machine stops at the l
 """
 import argparse
 import hashlib
-import json
 import os
 import shutil
 import subprocess
@@ -71,14 +68,6 @@ NOT_GAME_NAMES = {"license"}
 DATA_FOLDERS = ("graphics", "scenarios")
 TEST_DATA = "tests/data"
 HARNESS_FILES = {"WONSEED.EXE", "PLAYKEYS.COM", "KEYS.BIN", "IDLE.COM", "RUNDATE.TXT"}
-# The DOS programs with no source, which left the branch qb64rust in its step 5, and the
-# commit that still has them. --port takes them from there.
-SHIPPED_COMMIT = "7738434"
-SHIPPED_ONLY = ("ARCH2.EXE", "VIC.EXE", "NAPIC.EXE")
-# What --port takes from that commit: those three, and the tactical game. The branch still
-# tracks the shipped NAPOLEON.EXE, but a QB64 build of the port in the repo's folder
-# overwrites it with a Windows program, which DOSBox-X cannot run.
-FROM_GIT = SHIPPED_ONLY + ("NAPOLEON.EXE",)
 
 # Key names: (scan code, character, shifted character).
 LETTERS = dict(zip("qwertyuiop", range(0x10, 0x1A)))
@@ -203,140 +192,6 @@ class Script:
         return sum(gap for _, _, gap in self.ops)
 
 
-class HoldScript:
-    """A keys file of QB64Rust's screen tool, played in DOS by PLAYKEYS.COM's hold mode: a
-    battle of tests/battles/ (docs/port-study.md, D3). The steps it takes are prompt, key,
-    text, state, rule, play until and repeat (tools/screen/README.md in QB64Rust, "The keys
-    file"). A "# shot NAME" line names the state after it, and "# seed N (NAP_SEED)" gives
-    the seed. The battle's BATTLE.$$$ is the file beside it, NAME.battle."""
-
-    # The screen tool's names of keys that the harness names otherwise.
-    NAMES = {"backspace": "bksp", "pageup": "pgup", "pagedown": "pgdn", "insert": "ins", "delete": "del"}
-
-    def __init__(self, path):
-        self.path = Path(path)
-        self.name = self.path.stem
-        self.battle = self.path.with_suffix(".battle")
-        self.seed, self.cycles = 1.0, 20000
-        self.ops, self.shots = [], []
-        if not self.battle.is_file():
-            raise SystemExit(f"{self.path}: no {self.battle.name} beside it")
-        pending = None
-        for number, text in self._lines():
-            try:
-                if text.startswith("#"):
-                    m = text.split()
-                    if len(m) >= 3 and m[1] == "shot":
-                        pending = m[2].rstrip(":")
-                    elif len(m) >= 4 and m[1] == "seed" and m[3] == "(NAP_SEED)":
-                        self.seed = float(m[2])
-                    continue
-                cmd, _, rest = text.partition(" ")
-                if cmd == "prompt" and not rest:
-                    self.ops.append((playkeys.HOLD_PROMPT,))
-                elif cmd == "key":
-                    self.ops.append((playkeys.HOLD_KEY, self.word(rest)))
-                elif cmd == "text":
-                    self.ops += [(playkeys.HOLD_KEY, self.char(c)) for c in rest]
-                elif cmd == "state" and not rest:
-                    if not pending or any(not (c.isalnum() or c in "-_") for c in pending):
-                        raise ValueError("a state needs a '# shot NAME' line before it")
-                    self.ops.append((playkeys.HOLD_SHOT,))
-                    self.shots.append(f"{len(self.shots) + 1:02d}-{pending}")
-                    pending = None
-                elif cmd == "rule":
-                    where, _, keys = rest.partition(" ")
-                    self.ops.append((playkeys.HOLD_RULE, *self.place(where), self.rule_keys(keys)))
-                elif cmd == "play" and rest.startswith("until "):
-                    self.ops.append((playkeys.HOLD_UNTIL, *self.place(rest[6:].strip())))
-                else:
-                    raise ValueError(f"hold mode does not play {text!r}")
-            except ValueError as e:
-                raise SystemExit(f"{self.path}:{number}: {e}") from None
-        if not self.shots:
-            raise SystemExit(f"{self.path}: no state")
-
-    def word(self, name):
-        name = name.strip()
-        return key_word(self.NAMES.get(name, name))
-
-    @staticmethod
-    def char(c):
-        if c not in CHARS:
-            raise ValueError(f"no key types {c!r}")
-        return CHARS[c]
-
-    @staticmethod
-    def place(text):
-        place, _, letter = text.partition(":")
-        if not place.isdigit() or not 1 <= int(place) <= 255 or len(letter) > 1:
-            raise ValueError(f"not a place: {text!r}")
-        return int(place), ord(letter.upper()) if letter else 0
-
-    def rule_keys(self, text):
-        words, rest = [], text.strip()
-        while rest:
-            part, _, rest = rest.partition(" ")
-            if part == "key":
-                name, _, rest = rest.partition(" ")
-                words.append(self.word(name))
-            elif part == "text":
-                words += [self.char(c) for c in rest]
-                rest = ""
-            else:
-                raise ValueError(f"a rule takes key and text parts, not {part!r}")
-        if not words:
-            raise ValueError("a rule needs keys")
-        return words
-
-    def _lines(self):
-        """(line number, text) of the steps and the comments, repeat blocks unrolled. The
-        screen tool takes "#" only at the start of a line, and text keeps its spaces."""
-        stack, counts = [[]], []
-        for number, line in enumerate(self.path.read_text(encoding="ascii").splitlines(), 1):
-            text = line if line.startswith("text ") else line.strip()
-            if not text:
-                continue
-            cmd, _, rest = text.partition(" ")
-            if cmd == "repeat":
-                if not rest.strip().isdigit():
-                    raise SystemExit(f"{self.path}:{number}: repeat needs a count")
-                counts.append(int(rest))
-                stack.append([])
-            elif cmd == "end" and not rest:
-                if len(stack) == 1:
-                    raise SystemExit(f"{self.path}:{number}: end without repeat")
-                body = stack.pop()
-                stack[-1].extend(body * counts.pop())
-            else:
-                stack[-1].append((number, text))
-        if len(stack) != 1:
-            raise SystemExit(f"{self.path}: repeat without end")
-        return stack[0]
-
-    def keyfile(self):
-        try:
-            return playkeys.hold_keyfile(self.ops)
-        except ValueError as e:
-            raise SystemExit(f"{self.path}: {e}") from None
-
-    def seconds(self):
-        """No fixed time: a battle takes as long as it takes. The run's limit."""
-        return HOLD_LIMIT
-
-
-# A battle in hold mode stops after this many seconds of the host's time.
-HOLD_LIMIT = 900
-# After the tactical game, the autoexec runs this in place of IDLE.COM. It announces a wait
-# at place 255, as if the game had: xor ax, ax / mov es, ax / mov byte es:[4F1h], 255 /
-# mov byte es:[4F2h], 0 / inc byte es:[4F0h] / then sti / hlt / jmp hlt, as IDLE.COM. A
-# battle's script ends before the game exits (scriptend, NAPSCRIPT.BM), so a script that
-# meets this wait failed: a "play until" has no rule for it, and stops at once instead of
-# at the run's time limit.
-ENDMARK = bytes([0x31, 0xC0, 0x8E, 0xC0, 0x26, 0xC6, 0x06, 0xF1, 0x04, 0xFF, 0x26, 0xC6, 0x06, 0xF2, 0x04,
-                 0x00, 0x26, 0xFE, 0x06, 0xF0, 0x04, 0xFB, 0xF4, 0xEB, 0xFD])
-
-
 def game_files(replaced=(), flat=False):
     """The game's files as (path, name in the run's folder): the files git tracks in the repo's
     top folder, without sources and documents, the data folders of FOLDERS.BI, and the files of
@@ -368,16 +223,11 @@ def game_files(replaced=(), flat=False):
         yield p, (base if flat or folder == TEST_DATA else name)
 
 
-def copy_game_files(game, replaced=(), flat=False, skip=(), dos=False):
-    """Copy the game's files into the run's folder game; files with a suffix in skip are left out.
-    With dos, a data folder gets the name a DOS program gives it: "scenarios" is SCENARIO, as in
-    the PDS builds' FOLDERS.BI (tools/pdsbuild.py, dos_folder)."""
+def copy_game_files(game, replaced=(), flat=False, skip=()):
+    """Copy the game's files into the run's folder game; files with a suffix in skip are left out."""
     for p, name in game_files(replaced, flat):
         if p.suffix.lower() in skip:
             continue
-        if dos and "/" in name:
-            folder, _, base = name.rpartition("/")
-            name = f"{folder[:8].upper()}/{base}"
         (game / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, game / name)
 
@@ -385,19 +235,6 @@ def copy_game_files(game, replaced=(), flat=False, skip=(), dos=False):
 def top_files(game):
     """The files at the top of a run's folder, where the game writes: not the data folders."""
     return [p for p in game.iterdir() if p.is_file()]
-
-
-def git_show(commit, name):
-    try:
-        return subprocess.run(["git", "-C", str(REPO), "show", f"{commit}:{name}"], capture_output=True,
-                              check=True).stdout
-    except (OSError, subprocess.CalledProcessError) as e:
-        raise SystemExit(f"cannot take {name} from git {commit}: {e}") from None
-
-
-def seed_text(seed):
-    """The seed as WON_SEED gives it to VAL: 1.0 is "1", the same DOUBLE as wonseed.py's RANDOMIZE 1#."""
-    return str(int(seed)) if seed == int(seed) else repr(seed)
 
 
 def dosbox_version(dosbox):
@@ -419,45 +256,18 @@ def run(script, out, args):
     game, cap = out / "game", out / "capture"
     game.mkdir(parents=True)
     cap.mkdir()
-    hold = isinstance(script, HoldScript)
-    # A battle gets its own BATTLE.$$$, and no OUTCOME.&&&: the one in the run's folder at the
-    # end is the battle's, and a battle that writes none shows as none.
-    replaced = ("WON.EXE",) + FROM_GIT + (("BATTLE.$$$", "OUTCOME.&&&") if hold else ())
-    # The PDS builds read the data folders of FOLDERS.BI; the shipped WON.EXE reads its files flat.
-    copy_game_files(game, replaced if args.port or hold else (), flat=not (args.port or hold),
-                    dos=bool(args.port or hold))
-    if args.port:
-        # With --port the battles run the shipped NAPOLEON.EXE, which reads its files flat.
-        copy_game_files(game, replaced, flat=True)
-    if hold:
-        # A PDS 7.1 build of the tactical game (tools/pdsbuild.py --game napoleon), alone.
-        # NAP_SEED makes it scripted, as under QB64's screen tool (NAPSCRIPT.BM).
-        (game / "NAPOLEON.EXE").write_bytes(Path(args.napoleon).read_bytes())
-        (game / "BATTLE.$$$").write_bytes(script.battle.read_bytes())
-        program = "NAPOLEON.EXE"
-    elif args.port:
-        # A PDS 7.1 build of the port (tools/pdsbuild.py) seeds itself from WON_SEED, so it
-        # is not patched. The DOS programs come from git, so that it runs them as the
-        # recordings did (docs/port-study.md, step 7a).
-        (game / "WON.EXE").write_bytes(Path(args.port).read_bytes())
-        for name in FROM_GIT:
-            (game / name).write_bytes(git_show(SHIPPED_COMMIT, name))
-        program = "WON.EXE"
-    else:
-        exe = wonseed.unpacked(Path(args.exe).read_bytes())
-        if hashlib.sha256(exe).hexdigest() != wonseed.SHIPPED_UNPACKED_SHA256 and args.timr is None:
-            raise SystemExit("--exe is not the shipped WON.EXE: pass --timr and --rnzp")
-        seeded, _, _ = wonseed.patch(exe, args.timr or wonseed.B_TIMR, args.rnzp or wonseed.B_RNZP, script.seed)
-        (game / "WONSEED.EXE").write_bytes(seeded)
-        program = "WONSEED.EXE"
+    # The shipped WON.EXE reads its files flat, all beside it.
+    copy_game_files(game, flat=True)
+    exe = wonseed.unpacked(Path(args.exe).read_bytes())
+    if hashlib.sha256(exe).hexdigest() != wonseed.SHIPPED_UNPACKED_SHA256 and args.timr is None:
+        raise SystemExit("--exe is not the shipped WON.EXE: pass --timr and --rnzp")
+    seeded, _, _ = wonseed.patch(exe, args.timr or wonseed.B_TIMR, args.rnzp or wonseed.B_RNZP, script.seed)
+    (game / "WONSEED.EXE").write_bytes(seeded)
+    program = "WONSEED.EXE"
     keys = script.keyfile()
-    # With --port, PLAYKEYS.COM runs in trace mode and logs the waits the port announces,
-    # the keys it reads and the shots (playkeys.py). DOSBox-X maps the guest's memory to
-    # MEMORY.BIN, where the harness reads the log after the run.
-    trace = (len(keys), len(script.ops)) if args.port or hold else None
-    (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes(trace, hold=hold))
+    (game / "PLAYKEYS.COM").write_bytes(playkeys.com_bytes())
     (game / "KEYS.BIN").write_bytes(keys)
-    (game / "IDLE.COM").write_bytes(ENDMARK if hold else bytes([0xFB, 0xF4, 0xEB, 0xFD]))  # sti / hlt / jmp hlt
+    (game / "IDLE.COM").write_bytes(bytes([0xFB, 0xF4, 0xEB, 0xFD]))  # sti / hlt / jmp hlt
     before = {p.name: sha(p) for p in top_files(game)}
 
     log = out / "dosbox.log"
@@ -465,29 +275,24 @@ def run(script, out, args):
     conf.write_text("\n".join([
         "[sdl]", "output=surface", "",
         "[log]", f"logfile={log}", "",
-        "[dosbox]", "mcp_server=0", f"captures={cap}", "synchronize time=false",
-        *([f"memory file={out / 'MEMORY.BIN'}"] if trace else []), "",
+        "[dosbox]", "mcp_server=0", f"captures={cap}", "synchronize time=false", "",
         "[cpu]", "core=normal", "cputype=pentium", f"cycles=fixed {script.cycles}", "turbo=true",
         "stop turbo on key=false", "stop turbo after second=0", "integration device=true", "",
         "[serial]", "serial1=disabled", "serial2=disabled", "",
         "[ipx]", "ipx=false", "", "[ne2000]", "ne2000=false", "",
-        "[autoexec]", *(["@echo off"] if hold else []),
+        "[autoexec]",
         f'mount c "{game}"', "c:", f"date {DATE}", f"time {TIME}", "date /t > RUNDATE.TXT",
         # After the game quits, IDLE.COM waits forever without printing, so a last shot shows
         # what the game left on the screen (-silent would end DOSBox-X with the autoexec).
         # The harness stops DOSBox-X after the last shot.
-        # The port's hooks read their variables (SCRIPT.BM). PDS 7.1's ENVIRON cannot add one
-        # in DOS, so the autoexec sets them before the game starts (docs/devnotes.md, step 6).
-        *([f"set WON_SEED={seed_text(script.seed)}", "set WON_TRACE=1"] if args.port and not hold else []),
-        *([f"set NAP_SEED={seed_text(script.seed)}"] if hold else []),
         "PLAYKEYS.COM KEYS.BIN", program, "IDLE.COM", "",
     ]), encoding="ascii")
     env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
-    limit = HOLD_LIMIT if hold else 120 + 3 * script.seconds()
+    limit = 120 + 3 * script.seconds()
     start = time.monotonic()
     proc = subprocess.Popen([str(args.dosbox), "-silent", "-conf", str(conf), "-noconsole",
                              "-nopromptfolder"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    shots, failed, polled = [], False, start
+    shots = []
     try:
         while True:
             if log.exists():
@@ -495,19 +300,6 @@ def run(script, out, args):
                          for l in log.read_text(errors="replace").splitlines() if "Capturing Screenshot to" in l]
             if len(shots) >= len(script.shots) or proc.poll() is not None:
                 break
-            if hold and time.monotonic() - polled > 2:
-                # A failed script stops the machine with a screenshot of its own. The guest's
-                # memory is a file the host can read while DOSBox-X runs.
-                polled = time.monotonic()
-                failed = hold_failed(out / "MEMORY.BIN")
-                if failed:
-                    # Let the failure's screenshot be written, then read the log again: the
-                    # last capture is that screenshot, not the last shot before it.
-                    time.sleep(1.0)
-                    shots = [l.split("Capturing Screenshot to ", 1)[1].strip()
-                             for l in log.read_text(errors="replace").splitlines()
-                             if "Capturing Screenshot to" in l]
-                    break
             if time.monotonic() - start > limit:
                 print(f"  {script.name}: stopped after {limit:.0f} s with {len(shots)} of {len(script.shots)} shots")
                 break
@@ -523,19 +315,6 @@ def run(script, out, args):
     if got != DATE:
         raise SystemExit(f"  {script.name}: DOS date is {got!r}, not {DATE}; the run is not repeatable")
 
-    if trace:
-        info = write_trace(out, script)
-        if hold and info["flags"] & 4:
-            why = playkeys.FAIL_TEXT.get(info["why"], f"reason {info['why']}")
-            if shots:
-                (out / "shots").mkdir(exist_ok=True)
-                shutil.copy2(shots[-1], out / "shots" / "fail.png")
-            raise RunFailed(f"{script.name}: the script failed after {info['seen']} waits: {why} "
-                            f"(the wait's place {info['place']}, letter {info['letter']}); "
-                            f"the screen is {(out / 'shots' / 'fail.png').relative_to(REPO).as_posix()}")
-        if hold and info["flags"] & 8:
-            print("  warning: a key was dropped with the BIOS buffer full")
-
     result = {}
     (out / "shots").mkdir()
     for name, src in zip(script.shots, shots):
@@ -546,8 +325,10 @@ def run(script, out, args):
     for p in sorted(top_files(game)):
         if p.name in HARNESS_FILES or before.get(p.name) == sha(p):
             continue
-        shutil.copy2(p, out / "files" / p.name)
-        result[f"files/{p.name}"] = sha(p)
+        # The name in upper case, as DOS shows it: the repo's data files have lower-case names
+        # (docs/devnotes.md, item 58), and a file the game writes over keeps its name.
+        shutil.copy2(p, out / "files" / p.name.upper())
+        result[f"files/{p.name.upper()}"] = sha(p)
     print(f"  {script.name}: {len(shots)} of {len(script.shots)} shots, "
           f"{sum(1 for k in result if k.startswith('files/'))} files written, {elapsed:.0f} s")
     return result
@@ -584,46 +365,6 @@ def dump_font(args):
     print(f"wrote {FONT.relative_to(REPO).as_posix()} ({dosbox_version(args.dosbox)})")
 
 
-class RunFailed(Exception):
-    """A run that gave no result; the next script still runs."""
-
-
-def write_trace(out, script):
-    """The trace log of the run, from DOSBox-X's memory file, into out/trace.json."""
-    memory = out / "MEMORY.BIN"
-    try:
-        samples, events, info = playkeys.read_trace(memory.read_bytes())
-    except (OSError, ValueError) as e:
-        raise RunFailed(f"{script.name}: no trace log: {e}") from None
-    memory.unlink()  # 16 MB, and nothing else in it is needed
-    if not isinstance(script, HoldScript):
-        # Only hold mode has these: in trace mode their offset is code, not data.
-        for name in ("seen", "why"):
-            del info[name]
-    if info["flags"] & 3:
-        print(f"  warning: the trace log was full (flags {info['flags']}); it misses the end of the run")
-    (out / "trace.json").write_text(json.dumps({
-        "script": script.name, "shots": script.shots, "info": info,
-        "samples": [list(s) for s in samples], "events": events}, indent=0), encoding="ascii")
-    reads = sum(1 for e in events if e["type"] == "R")
-    if isinstance(script, HoldScript):
-        print(f"  trace: {info['total']} waits announced, {info['seen']} answered")
-    else:
-        print(f"  trace: {len(samples)} samples, {info['total']} waits announced, {reads} keys read")
-    return info
-
-
-def hold_failed(memory):
-    """True when the hold-mode script of a running DOSBox-X has failed (flags bit 2)."""
-    try:
-        with open(memory, "rb") as f:
-            first_mb = f.read(0x100000)
-    except OSError:
-        return False
-    at = first_mb.find(b"PKTRACE1")
-    return at >= 0 and bool(first_mb[at + 8 + 11] & 4)
-
-
 def manifest_text(script, result, args):
     lines = [f"# {script.name}: recorded by tools/play/play.py",
              f"# {dosbox_version(args.dosbox)}, seed {script.seed!r}, cycles fixed {script.cycles}",
@@ -653,14 +394,7 @@ def main():
     ap.add_argument("--timr", type=lambda s: int(s, 16))
     ap.add_argument("--rnzp", type=lambda s: int(s, 16))
     ap.add_argument("--dosbox", default=str(DEFAULT_DOSBOX))
-    ap.add_argument("--port", help="a PDS 7.1 build of the port (tools/pdsbuild.py), played in trace mode")
-    ap.add_argument("--napoleon", help="a PDS 7.1 build of the tactical game (tools/pdsbuild.py --game "
-                    "napoleon), alone, played in hold mode from the keys files of tests/battles/")
     args = ap.parse_intermixed_args()
-    if args.napoleon and (args.port or args.timr is not None or args.exe != str(REPO / "WON.EXE")):
-        raise SystemExit("--napoleon plays the tactical game alone: it takes no --port, --exe, --timr or --rnzp")
-    if args.port and (args.timr is not None or args.exe != str(REPO / "WON.EXE")):
-        raise SystemExit("--port plays the port's own build: it takes no --exe, --timr or --rnzp")
     if (args.timr is None) != (args.rnzp is None):
         raise SystemExit("--timr and --rnzp go together: both from the build's runtime map")
     if not Path(args.dosbox).exists():
@@ -672,17 +406,9 @@ def main():
         raise SystemExit(f"{args.command} needs scripts")
     failed = 0
     for s in args.scripts:
-        script = HoldScript(s) if args.napoleon else Script(s)
-        if args.napoleon:
-            print(f"{args.command} {script.name} ({len(script.shots)} shots)")
-        else:
-            print(f"{args.command} {script.name} ({script.seconds():.0f} s of play, {len(script.shots)} shots)")
-        try:
-            ok = play_one(script, args)
-        except RunFailed as e:
-            print(f"  FAILED: {e}")
-            ok = False
-        failed += 0 if ok else 1
+        script = Script(s)
+        print(f"{args.command} {script.name} ({script.seconds():.0f} s of play, {len(script.shots)} shots)")
+        failed += 0 if play_one(script, args) else 1
     sys.exit(1 if failed else 0)
 
 

@@ -5,10 +5,6 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
 
 ## The port
 
-- **Linux** (row 17 of the plan). Both programs open lower-case names of upper-case files: `"battle.$$$"`,
-  `"nws.cfg"`, `'won.bi'`, `'nap10.bi'` and others. That works on Windows only. The copy of the history file
-  (`SHELL "copy nws.his oldhist.ory"`) is a Windows command too.
-
 - **Show the pictures of the DOS programs in the game** (D6 (b) of the plan). `ARCH2.EXE`, `VIC.EXE` and
   `NAPIC.EXE` have no source, and the port no longer runs them. Their screens are in `docs\` (`ARCH2.png`,
   `VIC.png`, `NAPIC.png`). The game could show them with `_LOADIMAGE` where it ran the programs. The QB64 user
@@ -16,6 +12,10 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
 
 ## The tests
 
+- **Run the Linux check again after changes.** `play.py check` passed on Linux under Xvfb on 2026-11-09
+  (WSL, QB64Rust's Linux build), against the references recorded on Windows (`docs\devnotes.md`, item 58).
+  Nothing runs it on its own. It could be a job of `.github\workflows\build.yml`, or a step run by hand before
+  a merge.
 - **Later, not part of the port's steps: draw the small circles and sloped lines with QB 4.5's pixels** (user,
   2026-11-09: "not part of this process, don't want to get slowed down"). Step 8 measured QB 4.5's small
   `CIRCLE`s (QB64Rust's `verification\qb45\q45_circle_pixels`, `DIVERGENCES-QB45.md` Q-036). QB64 lights other
@@ -36,7 +36,8 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
   army of 200 men has no unit at all, and the battle ends at once (`unitsize&`, `NAPOLEON.BAS`). A script that
   steers the player's units onto the enemy is needed, with the map's terrain in mind. One of the tries found
   the `over(3)` bug, now fixed, and became battle b6. `Compact`'s empty side, which
-  `wipeout` meets, has a unit test (`tests\battle_test.bas`).
+  `wipeout` meets, has a unit test (`tests\battle_test.bas`), and so has `writeoutcome`, which `wipeout` now
+  calls (`docs\devnotes.md`, item 61).
 - **No script reaches Napoleon's exile** (`WON1.BM` lines 1070 to 1086: "Napoleon removed to Corsica", or
   "banished to St. Helena" when Corsica is occupied). Napoleon's own army, army 1, must surrender or be
   crushed. A script would play the Allies and send large armies against him for several turns.
@@ -45,27 +46,17 @@ Open work on the QB64 port (branch `qb64rust`). Remove an item when it is done. 
   never run. In the tactical game, `help` and `report` never run, and less than half of `order`, the keys of a
   player's unit: the battles only rest, retreat, quit, step south and ask Intell. A battle that moves, fires
   and asks for help and the report would reach most of it. `tests\out\qb64\coverage\subs-*.txt` lists the SUBs.
-- **QB64pe's build of `09-1805-tactical-battle` crashed once** with exit code 3221226356 (0xC0000374, a heap
-  corruption) before its first state, in a bridge run of 32 runs four at a time. It passed in the five runs
-  after, and in the four runs of `record`. If it comes back, keep the run's folder and look at `won.exe`
-  starting `napoleon.exe`.
 
 ## The game
 
 Each of these is how the game behaves, in DOS too by its code. Decide whether to change it. A change to how the
-game plays changes the recorded screens. The pragmatic engineer's view (2026-11-09): decide them after the port
-is merged into `main`, as a change of their own, and keep DOS's behavior until then.
+game plays changes the recorded screens. Three were fixed on 2026-11-10 (`docs\devnotes.md`, item 61); each
+fix gets a line in `tests\known-differences.txt` where the port then differs from a DOS recording.
 
-- **`BATTLE.$$$` gives the tactical game the attacker's leader twice.** `battle` (`WON1.BM`) writes
-  `armylead(attack)` as the 11th field, where the defender's leader is meant. Session 9 wrote
-  `"Innsbruck",1,2,1,"Bernadotte",125,5,2,"Alexander",98,5,1,3,0,2`.
-- **A battle won by wiping out the other side writes no `OUTCOME.&&&`.** `wipeout` (`NAP1A.BM`) ends the tactical
-  game, and `expire` writes the file only when the time is up. The strategic game then reads the result of the
-  battle before. The same when the player quits the battle with F10.
-- **A small random army keeps all its cavalry.** In `randarm` (`NAP1.BM`), a unit that is to be cavalry
-  (`armx = 2`) in an army of fewer than 11 units should become infantry half the time: `IF allarm < 11 … THEN
-  amrx = 4`. The line sets `amrx`, and the rest of the SUB reads `armx`, so it only draws an `RND`. A fix
-  changes which units the tactical game makes.
+- **The retreat's penalty takes 20% of one unit, not of the army.** The strategic retreat (F9, `NAP1.BM`)
+  and now the F10 quit add `.2 * strength(side)` to the side's losses. `strength()` is indexed by unit, so
+  this is unit 1's strength for the French and unit 2's for the Allies. Unit 2 is a French unit: the Allies'
+  units start at 41 (`m2`).
 - **`normal` leans half a standard deviation high.** Both programs draw their casualties and odds from
   `normal` (`WON2.BM` and `NAP1A.BM`), which adds 12 `RND` and takes away 5.5. The sum's mean is 6, so the
   results come out half a standard deviation above the mean they are given. `TestNormalLeansHalfADeviationHigh`

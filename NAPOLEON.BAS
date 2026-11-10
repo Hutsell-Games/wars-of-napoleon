@@ -8,13 +8,14 @@ DECLARE SUB namer (file$, s%, F%, a$)
 DECLARE SUB arrange (who%, xloc%, yloc%)
 DECLARE SUB Near1 (index%, Enemy%, near%)
 DECLARE SUB over (flag%)
+DECLARE SUB writeoutcome (flag%)
 DECLARE SUB randarm (k%)
 DECLARE SUB randmap ()
 DECLARE SUB replace (y%, x%, z%)
 DECLARE SUB routed (index%, flag%)
 DECLARE SUB startmap ()
 DECLARE SUB vistarg (active%, flag%)
-REM $INCLUDE: 'nap10.bi'
+REM $INCLUDE: 'NAP10.BI'
 CALL napstart: CLS
 
 choose = 22: GOSUB lodecfg
@@ -98,7 +99,8 @@ CALL refresh
     
 nother: CALL order: IF LEN(file$) > 1 GOTO nother
 ' SYSTEM, not END: QB64's END waits for a key, and won.exe waits for this program.
-IF file$ = "๔" THEN file$ = "": CALL scriptend("Q"): SYSTEM
+' F10 counts as the strategic retreat (F9, NAP1.BM): the same penalty, and a loss.
+IF file$ = "๔" THEN file$ = "": score&(side) = score&(side) + .2 * strength(side): CALL writeoutcome(side): CALL scriptend("Q"): SYSTEM
 IF file$ = "๕" THEN file$ = "": flag = 0: GOTO menu7
 GOTO nother
 'ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
@@ -126,8 +128,8 @@ DATA Green,Raw,Veteran,Seasoned,Hardened
 DATA Inept,Weak,Good,Strong,Brilliant
 DATA Beaten,Low,Good,High,Fearless
 
-' $INCLUDE: 'nap1.bm'
-' $INCLUDE: 'nap1a.bm'
-' $INCLUDE: 'nap1c.bm'
-' $INCLUDE: 'qb64.bm'
-' $INCLUDE: 'napscript.bm'
+' $INCLUDE: 'NAP1.BM'
+' $INCLUDE: 'NAP1A.BM'
+' $INCLUDE: 'NAP1C.BM'
+' $INCLUDE: 'QB64.BM'
+' $INCLUDE: 'NAPSCRIPT.BM'

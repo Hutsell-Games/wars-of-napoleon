@@ -1,6 +1,7 @@
 ' ===========================================================================
 ' QB64.BM - what the game needs from BASIC PDS 7.1 that QB64 does not have:
-' DIR$, and the pixels of a dotted LINE. Included at the end of WON.BAS and
+' DIR$, the pixels of a dotted LINE, the names of the system it runs on,
+' and silence. Included at the end of WON.BAS and
 ' of NAPOLEON.BAS.
 ' DIR$ is that of the Civil War Strategy port (Hutsell-Games/civil-war-strategy).
 ' ===========================================================================
@@ -15,6 +16,28 @@ DO WHILE RIGHT$(f$, 1) = CHR$(92) OR RIGHT$(f$, 1) = "/"
 	f$ = _FILES$
 LOOP
 DIR$ = UCASE$(f$)
+END FUNCTION
+
+' -1 on Windows, 0 elsewhere. DOS's .EXE names and cmd's copy exist only
+' there. As in the World War 2 port (Hutsell-Games/world-war-2).
+FUNCTION onwindows%
+onwindows% = INSTR(_OS$, "[WINDOWS]") > 0
+END FUNCTION
+
+' Silences PLAY and SOUND, which both play through voice 0, for a scripted
+' run (scriptstart, napstart): a test plays the game on a hidden desktop,
+' but its sound still reaches the user's speakers. Every note still takes
+' its time, so nothing that a test compares changes.
+SUB silence
+PLAY "V0"
+END SUB
+
+' The name of a program as SHELL needs it: the strategic game starts the
+' tactical game, napoleon.exe on Windows and napoleon elsewhere. Off Windows
+' SHELL hands the name to the shell, which looks for a bare name on the
+' PATH, not in the game's folder: hence "./".
+FUNCTION exename$ (base$)
+IF onwindows% THEN exename$ = base$ + ".exe" ELSE exename$ = "./" + base$
 END FUNCTION
 
 ' LINE (xa, ya)-(xb, yb), c, , style& with the pixels PDS 7.1 and QB 4.5 gave.

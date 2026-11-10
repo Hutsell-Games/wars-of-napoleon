@@ -1338,3 +1338,133 @@ runs on GitHub at the next push.
     showed twice and the pointers looked wrong. The line now ends with `;`, as Detach's and every other
     heading's does. Session 1's reference is recorded again, and `known-differences.txt` leaves out its six
     shots where DOS shows the scroll.
+
+## Linux, and silent tests (2026-11-09)
+
+58. **The game builds and plays on Linux** (row 17 of the plan). On Linux neither QB64Rust nor QB64pe folds
+    the case of a file's name, as World War 2 measured (its `docs/devnotes.md`, item 17). The changes are World
+    War 2's:
+    - **The data files have lower-case names** (`git mv`): `battle.$$$`, `outcome.&&&`, `battsumm`,
+      `hiscore.nws`, `nws.cfg`, the 6 files of `graphics\`, the 26 of `scenarios\` and `tests\data\nws9.sav`.
+      The code opens them by these names. Menus do not change, since `DIR$` (`QB64.BM`) gives names in upper
+      case, as DOS did. The shipped DOS programs `WON.EXE` and `NAPOLEON.EXE` and the DOS recordings keep their
+      names: DOS folds case, and `play.py` compares written files by their names in upper case.
+    - **The `$INCLUDE` lines name the source files as they are**: `'WON.BI'`, `'NAP1A.BM'`, and in the two unit
+      test files `'../WON1.BM'`. The sources keep their upper-case names. `tools\pdsbuild.py` reads include
+      names in lower case, so the PDS build does not change.
+    - **The strategic game starts `./napoleon` off Windows** (`exename$`, `QB64.BM`, as World War 2 has it). A
+      Linux build has no `.exe`, and the shell looks for a bare name on the `PATH`, not in the game's folder.
+    - **Off Windows the history file is copied in BASIC** (`scriptshell`, `SCRIPT.BM`): `copy nws.his
+      oldhist.ory` is cmd's command. On Windows outside a script it still runs `SHELL`. `onwindows%` is in
+      `QB64.BM`. The PDS build has no DOS version of either: item 60 retired it.
+    - **`tests/play.py` runs off Windows**: programs without `.exe`, the run started as it is (Linux: under
+      Xvfb) in a process group of its own, which `kill_tree` stops whole.
+
+    Two unit tests in `tests\rules_test.bas` check the new code on the system they run on:
+    `TestExeNameOnThisSystem`, and `TestShellCopiesInBasicOffWindows`, which does nothing on Windows (it would
+    open cmd's window there).
+
+    The check: all 37 scripts passed on Windows, and on Linux under Xvfb (WSL, QB64Rust's Linux build of
+    2026-11-09) against the same references recorded on Windows. The unit tests passed on both systems.
+59. **A scripted run is silent** (user, 2026-11-09: tests should not play sound at the user). The hidden desktop
+    hides the window, not the sound. `scriptstart` and `napstart` now call `silence` (`QB64.BM`) when the run is
+    scripted, which runs `PLAY "V0"`. `PLAY` and `SOUND` both play through voice 0, and `SOUND` without a
+    volume keeps that voice's volume (libqb's `audio.cpp`). Every note still takes its time, so no state or file
+    changes. The game's one `BEEP` is for a missing `mtn.vga`. The DOSBox-X runs have no sound device. A game
+    played by hand still has its sound.
+    The earlier ports set the game's own sound option to 0 instead. Here that would change `nws.cfg` and
+    `battle.$$$`, which the sessions compare with DOS's.
+
+## The PDS bridge is retired (2026-11-10)
+
+60. **The port's source is no longer built with PDS 7.1** (D14 of the plan; user, 2026-11-10: "retire"). The
+    bridge proved that the port plays as DOS did, and it made the DOS recordings of the six battles. The fixes
+    of the game that come next make the port differ from DOS on purpose, so the bridge would only cost upkeep:
+    a DOS form of every hook, and hooks kept to what PDS 7.1 compiles. Removed:
+    - `tools\pdsbuild.py`, which built the two programs with PDS 7.1 in DOSBox 0.74;
+    - `PDS.BM`, the DOS form of `QB64.BM`;
+    - `tools\play\sessions.py`, which wrote `tests\sessions\*.keys` from the bridge's trace runs;
+    - in `tools\play\play.py`, the options `--port` (the strategic game's PDS build, in trace mode) and
+      `--napoleon` (the tactical game's, in hold mode), with `HoldScript`;
+    - in `tools\play\playkeys.py`, the trace and hold modes of `PLAYKEYS.COM` (576 lines). The program it
+      writes for the shipped game is byte for byte the same as before;
+    - the trace mode of the hooks (`WON_TRACE`, `NAP_TRACE`, `traced`) in `SCRIPT.BM` and `NAPSCRIPT.BM`.
+
+    What stays: the DOSBox-X recordings in `tests\recorded\`, unchanged, as the record of the game in DOS;
+    `play.py bridge` and `tactical`, which hold the QB64 builds to them; the harness that plays the shipped
+    `WON.EXE` (`tools\play\play.py run`, `record`, `check`, `font`); the recovery's tools (`tools\recover\`);
+    and the game's comments on what PDS 7.1 did. Each fix that makes the game differ from a recording gets a
+    line in `tests\known-differences.txt`, as Army Drill's scroll did (item 57).
+
+    While fixing the harness for this, `tools\play\play.py` was found to name the files the game wrote as
+    they are on disk, so `nws.cfg` did not match a recording's `NWS.CFG` after item 58. It now names them in
+    upper case, as DOS did.
+
+### How to bring the bridge back
+
+The bridge is in git. The last commit that has it is the parent of the commit that removed
+`tools/pdsbuild.py`:
+
+```
+git log --diff-filter=D -1 --format=%H -- tools/pdsbuild.py     # the commit that removed it
+git restore --worktree --source=<that commit>^ -- tools/pdsbuild.py PDS.BM tools/play/sessions.py
+git diff <that commit>^ <that commit> -- tools/play SCRIPT.BM NAPSCRIPT.BM WON.BI NAP10.BI   # what else it removed
+```
+
+`--worktree` changes only the files, not what is staged. The three files were removed whole, so they come
+back as they were. The rest of what the commit removed is in files that have changed since, so take it back
+by hand from the second command's diff, as the steps below say.
+
+Then:
+
+1. **The harness.** Take back `--port`, `--napoleon` and `HoldScript` in `tools\play\play.py`, the trace and
+   hold modes in `tools\play\playkeys.py`, and their sections of `tools\play\README.md`.
+2. **The hooks.** Take back the trace mode of `SCRIPT.BM` and `NAPSCRIPT.BM` (`traced`, `WON_TRACE`,
+   `NAP_TRACE`) and `traced` in the `COMMON SHARED` lines of `WON.BI` and `NAP10.BI`, from the same commit.
+   Merge them by hand with what the hooks hold by then.
+3. **PDS 7.1 must compile the hooks and `QB64.BM`'s replacements.** `PDS.BM` needs a DOS form of every
+   `FUNCTION` and `SUB` that `QB64.BM` has by then. At the time of removal these were `styledline`,
+   `onwindows%` (-1), `exename$` (`base$ + ".exe"`) and `silence` (empty: PDS's `PLAY` has no `V`). PDS 7.1
+   needs a `DECLARE FUNCTION` for each function before its first call, in `WON.BI`. Any QB64-only statement in
+   the hooks (`$IF`, `_OS$`, a `_` keyword) needs a form PDS compiles.
+4. **The machine.** PDS 7.1, installed by QB64Rust's `tools\qb45\pds71_install.py` (`..\pds71\install` beside
+   the repo, or `--pds DIR`); DOSBox 0.74-3 at `C:\Program Files (x86)\DOSBox-0.74-3\`, which the recovery's
+   tools run; and DOSBox-X at `..\won-hutsellgames\dosbox-x\`, as for the shipped game.
+5. **Check it.** Build with `python -I tools/pdsbuild.py OUT` and `--game napoleon`, then play the sessions
+   and battles in DOSBox-X: `tools/play/play.py check --port OUT/WON.EXE tests/scripts/*.keys`, and
+   `record --napoleon OUT/NAPOLEON.EXE tests/battles/*.keys` into a scratch folder. Before the game's fixes, a
+   run gave each recording. After a fix, it gives the fixed game in DOS, which is what a new recording would
+   hold. `tools\play\README.md` of the parent commit says how the trace and hold modes work.
+
+## Three fixes of the game (2026-11-10)
+
+61. **Three bugs of the original are fixed** (user, 2026-11-10: "fix" each, F10 as the panel recommended).
+    Each was in DOS too, by the game's code. `tests\known-differences.txt` lists where the port now differs
+    from a DOS recording.
+    - **`battle.$$$` names the defender's leader.** `battle` (`WON1.BM`) wrote `armylead(attack)` as the 11th
+      field, so the tactical game gave the defender the attacker's leadership. It now writes
+      `armylead(defend)`. Session 9 now writes `"Innsbruck",1,2,1,"Bernadotte",125,5,2,"Alexander",98,6,...`:
+      Alexander's own 6, where DOS wrote Bernadotte's 5. The references of `09-1805-tactical` and
+      `09-1805-tactical-battle` are recorded again.
+    - **Every end of a battle writes `outcome.&&&`.** Only `over` wrote it. `wipeout` (`NAP1A.BM`) ended the
+      battle after the report, and the F10 quit (`NAPOLEON.BAS`) ended it at once, both without a result, so
+      `won.exe` read the result of the battle before. `over`'s writing is now `writeoutcome (flag)`, with flag
+      the side that lost. `wipeout` calls it with the annihilated side. F10 counts as the strategic retreat
+      (F9 and Yes): the same penalty, `score&(side) + .2 * strength(side)`, and a loss for the player's side
+      (the user took the panel's view: judging the battle as it stands would let a defender quit at once and
+      win). Battle `b5` now writes `1,0,.58`, the result of `b1`'s retreat at the same moment, and its
+      reference is recorded again. `TestWriteOutcomeGivesTheOtherSideTheWin` in `tests\battle_test.bas` checks
+      `writeoutcome`. No script reaches `wipeout` yet (`TODO.md`).
+    - **A small army's cavalry becomes infantry half the time.** In `randarm` (`NAP1.BM`), `IF allarm < 11 …
+      THEN amrx = 4` set a misspelled variable and only drew an `RND`. It now sets `armx`. `randarm` makes
+      about 33 units for the larger side, so a side has fewer than 11 only when it is under a third of the
+      other. The strategic game starts a tactical battle only within 3:1, so that happens only after its supply
+      or cohesion penalty. No recorded battle reached the line. The new battle `b7-innsbruck-small-army` does:
+      session 9's battle with the French cut to 3,000 men, 10 units. With the old line its first screen
+      differs.
+
+    Found on the way, and left for the user (`TODO.md`): the retreat's penalty takes 20% of one unit's
+    strength, `strength(side)`, not of the army. For the Allies that is unit 2, a French unit.
+
+    The check: all 38 scripts against their references, `bridge` (16) and `tactical` (6) against the DOS
+    recordings with the two new lines of `known-differences.txt`, and the unit tests (12).
