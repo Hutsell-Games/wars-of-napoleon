@@ -8,7 +8,8 @@ recovered source must reproduce (step 6), and later the QB64Rust port.
 
 - Python 3. Nothing else from PyPI.
 - DOSBox-X 2026.10.01, the portable 64-bit build (`dosbox-x-vsbuild-win64-2026.10.01-portable.zip`), unpacked
-  into `..\won-hutsellgames\dosbox-x\` beside this repo (decision D5 of the study). `--dosbox PATH` names
+  into `..\dosbox-x\` beside this repo (decision D5 of the study; moved there from `..\won-hutsellgames\` on
+  2026-11-12). `--dosbox PATH` names
   another copy. The version and the start of `dosbox-x.exe`'s SHA-256 are written into each recording's
   `manifest.txt`. Another build may write other PNG bytes for the same screen, so record and check with the
   same one.

@@ -1,0 +1,158 @@
+pirate:
+	CALL BuffClear: CLS : LOCATE 1, 30: COLOR 11: PRINT "NAVAL COMBAT"
+	FOR k = 1 TO 2
+	hit(k) = 10
+	NEXT k
+	CALL schooner
+cannon:
+	LOCATE 9, 1: PRINT SPACE$(79)
+	LOCATE 15, 1: PRINT SPACE$(79)
+	x = 10: y = 100
+	COLOR 9: LOCATE 5, 25: PRINT "French"; navysize(1); "ship(s)"
+	GOSUB boxes
+	COLOR 1
+	FOR i = 1 TO navysize(1)
+	x = x + 50: PSET (x, y)
+	CALL shipicon(1)
+	NEXT i
+	COLOR 4: LOCATE 11, 23: PRINT "ENGLAND "; navysize(2); "ship(s)"
+	LINE (10, 180)-(530, 210), 1, BF
+	LINE (10, 180)-(530, 210), 11, B
+	x = 10: y = 200
+	COLOR 1
+	FOR i = 1 TO navysize(2)
+	x = x + 50: PSET (x, y)
+	CALL shipicon(2)
+	NEXT i
+	COLOR 11
+wave:
+	mtx$(0) = "Options"
+	mtx$(1) = "Attack"
+	mtx$(2) = "Retreat"
+	pct! = .05: IF who = 1 THEN pct! = -.05
+	IF chx > 0 THEN choose = 1: GOTO powder
+
+	size = 2: colour = 3: hilite = 14: tlx = 60: tly = 22: CALL menu(0)
+	CALL BuffClear
+powder:
+	SELECT CASE choose
+	 CASE 1
+firemore:
+	 IF noise > 0 THEN IF PEEK(1052) = 30 THEN CALL icon(1, 1, 12): CALL TICK(.1): SOUND 77, .3: SOUND 59, .3
+	 IF RND <= .5 + pct! GOTO hitem ELSE GOTO hitme1
+	 GOTO firemore
+hitem:
+	 hit(3 - who) = hit(3 - who) - 1: GOSUB showhit: IF hit(3 - who) > 0 GOTO firemore
+	 x = 10 + 50 * navysize(3 - who)
+	 y = 90: IF who = 1 THEN y = 190
+	 GOSUB xout
+	 c = 9: IF who = 1 THEN c = 4
+	 COLOR c: LOCATE 17, 5: PRINT force$(3 - who); " ship SUNK!"
+	 IF PEEK(1052) = 30 THEN CALL TICK(turbo! + 1)
+	 GOSUB clr1
+	 CALL barnacle(3 - who)
+	 IF navysize(3 - who) < 1 THEN
+		LOCATE 17, 5: COLOR 12
+		PRINT force$(3 - who); " fleet DEFEATED"
+		CALL TICK(turbo!)
+		navyloc(3 - who) = 0: navysize(3 - who) = 0
+		victory(3 - who) = victory(3 - who) + 10
+		IF who = side THEN grudge = 1 ELSE grudge = 0
+		GOTO sail3
+	 END IF
+	 hit(3 - who) = 10
+	 GOTO cannon
+hitme1:
+	 hit(who) = hit(who) - 1: GOSUB showhit: IF hit(who) > 0 GOTO firemore
+	 x = 10 + 50 * navysize(who)
+	 y = 190: IF who = 1 THEN y = 90
+	 GOSUB xout
+	 c = 9: IF who = 2 THEN c = 4
+	 COLOR c: LOCATE 17, 5: PRINT force$(who); " ship SUNK!"
+	 IF PEEK(1052) = 30 THEN CALL TICK(turbo!)
+	 GOSUB clr1
+	 CALL barnacle(who)
+	 IF navysize(who) < 1 THEN
+		LOCATE 19, 5: COLOR 12
+		PRINT "Attacking "; force$(who); " fleet has been ELIMINATED !"
+		CALL TICK(turbo!)
+		navyloc(who) = 0: navysize(who) = 0
+		victory(who) = victory(who) + 10
+		IF who <> side THEN grudge = 1 ELSE grudge = 0
+		GOTO sail3
+	 END IF
+	 hit(who) = 10
+	 GOTO cannon
+
+	 CASE 2
+	 target = 0
+	 FOR i = 1 TO cities
+	 IF cityp(i) <> 3 - who AND navyloc(who) <> i AND matrix(i, 7) > 90 THEN target = i: IF RND > .3 GOTO found1
+	 NEXT i
+	 IF target > 0 GOTO found1
+	 CALL clrbot: COLOR 11: PRINT force$(who); " cannot escape !"; : CALL TICK(2): GOTO wave
+found1:
+	 CALL clrbot: COLOR 11: PRINT force$(who); " is retreating to "; city$(target); : CALL TICK(turbo!)
+	 navyloc(who) = target
+	 GOTO sail3
+	 CASE ELSE
+	 GOTO wave
+	 END SELECT
+	 GOTO pirate
+'---------------------------------------------------------------------------
+'                               Subs
+'---------------------------------------------------------------------------
+showhit:
+	 LOCATE 9, 6 * navysize(1): PRINT hit(1); " ";
+	 LOCATE 15, 6 * navysize(2): PRINT hit(2); " ";
+	 IF noise = 0 THEN IF PEEK(1052) = 30 THEN TICK .1 * turbo!
+	 RETURN
+clr1:
+	COLOR 11: LINE (30, 250)-(180, 280), 3, BF: RETURN
+nest:
+	IF u7ca > 0 THEN
+		FOR k = 1 TO size
+		IF mtx$(k) = city$(u7ca) THEN choose = k: u7ca = 0: RETURN
+		NEXT k
+	END IF
+	best = 0: x = 0
+	FOR i = 1 TO size
+	target = array(i)
+	IF cityp(target) = 0 THEN
+		IF u892(cityo(target)) < 51 GOTO neutral
+		best = i: IF RND > .2 THEN choose = best: RETURN
+	END IF
+
+	IF target = navyloc(3 - who) THEN IF navysize(who) >= navysize(3 - who) AND RND > .1 THEN choose = i: RETURN
+	IF cityp(target) <> who THEN
+		best = i: x = x + 1
+		IF RND > .8 THEN choose = best: RETURN
+	END IF
+neutral:
+	NEXT i
+	IF best = 0 THEN
+		choose = 1 + INT(RND * size)
+	ELSE
+		choose = best
+	END IF
+	RETURN
+boxes:
+	LINE (10, 80)-(530, 110), 1, BF
+	LINE (10, 80)-(530, 110), 11, B
+	RETURN
+box2:
+	CLS
+	LINE (100, 110)-(550, 240), 1, B
+	LINE (95, 115)-(555, 235), 7, B
+	RETURN
+xout:
+		PSET (x, y)
+		DRAW "S5C15G5F5G3H5G5H3E5H5E3F5E5F3"
+		PAINT (x - 3, y + 1), 12, 15
+	RETURN
+sail3:
+	commerce = 0
+	FOR k = 1 TO 2
+	IF navyloc(k) = 99 THEN commerce = k
+	NEXT k
+	CLS : CALL europe

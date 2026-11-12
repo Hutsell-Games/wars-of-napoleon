@@ -8,7 +8,7 @@ Usage (from the repo's folder):
     python -I tools/play/play.py font                   # DOSBox-X's 8 x 14 font into tests/recorded/
 Options: --exe WON.EXE (another build to play; default the repo's WON.EXE),
          --timr HEX --rnzp HEX (its runtime addresses, for a build other than the shipped one),
-         --dosbox PATH (default ../won-hutsellgames/dosbox-x/bin/x64/Release/dosbox-x.exe).
+         --dosbox PATH (default ../dosbox-x/bin/x64/Release/dosbox-x.exe).
 
 How a run works:
 - A fresh folder gets the game's files from the repo's folder, WONSEED.EXE (WON.EXE with
@@ -53,7 +53,7 @@ import playkeys  # noqa: E402
 import wonseed  # noqa: E402
 
 REPO = HERE.parent.parent
-DEFAULT_DOSBOX = REPO.parent / "won-hutsellgames" / "dosbox-x" / "bin" / "x64" / "Release" / "dosbox-x.exe"
+DEFAULT_DOSBOX = REPO.parent / "dosbox-x" / "bin" / "x64" / "Release" / "dosbox-x.exe"
 OUT = REPO / "tests" / "out"
 RECORDED = REPO / "tests" / "recorded"
 # The date of the shipped WON.EXE. DOSBox-X's DATE takes MM/DD/YYYY; with dashes it

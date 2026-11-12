@@ -1429,7 +1429,7 @@ Then:
    the hooks (`$IF`, `_OS$`, a `_` keyword) needs a form PDS compiles.
 4. **The machine.** PDS 7.1, installed by QB64Rust's `tools\qb45\pds71_install.py` (`..\pds71\install` beside
    the repo, or `--pds DIR`); DOSBox 0.74-3 at `C:\Program Files (x86)\DOSBox-0.74-3\`, which the recovery's
-   tools run; and DOSBox-X at `..\won-hutsellgames\dosbox-x\`, as for the shipped game.
+   tools run; and DOSBox-X at `..\dosbox-x\`, as for the shipped game.
 5. **Check it.** Build with `python -I tools/pdsbuild.py OUT` and `--game napoleon`, then play the sessions
    and battles in DOSBox-X: `tools/play/play.py check --port OUT/WON.EXE tests/scripts/*.keys`, and
    `record --napoleon OUT/NAPOLEON.EXE tests/battles/*.keys` into a scratch folder. Before the game's fixes, a

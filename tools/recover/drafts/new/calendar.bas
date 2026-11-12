@@ -1,0 +1,7 @@
+SUB calendar
+LINE (135, 320)-(230, 350), 0, BF
+LINE (125, 310)-(220, 340), 3, BF
+LINE (125, 310)-(220, 340), 13, B
+COLOR 13
+LOCATE 21, 18: PRINT UCASE$(LEFT$(month$(month), 3)); ","; RTRIM$(STR$(year))
+END SUB

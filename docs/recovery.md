@@ -5,7 +5,8 @@ table of step 3: each procedure of the shipped `WON.EXE`, paired with its counte
 It also holds the facts the tools found that step 4 (writing the source) needs, and the open questions.
 
 The tools are in `tools\recover\`; their `README.md` gives the commands. The scratch files they read and write
-are in `..\won-hutsellgames\work\`, outside the repo.
+were in `..\won-hutsellgames\work\`, outside the repo, which was deleted on 2026-11-12. Its scripts and drafts
+are kept in `tools\recover\drafts\` (its `README.md` says what each is).
 
 **The exact build works on `canonical-recovery` only** (named `won-source` until 2026-11-09). On `main` and
 `qb64rust`, the port has moved and edited the source files (`docs\devnotes.md`, step 4), so the commands of
@@ -118,7 +119,7 @@ byte: 193,056 bytes, the same 4,438 relocations and the same entry point. Sectio
 
 `WON2.BAS` is built from Hutsell's `CWSTRAT2.BAS` and `CWSTRAT.BAS` (for the five procedures that moved), with
 edits; the procedures that exist in neither were written from the disassembly. The drafts and the edit lists that
-produced it are in `..\won-hutsellgames\work\` (`make_won2.py`, `edits_won2.py`, `new\`); the repo keeps the
+produced it are in `tools\recover\drafts\` (`make_won2.py`, `edits_won2.py`, `new\`); the repo keeps the
 result.
 
 **How `WONMENU` differs from `CWSMENU`:**
@@ -152,7 +153,7 @@ on the way:
 - `mtnx(19)` and `mtny(19)` hold where `europe` puts the 19 mountains.
 
 **How `WON` differs from `CWSTRAT`.** `WON.BAS` keeps Hutsell's `CWSTRAT.BAS` text wherever the code is the
-same; the rest was written from `disasm.py --lift`. In `..\won-hutsellgames\work\`, `make_won.py` builds it from
+same; the rest was written from `disasm.py --lift`. In `tools\recover\drafts\`, `make_won.py` builds it from
 `new\won_main1.txt` (module-level code to the main menu), CWS lines 278–704 edited by `edits_won.py`,
 `new\won_tail.txt` (the module's subroutines) and `new\*.bas` (the procedures). Changes, in brief:
 

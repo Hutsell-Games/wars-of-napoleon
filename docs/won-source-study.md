@@ -31,7 +31,8 @@ The game is W.R. Hutsell's *Wars of Napoleon* (`Hutsell-Games/wars-of-napoleon`)
 The repo has the tactical game's source (`NAPOLEON.BAS`, `NAP1A.BAS`, `NAP1C.BAS`, `NAP10.BI`). It has no source
 for `WON.EXE`. This plan is for getting that source back.
 
-The scratch work of this study is in `..\won-hutsellgames\`, outside every repo:
+The scratch work of this study was in `..\won-hutsellgames\`, outside every repo. That folder was deleted on
+2026-11-12. Its scripts and drafts are in `tools\recover\drafts\`, and DOSBox-X moved to `..\dosbox-x\`. It held:
 
 - `won.zip`, as downloaded, and `unzipped\`;
 - `work\`, holding the unpacked `WON.EXE` and the compiled objects;

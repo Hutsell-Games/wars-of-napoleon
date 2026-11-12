@@ -1,0 +1,55 @@
+topbar:
+LOCATE 1, 1: PRINT SPACE$(80);
+COLOR 11
+LOCATE 1, 10: PRINT "Input your decisions now for "; force$(side); " side "; : COLOR 14: PRINT month$(month); ","; year; "  "
+RETURN
+'............................................................................
+rusure:
+choose = 23
+mtx$(0) = "Quit"
+mtx$(1) = "Yes"
+mtx$(2) = "No"
+size = 2: colour = 5
+tlx = 67: tly = 15
+CALL menu(0): CALL clrrite
+IF choose = 1 THEN
+	IF LEN(DIR$("rrs.exe")) > 0 THEN SHELL "rrs.exe"
+	END
+ELSE
+	GOTO menu0
+END IF
+RETURN
+'............................................................................
+blanken:        c = 1: IF side = 2 THEN c = 4
+		CLS : LINE (100, 200)-(500, 300), c, BF
+		LINE (100, 200)-(500, 300), 8 - c, B
+		COLOR 7: LOCATE 14, 31: PRINT " "; month$(month); year
+		COLOR 11: LOCATE 17, 30: PRINT force$(side); " PLAYER TURN"
+		DO WHILE INKEY$ = "": LOOP
+		RETURN
+'............................................................................
+tricolor:
+LINE (0, 0)-(213, 480), 1, BF
+LINE (214, 0)-(427, 480), 15, BF
+LINE (428, 0)-(639, 480), 4, BF
+RETURN
+'............................................................................
+history:
+IF history = 1 THEN
+	CLS
+	IF LEN(DIR$("nws.his")) > 0 THEN SHELL "copy nws.his oldhist.ory"
+	OPEN "O", 2, "nws.his"
+	PRINT #2, TAB(20); "[ HISTORY OF GAME BEGUN "; DATE$; " ]"
+	CLOSE #2
+END IF
+RETURN
+'............................................................................
+savecfg:
+OPEN "O", 1, "nws.cfg"
+WRITE #1, side, noise, difficult, bold, player, turbo!, randbal, history, u8c0
+CLOSE #1
+CALL clrbot
+COLOR 14: PRINT "NWS.CFG updated";
+TICK 1
+RETURN
+'............................................................................
